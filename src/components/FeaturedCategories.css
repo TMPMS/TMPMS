@@ -1,0 +1,70 @@
+.feat-cats-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.feat-cats-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.feat-cats-bar {
+  width: 4px;
+  height: 24px;
+  background: #e1251b;
+  border-radius: 4px;
+}
+.feat-cats-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1d2939;
+  text-transform: uppercase;
+  flex: 1;
+}
+.feat-cats-all {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1250dc;
+}
+.feat-cats-all:hover { opacity: 0.75; }
+
+.feat-cats-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8px;
+}
+@media (max-width: 1100px) {
+  .feat-cats-grid { grid-template-columns: repeat(5, 1fr); }
+}
+.feat-cat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 12px 4px;
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+.feat-cat-item:hover { background: var(--bg-color); }
+.feat-cat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: transform 0.2s;
+}
+.feat-cat-item:hover .feat-cat-icon { transform: scale(1.08); }
+.feat-cat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1d2939;
+  text-align: center;
+  line-height: 1.3;
+}

@@ -1,0 +1,49 @@
+.promo-banners {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+.promo-banner {
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  min-height: 160px;
+  transition: transform 0.2s;
+}
+.promo-banner:hover { transform: translateY(-2px); }
+.promo-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.promo-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+.promo-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 12px;
+}
+.promo-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: auto;
+}
+.promo-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+}
+.promo-deco-1 { width: 150px; height: 150px; right: -30px; top: -30px; }
+.promo-deco-2 { width: 80px; height: 80px; right: 60px; bottom: -30px; }

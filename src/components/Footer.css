@@ -1,0 +1,258 @@
+/* ============ PREMIUM FOOTER REDESIGN ============ */
+.footer {
+  background: linear-gradient(180deg, #063c31 0%, #03201a 100%);
+  margin-top: 40px;
+  border-top: 4px solid var(--primary-hover);
+  padding-top: 50px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.footer-inner {
+  width: 1200px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1.2fr 1.2fr;
+  gap: 32px;
+  padding-bottom: 40px;
+}
+@media (max-width: 992px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}
+@media (max-width: 576px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Logo */
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.footer-logo-fpt {
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 2px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.footer-logo-name {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+.footer-logo-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+.footer-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* Ministry glass badges */
+.footer-ministry {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ministry-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s, border-color 0.2s;
+}
+.ministry-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.ministry-icon {
+  font-size: 20px;
+}
+.ministry-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.ministry-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Column titles */
+.footer-col-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  position: relative;
+  padding-bottom: 6px;
+}
+.footer-col-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--primary-color);
+  border-radius: 2px;
+}
+
+/* Links */
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-links li a {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.15s;
+  display: inline-block;
+}
+.footer-links li a:hover {
+  color: #2dd4bf;
+  transform: translateX(3px);
+}
+
+/* Hotlines */
+.footer-hotlines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.footer-hotlines li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hotline-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.hotline-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--secondary-color);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.hotline-num:hover {
+  color: #fef08a;
+}
+.hotline-note {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 12px;
+}
+.footer-address {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+}
+
+/* Socials */
+.footer-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+  color: #fff;
+}
+.social-btn:hover {
+  transform: translateY(-1px);
+}
+.social-btn.fb {
+  background: #1877f2;
+}
+.social-btn.zalo {
+  background: #0068ff;
+}
+.social-btn.yt {
+  background: #ff0000;
+}
+
+/* App buttons */
+.footer-app-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.app-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.app-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+.app-icon {
+  font-size: 20px;
+}
+.app-btn > div {
+  display: flex;
+  flex-direction: column;
+}
+.app-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.app-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Bottom bar */
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 24px 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 16px;
+}

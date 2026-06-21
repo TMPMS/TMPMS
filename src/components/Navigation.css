@@ -1,0 +1,22 @@
+.main-nav {
+  background-color: white;
+  height: 48px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+}
+
+.nav-item {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text-main);
+  padding: 12px 0;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}

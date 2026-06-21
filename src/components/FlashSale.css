@@ -1,0 +1,315 @@
+/* Flash Sale Section */
+.flashsale-section {
+  margin-top: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* Tropical header */
+.flashsale-header {
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 40%, #2dd4bf 70%, #99f6e4 100%);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+.flashsale-bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.b1 { width: 120px; height: 120px; right: 5%; top: -40px; }
+.b2 { width: 60px; height: 60px; right: 20%; bottom: -20px; }
+.b3 { width: 40px; height: 40px; left: 40%; top: 0; }
+
+.flashsale-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+.flashsale-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.flashsale-fire { font-size: 36px; }
+.flashsale-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.fs-top, .fs-bot {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 2px;
+  text-shadow: 2px 3px 0 #0f766e;
+  font-style: italic;
+  font-family: 'Arial Black', Impact, sans-serif;
+}
+.fs-subtitle {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fef08a;
+  text-shadow: 2px 3px 0 #0f766e;
+  font-style: italic;
+  font-family: 'Arial Black', Impact, sans-serif;
+  letter-spacing: 1px;
+}
+.flashsale-see-rule {
+  background: rgba(255,255,255,0.9);
+  color: #1d2939;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.flashsale-see-rule:hover { background: #fff; }
+
+/* Content Panel */
+.flashsale-panel {
+  background: #fff;
+}
+
+/* Tabs */
+.flashsale-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+}
+.flashsale-tab {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 24px;
+  border: none;
+  background: #fafafa;
+  cursor: pointer;
+  border-right: 1px solid #f3f4f6;
+  position: relative;
+  transition: background 0.2s;
+}
+.flashsale-tab:hover { background: var(--primary-light); }
+.flashsale-tab.active {
+  background: var(--primary-light);
+}
+.flashsale-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary-color);
+}
+.tab-time {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d2939;
+}
+.flashsale-tab.active .tab-time { color: var(--primary-color); }
+.tab-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2939;
+}
+.flashsale-tab.active .tab-date { color: var(--primary-color); }
+.tab-status {
+  font-size: 12px;
+  color: #6b7280;
+}
+.flashsale-tab.active .tab-status { color: var(--primary-color); }
+
+/* Countdown */
+.flashsale-countdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px 4px;
+}
+.countdown-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2939;
+}
+.countdown-digits {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.digit-box {
+  background: var(--secondary-color);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: monospace;
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 38px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.digit-sep {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--secondary-color);
+  line-height: 1;
+}
+
+/* Product Swiper */
+.flashsale-products {
+  padding: 12px 16px 20px;
+  position: relative;
+}
+.fs-swiper { overflow: hidden; }
+
+/* Flash Sale Card */
+.fs-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.fs-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  border-color: var(--primary-color);
+}
+
+.fs-origin {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #374151;
+  font-weight: 500;
+  background: rgba(255,255,255,0.9);
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  z-index: 2;
+}
+.origin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fs-discount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--secondary-color);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  z-index: 2;
+}
+.fs-img-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 16px 8px 8px;
+  height: 130px;
+}
+.fs-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.fs-name {
+  font-size: 13px;
+  color: #1d2939;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 8px;
+  flex: 1;
+}
+.fs-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.fs-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+.fs-unit {
+  font-size: 12px;
+  color: #6b7280;
+}
+.fs-old-price {
+  font-size: 12px;
+  color: #9ca3af;
+  text-decoration: line-through;
+  margin-bottom: 8px;
+}
+.fs-hot-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+.fs-cta {
+  width: 100%;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 20px;
+  padding: 7px 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.fs-cta:hover { background: var(--primary-color); color: #fff; }
+
+/* Swiper nav buttons */
+.flashsale-products .swiper-button-next,
+.flashsale-products .swiper-button-prev {
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  color: var(--primary-color);
+  top: 38%;
+}
+.flashsale-products .swiper-button-next::after,
+.flashsale-products .swiper-button-prev::after {
+  font-size: 13px;
+  font-weight: 800;
+}
