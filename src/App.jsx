@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Header from './components/Header';
 import HeroBanner from './components/HeroBanner';
@@ -12,42 +12,215 @@ import HealthNews from './components/HealthNews';
 import StorePromoBar from './components/StorePromoBar';
 import FloatingActions from './components/FloatingActions';
 import Footer from './components/Footer';
+import DongYPromoStrip from './components/DongYPromoStrip';
+import DongYSection from './components/DongYSection';
 
-/* ============ MOCK DATA ============ */
-const BEST_SELLERS = [
-  { id: 101, name: 'Hoạt Huyết Dưỡng Não Traphaco (Hộp 5 vỉ x 20 viên)', image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200&h=200&fit=crop', price: 95000, oldPrice: 105000, unit: 'Hộp', discount: 10, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Hộp 100 viên' },
-  { id: 102, name: 'Trà túi lọc Cà Gai Leo thải độc gan (Hộp 20 túi)', image: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=200&h=200&fit=crop', price: 45000, unit: 'Hộp', packaging: 'Hộp 20 túi lọc' },
-  { id: 103, name: 'Kim Tiền Thảo trị sỏi thận OPC (Hộp 100 viên)', image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=200&h=200&fit=crop', price: 65000, oldPrice: 72000, unit: 'Hộp', discount: 9, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Hộp 100 viên' },
-  { id: 104, name: 'Cao Xương Khớp Bách Thảo Dược (Lọ 100g)', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=200&h=200&fit=crop', price: 180000, unit: 'Lọ', origin: 'Việt Nam', originColor: '#10b981', packaging: 'Lọ 100g' },
-  { id: 105, name: 'Mật ong hoa rừng nguyên chất Tây Nguyên (Chai 500ml)', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=200&h=200&fit=crop', price: 120000, unit: 'Chai', packaging: 'Chai 500ml' },
-  { id: 106, name: 'Bột gừng mật ong sấy thăng hoa (Hộp 15 gói)', image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=200&h=200&fit=crop', price: 75000, oldPrice: 85000, unit: 'Hộp', discount: 11, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Hộp 15 gói' },
-];
+// New Views
+import HistoryView from './components/HistoryView';
+import AdminView from './components/AdminView';
+import SuppliersView from './components/SuppliersView';
+import SelfDiagnosis from './components/SelfDiagnosis';
+import PatientPortal from './components/PatientPortal';
 
-const SUPPLEMENTS = [
-  { id: 201, name: 'Đông Trùng Hạ Thảo Militaris sấy (Lọ 10g)', image: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&h=200&fit=crop', price: 290000, oldPrice: 320000, unit: 'Lọ', discount: 9, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Lọ 10g' },
-  { id: 202, name: 'Cao Atiso Vân Anh Đà Lạt (Hộp 1kg)', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=200&h=200&fit=crop', price: 220000, oldPrice: 245000, unit: 'Hộp', discount: 10, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Hộp 1kg' },
-  { id: 203, name: 'Nhân sâm lát tẩm mật ong Hàn Quốc (Hộp 10 gói)', image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=200&h=200&fit=crop', price: 350000, oldPrice: 380000, unit: 'Hộp', discount: 8, origin: 'Hàn Quốc', originColor: '#1d4ed8', packaging: 'Hộp 200g' },
-  { id: 204, name: 'Tinh chất hồng sâm KGC Everytime (Hộp 30 gói)', image: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=200&h=200&fit=crop', price: 1450000, unit: 'Hộp', origin: 'Hàn Quốc', originColor: '#1d4ed8', packaging: 'Hộp 30 gói' },
-  { id: 205, name: 'Viên nghệ mật ong sữa chúa Tenchi (Hộp 250g)', image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=200&h=200&fit=crop', price: 160000, oldPrice: 180000, unit: 'Hộp', discount: 11, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Hộp 250g' },
-  { id: 206, name: 'Dầu tràm nguyên chất Cung Đình Huế (Chai 50ml)', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=200&h=200&fit=crop', price: 125000, oldPrice: 140000, unit: 'Chai', discount: 10, origin: 'Việt Nam', originColor: '#10b981', packaging: 'Chai 50ml' },
-];
+import { fetchMedicines } from './services/api';
+
+const mapProduct = (p) => ({
+  id: p.id,
+  name: p.name,
+  image: p.image_url,
+  price: parseFloat(p.price),
+  oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+  unit: p.unit || 'Hộp',
+  discount: p.discount,
+  origin: p.origin || 'Việt Nam',
+  packaging: p.packaging || 'Hộp',
+  description: p.description,
+  requiresPrescription: p.requires_prescription,
+});
+
+const categoryNames = {
+  1: 'Thực phẩm chức năng',
+  2: 'Dược mỹ phẩm',
+  3: 'Thuốc',
+  4: 'Chăm sóc cá nhân',
+  5: 'Thiết bị y tế',
+  6: 'Châm cứu',
+  7: 'Bệnh & Góc sức khỏe',
+  8: 'Hệ thống nhà thuốc'
+};
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'history' | 'admin' | 'suppliers'
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  
+  const [bestSellers, setBestSellers] = useState([]);
+  const [supplements, setSupplements] = useState([]);
+  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load Home Products (when no category selected)
+  useEffect(() => {
+    const loadHomeProducts = async () => {
+      try {
+        setLoading(true);
+        // Category 3: Thuốc (Best Sellers)
+        const bestData = await fetchMedicines(3);
+        // Category 1: Thực phẩm chức năng (Supplements)
+        const suppData = await fetchMedicines(1);
+
+        setBestSellers(bestData.map(mapProduct));
+        setSupplements(suppData.map(mapProduct));
+      } catch (err) {
+        console.error('Không thể tải sản phẩm trang chủ:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!selectedCategoryId) {
+      loadHomeProducts();
+    }
+  }, [selectedCategoryId]);
+
+  // Load Category Products
+  useEffect(() => {
+    const loadCategoryProducts = async () => {
+      if (!selectedCategoryId) return;
+      try {
+        setLoading(true);
+        const catData = await fetchMedicines(selectedCategoryId);
+        setCategoryProducts(catData.map(mapProduct));
+      } catch (err) {
+        console.error('Không thể tải sản phẩm danh mục:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategoryProducts();
+  }, [selectedCategoryId]);
+
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      setIsSearching(true);
+      setSelectedCategoryId(null); // Clear category filter when searching
+      setCurrentPage('home'); // Switch to home page when searching
+      try {
+        const data = await fetchMedicines(null, query);
+        setSearchResults(data.map(mapProduct));
+      } catch (err) {
+        console.error('Lỗi tìm kiếm:', err);
+      }
+    } else {
+      setIsSearching(false);
+      setSearchResults([]);
+    }
+  };
+
+  const handleNavigate = (page) => {
+    setCurrentPage(page);
+    setIsSearching(false);
+    setSearchQuery('');
+  };
+
+  const handleSelectCategory = (catId) => {
+    setSelectedCategoryId(catId);
+    setIsSearching(false);
+    setSearchQuery('');
+  };
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'history':
+        return <HistoryView />;
+      case 'admin':
+        return <AdminView />;
+      case 'suppliers':
+        return <SuppliersView />;
+      case 'diagnose':
+        return <SelfDiagnosis onBack={() => handleNavigate('home')} />;
+      case 'patient-portal':
+        return <PatientPortal onBack={() => handleNavigate('home')} />;
+      case 'home':
+      default:
+        if (isSearching) {
+          return (
+            <div style={{ padding: '24px 0' }}>
+              <ProductSection 
+                title={`Kết quả tìm kiếm cho: "${searchQuery}" (${searchResults.length} sản phẩm)`} 
+                products={searchResults} 
+              />
+            </div>
+          );
+        }
+        
+        if (selectedCategoryId) {
+          const categoryName = categoryNames[selectedCategoryId] || 'Sản phẩm';
+          return (
+            <div style={{ padding: '24px 0' }}>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', fontSize: '14px', color: '#64748b' }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setSelectedCategoryId(null); }} style={{ color: '#0d9488', textDecoration: 'none', fontWeight: 'bold' }}>Trang chủ</a>
+                <span>&gt;</span>
+                <span>{categoryName}</span>
+              </div>
+              
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '16px', color: '#64748b' }}>
+                  Đang tải danh mục {categoryName}...
+                </div>
+              ) : categoryProducts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 0', fontSize: '16px', color: '#64748b', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  Hiện tại chưa có sản phẩm nào thuộc danh mục này.
+                </div>
+              ) : (
+                <ProductSection title={categoryName} products={categoryProducts} />
+              )}
+            </div>
+          );
+        }
+
+        return (
+          <>
+            <HeroBanner />
+            <DongYPromoStrip />
+            <QuickLinks onNavigate={handleNavigate} />
+            <FlashSale />
+            <PromoBanners />
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '18px', color: 'var(--text-color)' }}>
+                Đang tải dữ liệu sản phẩm...
+              </div>
+            ) : (
+              <>
+                <ProductSection title="🌿 Thuốc Đông Y Bán Chạy" products={bestSellers} />
+                <FeaturedCategories />
+                <DongYSection />
+                <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} />
+              </>
+            )}
+            <Brands />
+            <HealthNews />
+            <StorePromoBar />
+          </>
+        );
+    }
+  };
+
   return (
     <div style={{ background: 'var(--bg-color)', minHeight: '100vh' }}>
-      <Header />
+      <Header 
+        onSearch={handleSearch} 
+        onNavigate={handleNavigate}
+        onSelectCategory={handleSelectCategory}
+      />
 
       <main style={{ width: '1200px', maxWidth: '100%', margin: '0 auto', padding: '0 0 32px' }}>
-        <HeroBanner />
-        <QuickLinks />
-        <FlashSale />
-        <PromoBanners />
-        <ProductSection title="Thuốc Đông Y bán chạy" products={BEST_SELLERS} />
-        <FeaturedCategories />
-        <ProductSection title="Thảo dược & Cao dược liệu" products={SUPPLEMENTS} />
-        <Brands />
-        <HealthNews />
-        <StorePromoBar />
+        {renderContent()}
       </main>
 
       <FloatingActions />
