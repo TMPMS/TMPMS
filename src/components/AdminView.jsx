@@ -527,45 +527,48 @@ const AdminView = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o) => (
-                        <tr key={o.id}>
-                          <td className="col-id">#{o.id}</td>
-                          <td>
-                            <strong>{o.username}</strong>
-                            <div className="sub-text">{o.email}</div>
-                          </td>
-                          <td>{formatDate(o.created_at)}</td>
-                          <td>
-                            <div className="order-items-list">
-                              {o.items && o.items.map(item => (
-                                <div key={item.id} className="item-line">
-                                  • {item.medicine_name} (x{item.quantity})
-                                </div>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="col-total">{formatPrice(o.total_amount)}</td>
-                          <td>
-                            <select 
-                              className={`status-select ${o.status.toLowerCase()}`}
-                              value={o.status}
-                              onChange={(e) => handleStatusChange(o.id, e.target.value)}
-                            >
-                              <option value="Pending">Chờ duyệt</option>
-                              <option value="Shipping">Đang giao</option>
-                              <option value="Delivered">Đã giao</option>
-                            </select>
-                          </td>
-                          <td>
-                            <button
-                              className={`payment-toggle-btn ${o.payment_status.toLowerCase()}`}
-                              onClick={() => handlePaymentStatusToggle(o, o.payment_status)}
-                            >
-                              {o.payment_status === 'Paid' ? 'Đã thu tiền' : 'Chưa thu tiền'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {orders.map((o) => {
+                        const paymentStatus = o.payment_status || o.paymentStatus || 'Unpaid';
+                        return (
+                          <tr key={o.id}>
+                            <td className="col-id">#{o.id}</td>
+                            <td>
+                              <strong>{o.username}</strong>
+                              <div className="sub-text">{o.email}</div>
+                            </td>
+                            <td>{formatDate(o.created_at || o.createdAt)}</td>
+                            <td>
+                              <div className="order-items-list">
+                                {o.items && o.items.map(item => (
+                                  <div key={item.id} className="item-line">
+                                    • {item.medicine_name || item.medicineName} (x{item.quantity})
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="col-total">{formatPrice(o.total_amount || o.totalAmount)}</td>
+                            <td>
+                              <select 
+                                className={`status-select ${o.status.toLowerCase()}`}
+                                value={o.status}
+                                onChange={(e) => handleStatusChange(o.id, e.target.value)}
+                              >
+                                <option value="Pending">Chờ duyệt</option>
+                                <option value="Shipping">Đang giao</option>
+                                <option value="Delivered">Đã giao</option>
+                              </select>
+                            </td>
+                            <td>
+                              <button
+                                className={`payment-toggle-btn ${paymentStatus.toLowerCase()}`}
+                                onClick={() => handlePaymentStatusToggle(o, paymentStatus)}
+                              >
+                                {paymentStatus === 'Paid' ? 'Đã thu tiền' : 'Chưa thu tiền'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

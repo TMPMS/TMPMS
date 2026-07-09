@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BusinessObjects;
+using TMPMS.Data;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace backend.Controllers
+namespace TMPMS.Controllers
 {
     [ApiController]
     [Route("medicines")]
@@ -39,7 +43,7 @@ namespace backend.Controllers
                     .Replace("*", "")
                     .Trim();
                 
-                query = query.Where(m => EF.Functions.ILike(m.Name, $"%{searchTerm}%"));
+                query = query.Where(m => m.Name.Contains(searchTerm));
             }
 
             var medicines = await query

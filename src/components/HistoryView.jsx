@@ -97,11 +97,11 @@ const HistoryView = () => {
               <div className="order-card-header">
                 <div className="order-meta-info">
                   <span className="order-id-tag">Mã đơn: #{order.id}</span>
-                  <span className="order-date">{formatDate(order.created_at)}</span>
+                  <span className="order-date">{formatDate(order.created_at || order.createdAt)}</span>
                 </div>
                 <div className="order-badges">
                   {getStatusBadge(order.status)}
-                  {getPaymentStatusBadge(order.payment_status)}
+                  {getPaymentStatusBadge(order.payment_status || order.paymentStatus)}
                 </div>
               </div>
 
@@ -110,12 +110,12 @@ const HistoryView = () => {
                 {order.items && order.items.map((item) => (
                   <div key={item.id} className="order-item-row">
                     <img 
-                      src={item.image_url || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop'} 
-                      alt={item.medicine_name} 
+                      src={item.image_url || item.imageUrl || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop'} 
+                      alt={item.medicine_name || item.medicineName} 
                       className="order-item-pic" 
                     />
                     <div className="order-item-details">
-                      <span className="order-item-name">{item.medicine_name}</span>
+                      <span className="order-item-name">{item.medicine_name || item.medicineName}</span>
                       <span className="order-item-qty-price">
                         Số lượng: <strong>{item.quantity}</strong> × {formatPrice(item.price)}
                       </span>
@@ -130,11 +130,11 @@ const HistoryView = () => {
               {/* Order Summary & Footer */}
               <div className="order-card-footer">
                 <div className="order-shipping-address">
-                  <strong>Địa chỉ giao hàng:</strong> {order.shipping_address}
+                  <strong>Địa chỉ giao hàng:</strong> {order.shipping_address || order.shippingAddress}
                 </div>
                 <div className="order-total-block">
                   <span className="total-label">Tổng tiền đơn hàng:</span>
-                  <span className="total-val">{formatPrice(order.total_amount)}</span>
+                  <span className="total-val">{formatPrice(order.total_amount || order.totalAmount)}</span>
                 </div>
               </div>
             </div>

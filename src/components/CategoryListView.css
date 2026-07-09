@@ -1,0 +1,381 @@
+.category-list-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+/* Breadcrumbs */
+.cl-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.cl-breadcrumb-home {
+  color: #0d9488;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.cl-breadcrumb-home:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+.cl-breadcrumb-separator {
+  color: #cbd5e1;
+}
+
+.cl-breadcrumb-current {
+  font-weight: 400;
+}
+
+/* Header */
+.cl-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 16px;
+}
+
+.cl-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cl-count {
+  font-size: 15px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Main Layout */
+.cl-main-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Sidebar Filters */
+.cl-sidebar {
+  position: sticky;
+  top: 90px;
+}
+
+.cl-filter-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.cl-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cl-filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cl-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.cl-reset-btn:hover {
+  background: #f1f5f9;
+  color: #ef4444;
+}
+
+.cl-filter-section {
+  margin-bottom: 24px;
+}
+
+.cl-filter-section:last-child {
+  margin-bottom: 0;
+}
+
+.cl-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cl-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cl-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.cl-radio-label:hover {
+  background: #f8fafc;
+}
+
+.cl-radio-label.active {
+  background: #f0fdfa;
+  border-color: #ccfbf1;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.cl-radio-label input {
+  margin: 0;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
+.badge-rx {
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+/* Content Area */
+.cl-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Toolbar */
+.cl-toolbar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.cl-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cl-sort-icon {
+  color: #64748b;
+}
+
+.cl-sort-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cl-sort-options {
+  display: flex;
+  gap: 8px;
+}
+
+.cl-sort-btn {
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-sort-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.cl-sort-btn.active {
+  background: #0d9488;
+  color: #ffffff;
+  border-color: #0d9488;
+}
+
+/* Product Grid */
+.cl-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Reuse original styling for card but adapt to grid */
+.cl-grid .pc-card {
+  width: 100% !important;
+  margin: 0;
+}
+
+/* Load More */
+.cl-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.cl-load-more-btn {
+  background: #ffffff;
+  border: 2px solid #0d9488;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cl-load-more-btn:hover {
+  background: #0d9488;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.cl-load-more-btn:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.cl-empty-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.cl-empty-icon {
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.cl-empty-state h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.cl-empty-state p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  max-width: 320px;
+}
+
+.cl-reset-btn-large {
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-reset-btn-large:hover {
+  background: #0f766e;
+  box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .cl-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .cl-main-layout {
+    grid-template-columns: 1fr;
+  }
+  .cl-sidebar {
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .cl-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .cl-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .cl-title {
+    font-size: 22px;
+  }
+  .cl-toolbar {
+    padding: 10px;
+  }
+  .cl-sort-label {
+    display: none;
+  }
+  .cl-sort-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}

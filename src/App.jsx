@@ -21,21 +21,27 @@ import AdminView from './components/AdminView';
 import SuppliersView from './components/SuppliersView';
 import SelfDiagnosis from './components/SelfDiagnosis';
 import PatientPortal from './components/PatientPortal';
+import ProductDetailView from './components/ProductDetailView';
+import CategoryListView from './components/CategoryListView';
+import StoreFinderView from './components/StoreFinderView';
+import VaccineBookingView from './components/VaccineBookingView';
+import HealthReels from './components/HealthReels';
+import AIChatbot from './components/AIChatbot';
 
 import { fetchMedicines } from './services/api';
 
 const mapProduct = (p) => ({
   id: p.id,
   name: p.name,
-  image: p.image_url,
+  image: p.image_url || p.imageUrl,
   price: parseFloat(p.price),
-  oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+  oldPrice: p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null),
   unit: p.unit || 'Hộp',
   discount: p.discount,
   origin: p.origin || 'Việt Nam',
   packaging: p.packaging || 'Hộp',
   description: p.description,
-  requiresPrescription: p.requires_prescription,
+  requiresPrescription: p.requires_prescription !== undefined ? p.requires_prescription : p.requiresPrescription,
 });
 
 const categoryNames = {
@@ -50,11 +56,17 @@ const categoryNames = {
 };
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'history' | 'admin' | 'suppliers'
+  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'history' | 'admin' | 'suppliers' | 'detail'
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   
   const [bestSellers, setBestSellers] = useState([]);
   const [supplements, setSupplements] = useState([]);
+
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    setCurrentPage('detail');
+  };
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   
@@ -142,10 +154,18 @@ function App() {
         return <AdminView />;
       case 'suppliers':
         return <SuppliersView />;
+      case 'store-finder':
+        return <StoreFinderView onBack={() => handleNavigate('home')} />;
+      case 'vaccine':
+        return <VaccineBookingView onBack={() => handleNavigate('home')} />;
+      case 'reels':
+        return <HealthReels onBack={() => handleNavigate('home')} />;
       case 'diagnose':
         return <SelfDiagnosis onBack={() => handleNavigate('home')} />;
       case 'patient-portal':
         return <PatientPortal onBack={() => handleNavigate('home')} />;
+      case 'detail':
+        return <ProductDetailView product={selectedProduct} onBack={() => handleNavigate('home')} />;
       case 'home':
       default:
         if (isSearching) {
@@ -154,6 +174,7 @@ function App() {
               <ProductSection 
                 title={`Kết quả tìm kiếm cho: "${searchQuery}" (${searchResults.length} sản phẩm)`} 
                 products={searchResults} 
+                onProductClick={handleSelectProduct}
               />
             </div>
           );
@@ -162,25 +183,13 @@ function App() {
         if (selectedCategoryId) {
           const categoryName = categoryNames[selectedCategoryId] || 'Sản phẩm';
           return (
-            <div style={{ padding: '24px 0' }}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', fontSize: '14px', color: '#64748b' }}>
-                <a href="#" onClick={(e) => { e.preventDefault(); setSelectedCategoryId(null); }} style={{ color: '#0d9488', textDecoration: 'none', fontWeight: 'bold' }}>Trang chủ</a>
-                <span>&gt;</span>
-                <span>{categoryName}</span>
-              </div>
-              
-              {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '16px', color: '#64748b' }}>
-                  Đang tải danh mục {categoryName}...
-                </div>
-              ) : categoryProducts.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', fontSize: '16px', color: '#64748b', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  Hiện tại chưa có sản phẩm nào thuộc danh mục này.
-                </div>
-              ) : (
-                <ProductSection title={categoryName} products={categoryProducts} />
-              )}
-            </div>
+            <CategoryListView
+              categoryId={selectedCategoryId}
+              categoryName={categoryName}
+              products={categoryProducts}
+              onProductClick={handleSelectProduct}
+              onBackToHome={() => setSelectedCategoryId(null)}
+            />
           );
         }
 
@@ -197,10 +206,10 @@ function App() {
               </div>
             ) : (
               <>
-                <ProductSection title="🌿 Thuốc Đông Y Bán Chạy" products={bestSellers} />
+                <ProductSection title="🌿 Thuốc Đông Y Bán Chạy" products={bestSellers} onProductClick={handleSelectProduct} />
                 <FeaturedCategories />
                 <DongYSection />
-                <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} />
+                <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} onProductClick={handleSelectProduct} />
               </>
             )}
             <Brands />
@@ -217,6 +226,7 @@ function App() {
         onSearch={handleSearch} 
         onNavigate={handleNavigate}
         onSelectCategory={handleSelectCategory}
+        onSelectProduct={handleSelectProduct}
       />
 
       <main style={{ width: '1200px', maxWidth: '100%', margin: '0 auto', padding: '0 0 32px' }}>
@@ -224,6 +234,7 @@ function App() {
       </main>
 
       <FloatingActions />
+      <AIChatbot />
       <Footer />
     </div>
   );

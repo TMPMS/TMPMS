@@ -1,0 +1,541 @@
+.vc-booking-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+/* Breadcrumbs */
+.vc-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.vc-bc-home {
+  color: #0d9488;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.vc-bc-home:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+.vc-bc-sep {
+  color: #cbd5e1;
+}
+
+.vc-bc-current {
+  color: #64748b;
+}
+
+/* Header */
+.vc-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 20px;
+}
+
+.vc-header-icon {
+  color: #0d9488;
+  background: #f0fdfa;
+  padding: 12px;
+  box-sizing: content-box;
+  border-radius: 14px;
+}
+
+.vc-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.vc-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Steps Indicator */
+.vc-steps-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding: 0 20px;
+}
+
+.step-node {
+  font-size: 14px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.step-node.active {
+  background: #0d9488;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 16px;
+}
+
+/* Card Container */
+.vc-content-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.step-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 24px 0;
+  border-left: 4px solid #0d9488;
+  padding-left: 12px;
+}
+
+/* Vaccine packages grid */
+.vaccine-packages-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.vaccine-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.vaccine-card:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.vaccine-card.selected {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+
+.vc-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.vc-card-header h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.vaccine-card.selected .vc-card-header h4 {
+  color: #0d9488;
+}
+
+.age-badge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.vaccine-card.selected .age-badge {
+  background: #ccfbf1;
+  color: #0d9488;
+}
+
+.vaccine-card .desc {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.vc-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.vaccine-card.selected .vc-card-footer {
+  border-color: #ccfbf1;
+}
+
+.vaccine-card .price {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0d9488;
+}
+
+.select-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.select-checkbox.checked {
+  border-color: #0d9488;
+  background-color: #0d9488;
+}
+
+.select-checkbox.checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Patient info form */
+.vc-patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-group input,
+.input-group select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+  background: #f8fafc;
+  transition: all 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #0d9488;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* Step 3 layout */
+.step3-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 28px;
+}
+
+.selection-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary-col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.summary-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #475569;
+}
+
+.sum-row strong {
+  color: #0f172a;
+}
+
+.sum-vax-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.sum-vax-item {
+  font-weight: 600;
+  color: #334155;
+  font-size: 13px;
+}
+
+.sum-row.border-top {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.sum-row .total-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0d9488;
+}
+
+/* Footer Actions buttons */
+.vc-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 24px;
+}
+
+.vc-btn-outline {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-btn-outline:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.vc-btn-primary {
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.vc-btn-primary:hover {
+  background: #0f766e;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
+  transform: translateY(-1px);
+}
+
+.vc-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Success View */
+.vc-step-view.success {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.success-icon {
+  color: #10b981;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.2));
+}
+
+.vc-step-view.success h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.vc-step-view.success .subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 6px 0;
+}
+
+.booking-code-box {
+  background: #f0fdfa;
+  border: 1px dashed #0d9488;
+  color: #0d9488;
+  font-size: 24px;
+  font-weight: 900;
+  padding: 10px 24px;
+  border-radius: 12px;
+  letter-spacing: 0.1em;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.05);
+}
+
+.booking-summary-success {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+  margin-bottom: 24px;
+}
+
+.booking-summary-success .detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.booking-summary-success .detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.vax-sublist {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.success-instructions {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #b45309;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 13.5px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 520px;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.vc-btn-primary.back-home {
+  max-width: 240px;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: vcFadeIn 0.35s ease-out forwards;
+}
+
+@keyframes vcFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .vaccine-packages-grid {
+    grid-template-columns: 1fr;
+  }
+  .step3-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .vc-steps-indicator {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .step-line {
+    display: none;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .vc-content-card {
+    padding: 16px;
+  }
+}

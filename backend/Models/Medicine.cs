@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,16 +19,6 @@ namespace BusinessObjects
         public string Description { get; set; }
 
         public decimal Price { get; set; }
-
-        public decimal? OldPrice { get; set; }
-
-        public string? Unit { get; set; }
-
-        public int? Discount { get; set; }
-
-        public string? Origin { get; set; }
-
-        public string? Packaging { get; set; }
 
         public int StockQuantity { get; set; }
 

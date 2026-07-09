@@ -1,0 +1,510 @@
+.pd-container {
+  padding: 24px 0;
+  max-width: 100%;
+}
+
+.pd-breadcrumbs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.pd-breadcrumbs a {
+  color: #0d9488;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pd-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.pd-breadcrumbs .current {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Product Card container */
+.pd-card {
+  display: flex;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 32px;
+  gap: 40px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.pd-left {
+  flex: 1;
+  max-width: 450px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pd-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f8fafc;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pd-image-wrapper img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.pd-image-wrapper img:hover {
+  transform: scale(1.05);
+}
+
+.pd-right {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+}
+
+.prescription-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.pd-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.pd-sku {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.pd-price-card {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.pd-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pd-price {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0d9488;
+}
+
+.pd-unit {
+  font-size: 15px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pd-old-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.pd-old-price {
+  font-size: 15px;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.pd-discount {
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pd-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 24px;
+}
+
+.pd-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.meta-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pd-action-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  height: 48px;
+  overflow: hidden;
+}
+
+.quantity-selector button {
+  width: 40px;
+  height: 100%;
+  background: #f1f5f9;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.quantity-selector button:hover {
+  background: #e2e8f0;
+}
+
+.quantity-selector input {
+  width: 50px;
+  height: 100%;
+  border: none;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.quantity-selector input::-webkit-outer-spin-button,
+.quantity-selector input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.add-to-cart-btn {
+  flex-1: 1;
+  height: 48px;
+  background: #0d9488;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  padding: 0 32px;
+}
+
+.add-to-cart-btn:hover {
+  background: #0f766e;
+}
+
+.add-to-cart-btn:active {
+  transform: scale(0.98);
+}
+
+/* Sections - Description & Reviews */
+.pd-section {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 32px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.mt-6 {
+  margin-top: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+  border-left: 4px solid #0d9488;
+  padding-left: 12px;
+}
+
+.pd-description {
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* Reviews styles */
+.reviews-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: #f8fafc;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.summary-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+  padding-right: 32px;
+  min-width: 140px;
+}
+
+.avg-rating {
+  font-size: 40px;
+  font-weight: 800;
+  color: #0d9488;
+  line-height: 1;
+}
+
+.avg-stars {
+  display: flex;
+  gap: 2px;
+  margin: 8px 0;
+}
+
+.star-icon {
+  color: #cbd5e1;
+  font-size: 16px;
+}
+
+.star-icon.filled {
+  color: #fbbf24;
+}
+
+.total-reviews {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.summary-right {
+  flex: 1;
+}
+
+.eligibility-banner {
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.eligibility-banner.info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+.eligibility-banner.warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.eligibility-banner.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+/* Review Form styles */
+.review-form {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.review-form h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.rating-select {
+  display: flex;
+  gap: 6px;
+}
+
+.star-select {
+  font-size: 28px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: color 0.1s, transform 0.1s;
+}
+
+.star-select.active {
+  color: #fbbf24;
+}
+
+.star-select:hover {
+  transform: scale(1.15);
+}
+
+.review-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.review-form textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
+.submit-review-btn {
+  background: #0d9488;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit-review-btn:hover {
+  background: #0f766e;
+}
+
+.submit-review-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.error-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.success-alert {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Reviews List styles */
+.reviews-list h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.review-item {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 0;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.reviewer-name {
+  font-weight: 600;
+  color: #334155;
+  font-size: 14px;
+}
+
+.review-date {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.review-rating {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.review-comment {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.no-reviews, .reviews-loading {
+  text-align: center;
+  font-size: 14px;
+  color: #94a3b8;
+  padding: 24px 0;
+}

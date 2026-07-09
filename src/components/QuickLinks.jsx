@@ -6,9 +6,9 @@ const QuickLinks = ({ onNavigate }) => {
     { icon: '💊', label: 'Cần mua thuốc', color: '#e8f0fe', action: () => onNavigate && onNavigate('home') },
     { icon: '👨‍⚕️', label: 'Tự Chẩn Đoán Đông Y', color: '#e8f5e9', action: () => onNavigate && onNavigate('diagnose') },
     { icon: '📋', label: 'Đơn của tôi', color: '#fff3e0', action: () => onNavigate && onNavigate('history') },
-    { icon: '🏪', label: 'Tìm nhà thuốc', color: '#fce4ec' },
-    { icon: '🪡', label: 'Châm cứu', color: '#e0f2f1' },
-    { icon: '🔍', label: 'Tra thuốc chính hãng', color: '#e0f7fa' },
+    { icon: '🏪', label: 'Tìm nhà thuốc', color: '#fce4ec', action: () => onNavigate && onNavigate('store-finder') },
+    { icon: '💉', label: 'Tiêm chủng', color: '#e0f2f1', action: () => onNavigate && onNavigate('vaccine') },
+    { icon: '🎥', label: 'Video sức khỏe', color: '#e0f7fa', action: () => onNavigate && onNavigate('reels') },
   ];
 
   return (
