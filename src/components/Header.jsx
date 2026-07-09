@@ -22,7 +22,7 @@ const categories = [
 
 const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
-  const { user, login, register, logout } = useAuth();
+  const { user, login, loginByOtp, register, logout } = useAuth();
   
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -215,8 +215,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
 
     try {
       setAuthError('');
-      // Authenticate secretly using default user account to satisfy backend auth token
-      const loggedInUser = await login('user', 'User@123');
+      const loggedInUser = await loginByOtp(phoneForOtp, otpCode);
       setIsAuthModalOpen(false);
       if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
         onNavigate('admin');

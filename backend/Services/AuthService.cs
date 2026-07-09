@@ -1,5 +1,6 @@
 using BusinessObjects;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Repositories.Interfaces;
 using Services.Interfaces;
@@ -74,6 +75,10 @@ namespace TMPMS.Services
             {
                 user = await _userManager.FindByNameAsync(dto.Email);
             }
+            if (user == null)
+            {
+                user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.Email);
+            }
             if (user == null || !user.IsActive)
                 return null;
 
@@ -88,6 +93,38 @@ namespace TMPMS.Services
             }
 
             await _userManager.ResetAccessFailedCountAsync(user);
+
+            return await BuildAuthResponse(user, ipAddress, includeRefreshToken: true);
+        }
+
+        // ---------- OTP LOGIN ----------
+        public async Task<AuthResponseDTO> OtpLogin(OtpLoginRequestDTO dto, string ipAddress)
+        {
+            if (dto.Code != "123456")
+                throw new ArgumentException("Mã OTP không chính xác. Vui lòng dùng mã 123456.");
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.Phone);
+            if (user == null)
+            {
+                // Auto register guest user
+                user = new User
+                {
+                    UserName = "user_" + dto.Phone,
+                    Email = dto.Phone + "@tmpms.com",
+                    PhoneNumber = dto.Phone,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                var createResult = await _userManager.CreateAsync(user, "User@123");
+                if (!createResult.Succeeded)
+                {
+                    throw new InvalidOperationException("Không thể tự động đăng ký tài khoản cho số điện thoại này: " + string.Join("; ", createResult.Errors.Select(e => e.Description)));
+                }
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+
+            if (!user.IsActive)
+                throw new InvalidOperationException("Tài khoản đã bị vô hiệu hóa.");
 
             return await BuildAuthResponse(user, ipAddress, includeRefreshToken: true);
         }
