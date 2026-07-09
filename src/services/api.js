@@ -69,6 +69,31 @@ export async function loginUser(username, password) {
   };
 }
 
+export async function loginUserByOtp(phone, code) {
+  const res = await fetch(`${API_URL}/api/auth/otp-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Đăng nhập OTP thất bại');
+  }
+  const data = await res.json();
+  let role_id = 2; // Default to Customer/User
+  if (data.roles.includes("Admin")) role_id = 1;
+  else if (data.roles.includes("Pharmacy")) role_id = 3;
+
+  return {
+    id: data.userId,
+    username: data.userName,
+    email: data.email,
+    role_id: role_id,
+    token: data.accessToken,
+    refreshToken: data.refreshToken
+  };
+}
+
 export async function registerUser(username, email, password, phone) {
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',

@@ -1,4 +1,4 @@
-﻿namespace TMPMS.DTOs
+namespace TMPMS.DTOs
 {
     public class RegisterRequestDTO
     {
@@ -15,6 +15,12 @@
     {
         public string Email { get; set; }
         public string Password { get; set; }
+    }
+
+    public class OtpLoginRequestDTO
+    {
+        public string Phone { get; set; }
+        public string Code { get; set; }
     }
 
     public class RefreshTokenRequestDTO

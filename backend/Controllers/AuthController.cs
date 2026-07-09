@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System.Security.Claims;
@@ -37,6 +37,19 @@ namespace TMPMS.Controllers
                 return Ok(result);
             }
             catch (InvalidOperationException ex) { return StatusCode(423, ex.Message); } // Locked
+            catch (Exception ex) { return BadRequest(ex.Message); }
+        }
+
+        [HttpPost("otp-login")]
+        public async Task<ActionResult> OtpLogin([FromBody] OtpLoginRequestDTO dto)
+        {
+            try
+            {
+                var result = await _authService.OtpLogin(dto, GetIp());
+                if (result == null) return Unauthorized("Đăng nhập thất bại.");
+                return Ok(result);
+            }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
             catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
