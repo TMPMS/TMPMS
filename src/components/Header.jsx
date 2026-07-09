@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import CartDrawer from './CartDrawer';
 import UploadPrescriptionModal from './UploadPrescriptionModal';
 import { fetchMedicines } from '../services/api';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { auth, isFirebaseConfigured } from '../services/firebase';
 import './Header.css';
 
 const categories = [
@@ -194,39 +196,91 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setIsAuthModalOpen(true);
   };
 
-  // OTP Login mock flow
+  // OTP Login flow (support Firebase Phone Auth & Fallbacks)
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phoneForOtp.trim()) {
       setAuthError('Vui lòng nhập số điện thoại!');
       return;
     }
-    try {
-      setAuthError('');
-      await sendOtp(phoneForOtp);
-      setOtpSent(true);
-      setOtpSuccessMsg('Yêu cầu gửi mã OTP thành công! Mã OTP mặc định là 123456 (hoặc mã SMS thực tế nếu đã cấu hình Twilio)');
-    } catch (err) {
-      setAuthError('Không thể gửi mã OTP: ' + err.message);
+    
+    setAuthError('');
+    
+    // Nếu có cấu hình Firebase thực tế
+    if (isFirebaseConfigured) {
+      try {
+        let formattedPhone = phoneForOtp.trim();
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '+84' + formattedPhone.substring(1);
+        }
+        
+        // Khởi tạo Recaptcha ẩn
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {
+              console.log('Recaptcha verified');
+            }
+          });
+        }
+        
+        const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+        window.confirmationResult = confirmationResult;
+        
+        setOtpSent(true);
+        setOtpSuccessMsg('Mã OTP của Google Firebase đã được gửi tới số điện thoại của bạn!');
+      } catch (err) {
+        setAuthError('Lỗi Firebase: ' + err.message);
+      }
+    } else {
+      // Fallback sang Twilio / Mock SMS
+      try {
+        await sendOtp(phoneForOtp);
+        setOtpSent(true);
+        setOtpSuccessMsg('Yêu cầu gửi mã OTP thành công! Vui lòng nhập mã OTP nhận được trong tin nhắn điện thoại.');
+      } catch (err) {
+        console.warn('Twilio SMS delivery failed, falling back to mock OTP:', err);
+        setOtpSent(true);
+        setOtpSuccessMsg('Tài khoản Twilio Trial chưa xác minh số điện thoại này. Hệ thống tự động chuyển sang chế độ thử nghiệm (sử dụng mã OTP mặc định: 123456).');
+      }
     }
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (otpCode !== '123456') {
-      setAuthError('Mã OTP không chính xác. Vui lòng nhập 123456 để thử nghiệm.');
-      return;
-    }
-
-    try {
-      setAuthError('');
-      const loggedInUser = await loginByOtp(phoneForOtp, otpCode);
-      setIsAuthModalOpen(false);
-      if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
-        onNavigate('admin');
+    
+    if (isFirebaseConfigured && window.confirmationResult) {
+      try {
+        setAuthError('');
+        const result = await window.confirmationResult.confirm(otpCode);
+        const firebaseUser = result.user;
+        
+        // Gửi thông tin SĐT đã xác thực về Backend của bạn để lưu phiên/đăng ký
+        const loggedInUser = await loginByOtp(firebaseUser.phoneNumber, '123456');
+        setIsAuthModalOpen(false);
+        if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
+          onNavigate('admin');
+        }
+      } catch (err) {
+        setAuthError('Lỗi xác thực OTP Firebase: ' + err.message);
       }
-    } catch (err) {
-      setAuthError('Lỗi đăng nhập bằng OTP: ' + err.message);
+    } else {
+      // Fallback
+      if (otpCode !== '123456') {
+        setAuthError('Mã OTP không chính xác. Vui lòng nhập 123456 để thử nghiệm.');
+        return;
+      }
+
+      try {
+        setAuthError('');
+        const loggedInUser = await loginByOtp(phoneForOtp, otpCode);
+        setIsAuthModalOpen(false);
+        if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
+          onNavigate('admin');
+        }
+      } catch (err) {
+        setAuthError('Lỗi đăng nhập bằng OTP: ' + err.message);
+      }
     }
   };
 
@@ -568,6 +622,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                     <span className="otp-resend-tip" onClick={() => setOtpSent(false)}>← Đổi số điện thoại khác</span>
                   </div>
                 )}
+                <div id="recaptcha-container"></div>
               </form>
             ) : (
               /* Password Login & Register Form */

@@ -12,6 +12,7 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "firebase": "^12.16.0",
     "lucide-react": "^1.16.0",
     "pg": "^8.22.0",
     "react": "^19.2.6",
