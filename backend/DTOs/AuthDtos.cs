@@ -23,6 +23,11 @@ namespace TMPMS.DTOs
         public string Code { get; set; }
     }
 
+    public class SendOtpRequestDTO
+    {
+        public string Phone { get; set; }
+    }
+
     public class RefreshTokenRequestDTO
     {
         public string RefreshToken { get; set; }

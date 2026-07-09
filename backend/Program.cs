@@ -45,6 +45,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<ISmsService, TwilioSmsService>();
 
 builder.Services.AddDbContext<TMPMSDbContext>(options =>
 {
