@@ -61,6 +61,25 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
 
+  // Dọn dẹp recaptcha và reset các trường nhập liệu khi đóng modal đăng nhập
+  useEffect(() => {
+    if (!isAuthModalOpen) {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.warn('Error clearing recaptcha verifier:', e);
+        }
+        window.recaptchaVerifier = null;
+      }
+      setOtpSent(false);
+      setOtpCode('');
+      setPhoneForOtp('');
+      setOtpSuccessMsg('');
+      setAuthError('');
+    }
+  }, [isAuthModalOpen]);
+
   const loadSuggestions = async () => {
     try {
       const data = await fetchMedicines();
@@ -214,15 +233,21 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
           formattedPhone = '+84' + formattedPhone.substring(1);
         }
         
-        // Khởi tạo Recaptcha ẩn
-        if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {
-              console.log('Recaptcha verified');
-            }
-          });
+        // Khởi tạo Recaptcha ẩn (luôn tạo mới để tránh lỗi DOM element bị xóa)
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (e) {
+            console.warn('Error clearing recaptcha verifier:', e);
+          }
+          window.recaptchaVerifier = null;
         }
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: () => {
+            console.log('Recaptcha verified');
+          }
+        });
         
         const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
         window.confirmationResult = confirmationResult;
@@ -319,11 +344,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         <div className="main-header-inner">
           {/* Logo */}
           <a href="/" className="logo" onClick={handleHomeClick}>
-            <div className="logo-badge">TC</div>
-            <div className="logo-text">
-              <span className="logo-name">TCMPAM</span>
-              <span className="logo-sub">Dược Phẩm Đông Y</span>
-            </div>
+            <img src="/logo.png" alt="TCMPAM Logo" className="logo-img" />
           </a>
 
           {/* Search */}
