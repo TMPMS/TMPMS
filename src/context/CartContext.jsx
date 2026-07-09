@@ -34,7 +34,7 @@ export const CartProvider = ({ children }) => {
             id: item.medicine.id,
             name: item.medicine.name,
             price: item.medicine.price,
-            imageUrl: item.medicine.image_url,
+            imageUrl: item.medicine.image_url || item.medicine.imageUrl,
             quantity: item.quantity,
           }));
           setCartItems(mappedItems);
@@ -76,7 +76,7 @@ export const CartProvider = ({ children }) => {
           id: item.medicine.id,
           name: item.medicine.name,
           price: item.medicine.price,
-          imageUrl: item.medicine.image_url,
+          imageUrl: item.medicine.image_url || item.medicine.imageUrl,
           quantity: item.quantity,
         }));
         setCartItems(mappedItems);

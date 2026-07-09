@@ -1,96 +1,101 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BusinessObjects;
+using Services.Interfaces;
+using System.Security.Claims;
+using TMPMS.DTOs;
 
-namespace backend.Controllers
+namespace TMPMS.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
-    [Route("rpc")]
     public class AuthController : ControllerBase
     {
-        private readonly TMPMSDbContext _context;
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService) => _authService = authService;
 
-        public AuthController(TMPMSDbContext context)
+        private string GetIp() => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        [HttpPost("register")]
+        public async Task<ActionResult> Register([FromBody] RegisterRequestDTO dto)
         {
-            _context = context;
-        }
-
-        public class LoginRequest
-        {
-            public string p_username { get; set; } = "";
-            public string p_password { get; set; } = "";
-        }
-
-        [HttpPost("login_user")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            Console.WriteLine($"[AUTH DEBUG] Login attempt for user: '{request.p_username}' with password length: {request.p_password.Length}");
-            
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == request.p_username && u.PasswordHash == request.p_password);
-
-            if (user == null)
+            try
             {
-                return BadRequest(new { message = "Sai tên đăng nhập hoặc mật khẩu" });
+                var result = await _authService.Register(dto);
+                return Ok(result);
             }
-
-            if (!user.IsActive)
-            {
-                return BadRequest(new { message = "Tài khoản của bạn đã bị khóa" });
-            }
-
-            return Ok(new
-            {
-                id = user.Id,
-                username = user.Username,
-                email = user.Email,
-                phone = user.Phone,
-                role_id = user.RoleId,
-                is_active = user.IsActive,
-                created_at = user.CreatedAt
-            });
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
+            catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
-        public class RegisterRequest
+        [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] LoginRequestDTO dto)
         {
-            public string p_username { get; set; } = "";
-            public string p_email { get; set; } = "";
-            public string p_password { get; set; } = "";
-            public string p_phone { get; set; } = "";
+            try
+            {
+                var result = await _authService.Login(dto, GetIp());
+                if (result == null) return Unauthorized("Email hoặc mật khẩu không đúng.");
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex) { return StatusCode(423, ex.Message); } // Locked
+            catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
-        [HttpPost("register_user")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO dto)
         {
-            var exists = await _context.Users.AnyAsync(u => u.Username == request.p_username || u.Email == request.p_email);
-            if (exists)
+            try
             {
-                return BadRequest(new { message = "Tên đăng nhập hoặc email đã tồn tại" });
+                var result = await _authService.RefreshToken(dto.RefreshToken, GetIp());
+                return Ok(result);
             }
+            catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
+            catch (Exception ex) { return BadRequest(ex.Message); }
+        }
 
-            var newUser = new User
+        [HttpPost("revoke-token")]
+        [Authorize]
+        public async Task<ActionResult> RevokeToken([FromBody] RevokeTokenRequestDTO dto)
+        {
+            var ok = await _authService.RevokeToken(dto.RefreshToken, GetIp());
+            if (!ok) return NotFound("Token không tồn tại hoặc đã bị thu hồi.");
+            return Ok(new { message = "Đăng xuất thành công." });
+        }
+
+        [HttpPost("assign-role")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> AssignRole([FromBody] AssignRoleRequestDTO dto)
+        {
+            var ok = await _authService.AssignRole(dto);
+            if (!ok) return BadRequest("Không thể gán role cho user.");
+            return Ok(new { message = "Gán role thành công." });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult> GetProfile()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+            var profile = await _authService.GetProfile(userId);
+            if (profile == null) return NotFound();
+            return Ok(profile);
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequestDTO dto)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+            try
             {
-                Username = request.p_username,
-                Email = request.p_email,
-                PasswordHash = request.p_password,
-                Phone = request.p_phone,
-                RoleId = 2, // Customer default
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-
-            // Auto create cart for user
-            var newCart = new Cart
-            {
-                UserId = newUser.Id
-            };
-            _context.Carts.Add(newCart);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Đăng ký thành công!" });
+                var ok = await _authService.ChangePassword(userId, dto);
+                if (!ok) return NotFound();
+                return Ok(new { message = "Đổi mật khẩu thành công." });
+            }
+            catch (Exception ex) { return BadRequest(ex.Message); }
         }
     }
 }

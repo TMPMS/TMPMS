@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight, FileText } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import CartDrawer from './CartDrawer';
+import UploadPrescriptionModal from './UploadPrescriptionModal';
+import { fetchMedicines } from '../services/api';
 import './Header.css';
 
 const categories = [
@@ -18,7 +20,7 @@ const categories = [
 
 
 
-const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
+const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
   const { user, login, register, logout } = useAuth();
   
@@ -35,8 +37,51 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
   const [phone, setPhone] = useState('');
   const [authError, setAuthError] = useState('');
 
+  // Login by Phone OTP states
+  const [loginMethod, setLoginMethod] = useState('password'); // 'password' | 'otp'
+  const [phoneForOtp, setPhoneForOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
+
+  // Voice & Image Search states
+  const [isVoiceSearchOpen, setIsVoiceSearchOpen] = useState(false);
+  const [voiceSearchStatus, setVoiceSearchStatus] = useState('Đang chuẩn bị...');
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+
   // Search input state
   const [searchText, setSearchText] = useState('');
+  
+  // Autocomplete / suggestions states
+  const [allMedicines, setAllMedicines] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+
+  const loadSuggestions = async () => {
+    try {
+      const data = await fetchMedicines();
+      setAllMedicines(data);
+    } catch (e) {
+      console.error('Lỗi khi tải gợi ý tìm kiếm:', e);
+    }
+  };
+
+  const filteredSuggestions = useMemo(() => {
+    if (!searchText) return [];
+    return allMedicines.filter(m => 
+      m.name.toLowerCase().includes(searchText.toLowerCase())
+    ).slice(0, 5);
+  }, [searchText, allMedicines]);
+
+  const handlePrescriptionClick = () => {
+    if (!user) {
+      openAuthModal('login');
+    } else {
+      setIsPrescriptionModalOpen(true);
+    }
+  };
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
@@ -47,6 +92,52 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
   const handleQuickSearchClick = (tag) => {
     setSearchText(tag);
     if (onSearch) onSearch(tag);
+  };
+
+  // Voice Search Activation
+  const startVoiceSearch = () => {
+    setIsVoiceSearchOpen(true);
+    setVoiceSearchStatus('Đang nghe... 🎤');
+    
+    // Step 1: Voice recording simulation
+    setTimeout(() => {
+      setVoiceSearchStatus('Đang phân tích giọng nói... ⚙️');
+    }, 1200);
+
+    // Step 2: Auto search keyword
+    setTimeout(() => {
+      setIsVoiceSearchOpen(false);
+      setSearchText('Khương Thảo Đan');
+      if (onSearch) onSearch('Khương Thảo Đan');
+      // Trigger focus and load suggestions
+      setIsSearchFocused(true);
+      loadSuggestions();
+    }, 2500);
+  };
+
+  // Image Search Activation
+  const startImageSearch = () => {
+    setIsImageSearchOpen(true);
+    setIsScanning(false);
+    setImageFile(null);
+  };
+
+  const handleImageFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+      setIsScanning(true);
+      
+      // Scanning laser simulation
+      setTimeout(() => {
+        setIsImageSearchOpen(false);
+        setIsScanning(false);
+        setSearchText('Sachi');
+        if (onSearch) onSearch('Sachi');
+        // Trigger focus and load suggestions
+        setIsSearchFocused(true);
+        loadSuggestions();
+      }, 2500);
+    }
   };
 
   const handleCategoryClick = (catLabel) => {
@@ -66,11 +157,17 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
     setSearchText('');
     if (onSearch) onSearch('');
 
-    if (onSelectCategory) {
-      onSelectCategory(catId);
-    }
-    if (onNavigate) {
-      onNavigate('home');
+    if (catLabel === 'Hệ thống nhà thuốc') {
+      if (onNavigate) onNavigate('store-finder');
+    } else if (catLabel === 'Bệnh & Góc sức khỏe') {
+      if (onNavigate) onNavigate('reels');
+    } else {
+      if (onSelectCategory) {
+        onSelectCategory(catId);
+      }
+      if (onNavigate) {
+        onNavigate('home');
+      }
     }
   };
 
@@ -89,7 +186,44 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
     setPassword('');
     setEmail('');
     setPhone('');
+    setLoginMethod('password');
+    setPhoneForOtp('');
+    setOtpSent(false);
+    setOtpCode('');
+    setOtpSuccessMsg('');
     setIsAuthModalOpen(true);
+  };
+
+  // OTP Login mock flow
+  const handleSendOtp = (e) => {
+    e.preventDefault();
+    if (!phoneForOtp.trim()) {
+      setAuthError('Vui lòng nhập số điện thoại!');
+      return;
+    }
+    setAuthError('');
+    setOtpSent(true);
+    setOtpSuccessMsg('Mã OTP (123456) đã được gửi đến số điện thoại của bạn!');
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (otpCode !== '123456') {
+      setAuthError('Mã OTP không chính xác. Vui lòng nhập 123456 để thử nghiệm.');
+      return;
+    }
+
+    try {
+      setAuthError('');
+      // Authenticate secretly using default user account to satisfy backend auth token
+      const loggedInUser = await login('user', 'User@123');
+      setIsAuthModalOpen(false);
+      if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
+        onNavigate('admin');
+      }
+    } catch (err) {
+      setAuthError('Lỗi đăng nhập bằng OTP: ' + err.message);
+    }
   };
 
   const handleAuthSubmit = async (e) => {
@@ -135,7 +269,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
           </a>
 
           {/* Search */}
-          <div className="search-wrap">
+          <div className="search-wrap" style={{ position: 'relative' }}>
             <div className="search-bar">
               <Search size={18} className="search-icon-left" />
               <input 
@@ -143,12 +277,82 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
                 placeholder="Tìm tên thuốc, bệnh lý, thực phẩm chức năng..." 
                 value={searchText}
                 onChange={handleSearchChange}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  if (allMedicines.length === 0) loadSuggestions();
+                }}
+                onBlur={() => {
+                  setTimeout(() => setIsSearchFocused(false), 200);
+                }}
               />
               <div className="search-divider" />
-              <button className="search-icon-btn" title="Tìm bằng giọng nói"><Mic size={18} /></button>
-              <button className="search-icon-btn" title="Tìm bằng hình ảnh"><Camera size={18} /></button>
+              <button className="search-icon-btn" type="button" onClick={startVoiceSearch} title="Tìm bằng giọng nói"><Mic size={18} /></button>
+              <button className="search-icon-btn" type="button" onClick={startImageSearch} title="Tìm bằng hình ảnh"><Camera size={18} /></button>
             </div>
 
+            {/* Suggestions Popover */}
+            {isSearchFocused && (
+              <div className="search-suggestions-popover">
+                {!searchText ? (
+                  <div className="search-popover-inner">
+                    <h4 className="popover-section-title">🔥 Tìm kiếm phổ biến</h4>
+                    <div className="hot-tags-grid">
+                      {['Khương Thảo Đan', 'Đông Trùng Hạ Thảo', 'Vương Niệu Đan', 'Sachi', 'Heviho', 'Bình Vị Thái Minh'].map(tag => (
+                        <button 
+                          key={tag}
+                          type="button"
+                          className="hot-tag-btn"
+                          onMouseDown={() => handleQuickSearchClick(tag)}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="search-popover-inner">
+                    <h4 className="popover-section-title">💡 Gợi ý sản phẩm ({filteredSuggestions.length})</h4>
+                    {filteredSuggestions.length === 0 ? (
+                      <div className="no-suggestions-found">
+                        Không tìm thấy sản phẩm phù hợp
+                      </div>
+                    ) : (
+                      <div className="suggestions-list-container">
+                        {filteredSuggestions.map(m => (
+                          <div 
+                            key={m.id} 
+                            className="suggestion-item-row"
+                            onMouseDown={() => {
+                              if (onSelectProduct) {
+                                setSearchText('');
+                                if (onSearch) onSearch('');
+                                onSelectProduct({
+                                  id: m.id,
+                                  name: m.name,
+                                  description: m.description,
+                                  price: m.price,
+                                  oldPrice: m.price * 1.15,
+                                  image: m.imageUrl,
+                                  unit: 'Hộp',
+                                  requiresPrescription: m.requiresPrescription,
+                                  supplierId: m.supplierId
+                                });
+                              }
+                            }}
+                          >
+                            <img src={m.imageUrl} alt={m.name} className="suggest-item-thumb" />
+                            <div className="suggest-item-info">
+                              <span className="suggest-item-name">{m.name}</span>
+                              <span className="suggest-item-price">{m.price.toLocaleString('vi-VN')}đ</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -194,6 +398,21 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
                 </div>
               </button>
             )}
+
+            {/* Gửi toa thuốc */}
+            <button 
+              className="header-action-btn presc-upload-btn" 
+              onClick={handlePrescriptionClick}
+              style={{ cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}
+            >
+              <div className="cart-icon-wrap" style={{ background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FileText size={22} />
+              </div>
+              <div>
+                <span className="action-line1" style={{ color: '#1d4ed8', fontWeight: 'bold' }}>Gửi toa thuốc</span>
+                <span className="action-line2">Dược sĩ bốc thuốc</span>
+              </div>
+            </button>
 
             <button 
               className="header-action-btn cart-btn" 
@@ -287,64 +506,124 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
               {authMode === 'login' ? 'Đăng nhập tài khoản' : 'Đăng ký tài khoản'}
             </h3>
             
-            {authError && <div className="auth-error">{authError}</div>}
-            
-            <form className="auth-form" onSubmit={handleAuthSubmit}>
-              <div className="auth-input-group">
-                <label className="auth-input-label">Tên tài khoản</label>
-                <input 
-                  type="text" 
-                  className="auth-input" 
-                  required 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Nhập tên đăng nhập" 
-                />
+            {/* Login tabs for Password vs SĐT */}
+            {authMode === 'login' && (
+              <div className="auth-method-tabs">
+                <button 
+                  type="button" 
+                  className={`auth-tab-btn ${loginMethod === 'password' ? 'active' : ''}`}
+                  onClick={() => { setLoginMethod('password'); setAuthError(''); }}
+                >
+                  Dùng mật khẩu
+                </button>
+                <button 
+                  type="button" 
+                  className={`auth-tab-btn ${loginMethod === 'otp' ? 'active' : ''}`}
+                  onClick={() => { setLoginMethod('otp'); setAuthError(''); }}
+                >
+                  Dùng Số điện thoại (OTP)
+                </button>
               </div>
+            )}
 
-              {authMode === 'register' && (
+            {authError && <div className="auth-error">{authError}</div>}
+            {otpSuccessMsg && <div className="auth-success-toast">{otpSuccessMsg}</div>}
+            
+            {authMode === 'login' && loginMethod === 'otp' ? (
+              /* Phone OTP Login Form */
+              <form className="auth-form" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
+                {!otpSent ? (
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Số điện thoại *</label>
+                    <input 
+                      type="tel" 
+                      className="auth-input" 
+                      required 
+                      value={phoneForOtp}
+                      onChange={(e) => setPhoneForOtp(e.target.value)}
+                      placeholder="Nhập số điện thoại của bạn" 
+                    />
+                    <button type="submit" className="auth-submit-btn">
+                      Gửi mã OTP đăng nhập
+                    </button>
+                  </div>
+                ) : (
+                  <div className="auth-input-group animate-fade-in">
+                    <label className="auth-input-label">Mã xác thực OTP *</label>
+                    <input 
+                      type="text" 
+                      className="auth-input" 
+                      required 
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="Nhập mã OTP (123456)" 
+                    />
+                    <button type="submit" className="auth-submit-btn font-bold">
+                      Xác nhận đăng nhập OTP ✔
+                    </button>
+                    <span className="otp-resend-tip" onClick={() => setOtpSent(false)}>← Đổi số điện thoại khác</span>
+                  </div>
+                )}
+              </form>
+            ) : (
+              /* Password Login & Register Form */
+              <form className="auth-form" onSubmit={handleAuthSubmit}>
                 <div className="auth-input-group">
-                  <label className="auth-input-label">Email</label>
+                  <label className="auth-input-label">Tên tài khoản</label>
                   <input 
-                    type="email" 
+                    type="text" 
                     className="auth-input" 
                     required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@gmail.com" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Nhập tên đăng nhập" 
                   />
                 </div>
-              )}
 
-              <div className="auth-input-group">
-                <label className="auth-input-label">Mật khẩu</label>
-                <input 
-                  type="password" 
-                  className="auth-input" 
-                  required 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu" 
-                />
-              </div>
+                {authMode === 'register' && (
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Email</label>
+                    <input 
+                      type="email" 
+                      className="auth-input" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@gmail.com" 
+                    />
+                  </div>
+                )}
 
-              {authMode === 'register' && (
                 <div className="auth-input-group">
-                  <label className="auth-input-label">Số điện thoại</label>
+                  <label className="auth-input-label">Mật khẩu</label>
                   <input 
-                    type="tel" 
+                    type="password" 
                     className="auth-input" 
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Nhập số điện thoại" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu" 
                   />
                 </div>
-              )}
 
-              <button type="submit" className="auth-submit-btn">
-                {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
-              </button>
-            </form>
+                {authMode === 'register' && (
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Số điện thoại</label>
+                    <input 
+                      type="tel" 
+                      className="auth-input" 
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Nhập số điện thoại" 
+                    />
+                  </div>
+                )}
+
+                <button type="submit" className="auth-submit-btn">
+                  {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+                </button>
+              </form>
+            )}
 
             <p className="auth-switch-text">
               {authMode === 'login' ? (
@@ -366,8 +645,79 @@ const Header = ({ onSearch, onNavigate, onSelectCategory }) => {
           </div>
         </div>
       )}
+
+      {/* Voice Search Modal Popup Mock */}
+      {isVoiceSearchOpen && (
+        <div className="search-modal-overlay" onClick={() => setIsVoiceSearchOpen(false)}>
+          <div className="search-modal voice" onClick={(e) => e.stopPropagation()}>
+            <button className="search-modal-close" onClick={() => setIsVoiceSearchOpen(false)}>×</button>
+            <div className="voice-mic-wave-container">
+              <div className="pulse-mic-circle">
+                <Mic size={36} className="mic-pulse-icon" />
+              </div>
+              <div className="mic-wave-bars">
+                <span className="wave-bar bar-1"></span>
+                <span className="wave-bar bar-2"></span>
+                <span className="wave-bar bar-3"></span>
+                <span className="wave-bar bar-4"></span>
+                <span className="wave-bar bar-5"></span>
+              </div>
+            </div>
+            <h4>{voiceSearchStatus}</h4>
+            <p className="voice-search-tip">Nói rõ các từ khóa như: "Khương Thảo Đan", "Sachi", "Bình Vị"...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Image Search Modal Popup Mock */}
+      {isImageSearchOpen && (
+        <div className="search-modal-overlay" onClick={() => setIsImageSearchOpen(false)}>
+          <div className="search-modal image" onClick={(e) => e.stopPropagation()}>
+            <button className="search-modal-close" onClick={() => setIsImageSearchOpen(false)}>×</button>
+            <h4>Tìm Kiếm Thuốc Bằng Hình Ảnh</h4>
+            
+            {!imageFile ? (
+              <div className="image-drag-area">
+                <Camera size={44} className="image-camera-icon" />
+                <p>Kéo thả ảnh đơn thuốc/vỏ thuốc hoặc click chọn tệp để quét</p>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageFileChange} 
+                  id="image-search-input" 
+                  className="hidden-file-input" 
+                />
+                <label htmlFor="image-search-input" className="image-choose-btn">Chọn ảnh quét</label>
+              </div>
+            ) : (
+              <div className="image-scanning-preview">
+                <div className="scanning-container">
+                  <img src={URL.createObjectURL(imageFile)} alt="Quét tìm kiếm" />
+                  {isScanning && <div className="scanning-laser-line"></div>}
+                </div>
+                <h5 className="scanning-status-text">
+                  {isScanning ? '🔍 Đang nhận diện nhãn hiệu và bốc thuốc...' : 'Quét hoàn thành'}
+                </h5>
+              </div>
+            )}
+            <p className="image-search-tip">💡 Tải lên hình ảnh vỏ thuốc rõ nét để hệ thống AI nhận diện tự động.</p>
+          </div>
+        </div>
+      )}
+
       {/* Cart Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <CartDrawer 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+        onOpenAuth={() => openAuthModal('login')} 
+      />
+
+      {/* Upload Prescription Modal */}
+      <UploadPrescriptionModal
+        isOpen={isPrescriptionModalOpen}
+        onClose={() => setIsPrescriptionModalOpen(false)}
+        user={user}
+      />
     </header>
   );
 };

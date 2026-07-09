@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# C# Build and VS files
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+appsettings.Development.json

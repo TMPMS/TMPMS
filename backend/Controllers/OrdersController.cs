@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BusinessObjects;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using TMPMS.Data;
 
-namespace backend.Controllers
+namespace TMPMS.Controllers
 {
     [ApiController]
     public class OrdersController : ControllerBase
@@ -142,7 +145,7 @@ namespace backend.Controllers
                     o.ShippingAddress,
                     o.PaymentStatus,
                     o.CreatedAt,
-                    Username = _context.Users.Where(u => u.Id == o.UserId).Select(u => u.Username).FirstOrDefault(),
+                    Username = _context.Users.Where(u => u.Id == o.UserId).Select(u => u.UserName).FirstOrDefault(),
                     Email = _context.Users.Where(u => u.Id == o.UserId).Select(u => u.Email).FirstOrDefault(),
                     Items = _context.OrderItems
                         .Where(oi => oi.OrderId == o.Id)

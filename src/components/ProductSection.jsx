@@ -6,7 +6,7 @@ import 'swiper/css/navigation';
 import { useCart } from '../context/CartContext';
 import './ProductSection.css';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onProductClick }) => {
   const { addToCart } = useCart();
   const [selectedUnit, setSelectedUnit] = useState(0);
 
@@ -28,12 +28,12 @@ const ProductCard = ({ product }) => {
       )}
 
       {/* Image */}
-      <div className="pc-img-wrap">
+      <div className="pc-img-wrap" onClick={onProductClick ? () => onProductClick(product) : undefined} style={onProductClick ? {cursor: 'pointer'} : {}}>
         <img src={product.image} alt={product.name} loading="lazy" />
       </div>
 
       {/* Name */}
-      <p className="pc-name">{product.name}</p>
+      <p className="pc-name" onClick={onProductClick ? () => onProductClick(product) : undefined} style={onProductClick ? {cursor: 'pointer'} : {}}>{product.name}</p>
 
       {/* Unit toggle */}
       {units.length > 1 && (
@@ -68,7 +68,7 @@ const ProductCard = ({ product }) => {
   );
 };
 
-const ProductSection = ({ title, products, viewAllLink = '#', bgColor }) => (
+const ProductSection = ({ title, products, viewAllLink = '#', bgColor, onProductClick }) => (
   <section className="ps-section" style={bgColor ? { background: bgColor } : {}}>
     <div className="ps-header">
       <div className="ps-title-wrap">
@@ -81,7 +81,7 @@ const ProductSection = ({ title, products, viewAllLink = '#', bgColor }) => (
       <Swiper modules={[Navigation]} spaceBetween={14} slidesPerView={5} navigation className="ps-swiper">
         {products.map(p => (
           <SwiperSlide key={p.id} style={{ height: 'auto' }}>
-            <ProductCard product={p} />
+            <ProductCard product={p} onProductClick={onProductClick} />
           </SwiperSlide>
         ))}
       </Swiper>

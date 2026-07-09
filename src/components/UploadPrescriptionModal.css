@@ -1,0 +1,349 @@
+.upm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: upmFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.upm-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 620px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transform: scale(0.95);
+  animation: upmScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.upm-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upm-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Success State */
+.upm-success-state {
+  text-align: center;
+  padding: 40px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upm-success-icon {
+  color: #10b981;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.2));
+  animation: upmPulseSuccess 1.5s infinite;
+}
+
+.upm-success-state h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+}
+
+.upm-success-state p {
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.6;
+  max-width: 440px;
+  margin-bottom: 24px;
+}
+
+.upm-loader-bar {
+  width: 120px;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upm-loader-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 50%;
+  background: #0d9488;
+  border-radius: 2px;
+  animation: upmProgress 1.5s ease-in-out infinite;
+}
+
+/* Modal Content Header */
+.upm-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.upm-header-icon {
+  color: #0d9488;
+  background: #f0fdfa;
+  padding: 12px;
+  box-sizing: content-box;
+  border-radius: 14px;
+}
+
+.upm-header h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.upm-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Forms */
+.upm-error-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.upm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.upm-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.upm-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upm-input-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.upm-input-group input[type="text"],
+.upm-input-group textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #0f172a;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+}
+
+.upm-input-group input[type="text"]:focus,
+.upm-input-group textarea:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  background: #ffffff;
+}
+
+.upm-input-disabled {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed;
+}
+
+/* Upload zone */
+.upm-file-input {
+  display: none;
+}
+
+.upm-upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  transition: all 0.25s ease;
+}
+
+.upm-upload-zone:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+
+.upm-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.upm-upload-icon {
+  color: #64748b;
+  margin-bottom: 8px;
+  transition: transform 0.2s ease;
+}
+
+.upm-upload-zone:hover .upm-upload-icon {
+  transform: translateY(-2px);
+  color: #0d9488;
+}
+
+.upm-upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.upm-upload-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.upm-file-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upm-preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.upm-file-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d9488;
+}
+
+/* Actions */
+.upm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 18px;
+}
+
+.upm-cancel-btn {
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upm-cancel-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.upm-submit-btn {
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upm-submit-btn:hover {
+  background: #0f766e;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
+}
+
+.upm-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes upmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes upmScaleUp {
+  to { transform: scale(1); }
+}
+
+@keyframes upmPulseSuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes upmProgress {
+  0% { left: -50%; }
+  100% { left: 100%; }
+}
+
+@media (max-width: 640px) {
+  .upm-modal {
+    padding: 20px;
+    border-radius: 16px;
+    margin: 12px;
+  }
+  .upm-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

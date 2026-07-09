@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BusinessObjects;
+using TMPMS.Data;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace backend.Controllers
+namespace TMPMS.Controllers
 {
     [ApiController]
     [Route("categories")]
