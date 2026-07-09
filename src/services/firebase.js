@@ -1,16 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
-// CẤU HÌNH FIREBASE PROJECT CỦA BẠN
-// Đăng ký miễn phí tại: https://console.firebase.google.com/
-// Tạo một Web App và sao chép cấu hình Firebase Config dán vào đây:
+// CẤU HÌNH FIREBASE PROJECT TỰ ĐỘNG THIẾT LẬP
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAnCJlD11MYCNcYfX4xYuLWb3CocUccoQI",
+  authDomain: "tmpms-longchau.firebaseapp.com",
+  projectId: "tmpms-longchau",
+  storageBucket: "tmpms-longchau.firebasestorage.app",
+  messagingSenderId: "159926690260",
+  appId: "1:159926690260:web:ca175fc4f50cad2c7ab641"
 };
 
 // Kiểm tra xem người dùng đã cấu hình Firebase thực tế chưa
