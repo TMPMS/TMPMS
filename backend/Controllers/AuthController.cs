@@ -53,6 +53,18 @@ namespace TMPMS.Controllers
             catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
+        [HttpPost("send-otp")]
+        public async Task<ActionResult> SendOtp([FromBody] SendOtpRequestDTO dto)
+        {
+            try
+            {
+                var ok = await _authService.SendOtp(dto.Phone);
+                if (!ok) return BadRequest("Gửi mã OTP thất bại.");
+                return Ok(new { message = "Mã OTP đã được gửi đi." });
+            }
+            catch (Exception ex) { return BadRequest(ex.Message); }
+        }
+
         [HttpPost("refresh-token")]
         public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO dto)
         {

@@ -22,7 +22,7 @@ const categories = [
 
 const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
-  const { user, login, loginByOtp, register, logout } = useAuth();
+  const { user, login, loginByOtp, sendOtp, register, logout } = useAuth();
   
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -195,15 +195,20 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   };
 
   // OTP Login mock flow
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phoneForOtp.trim()) {
       setAuthError('Vui lòng nhập số điện thoại!');
       return;
     }
-    setAuthError('');
-    setOtpSent(true);
-    setOtpSuccessMsg('Mã OTP (123456) đã được gửi đến số điện thoại của bạn!');
+    try {
+      setAuthError('');
+      await sendOtp(phoneForOtp);
+      setOtpSent(true);
+      setOtpSuccessMsg('Yêu cầu gửi mã OTP thành công! Mã OTP mặc định là 123456 (hoặc mã SMS thực tế nếu đã cấu hình Twilio)');
+    } catch (err) {
+      setAuthError('Không thể gửi mã OTP: ' + err.message);
+    }
   };
 
   const handleVerifyOtp = async (e) => {

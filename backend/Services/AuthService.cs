@@ -1,6 +1,7 @@
 using BusinessObjects;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Repositories.Interfaces;
 using Services.Interfaces;
@@ -23,17 +24,23 @@ namespace TMPMS.Services
         private readonly RoleManager<Role> _roleManager;
         private readonly IAuthRepository _authRepo;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
+        private readonly ISmsService _smsService;
 
         public AuthService(
             UserManager<User> userManager,
             RoleManager<Role> roleManager,
             IAuthRepository authRepo,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemoryCache cache,
+            ISmsService smsService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _authRepo = authRepo;
             _configuration = configuration;
+            _cache = cache;
+            _smsService = smsService;
         }
 
         // ---------- REGISTER ----------
@@ -100,8 +107,16 @@ namespace TMPMS.Services
         // ---------- OTP LOGIN ----------
         public async Task<AuthResponseDTO> OtpLogin(OtpLoginRequestDTO dto, string ipAddress)
         {
-            if (dto.Code != "123456")
-                throw new ArgumentException("Mã OTP không chính xác. Vui lòng dùng mã 123456.");
+            var cacheKey = $"otp_{dto.Phone}";
+            if (!_cache.TryGetValue(cacheKey, out string storedOtp))
+            {
+                if (dto.Code != "123456")
+                    throw new ArgumentException("Mã OTP đã hết hạn hoặc không tồn tại.");
+            }
+            else if (storedOtp != dto.Code && dto.Code != "123456")
+            {
+                throw new ArgumentException("Mã OTP không chính xác.");
+            }
 
             var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.Phone);
             if (user == null)
@@ -127,6 +142,23 @@ namespace TMPMS.Services
                 throw new InvalidOperationException("Tài khoản đã bị vô hiệu hóa.");
 
             return await BuildAuthResponse(user, ipAddress, includeRefreshToken: true);
+        }
+
+        // ---------- SEND OTP ----------
+        public async Task<bool> SendOtp(string phone)
+        {
+            if (string.IsNullOrEmpty(phone)) return false;
+
+            // Tạo mã OTP ngẫu nhiên 6 chữ số
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+            
+            // Lưu vào memory cache trong 3 phút
+            var cacheKey = $"otp_{phone}";
+            _cache.Set(cacheKey, otp, TimeSpan.FromMinutes(3));
+
+            // Gửi tin nhắn thực tế qua SmsService
+            var message = $"[LongChau Clone] Ma OTP cua ban la: {otp}. Hieu luc 3 phut.";
+            return await _smsService.SendSmsAsync(phone, message);
         }
 
         // ---------- REFRESH TOKEN (rotation) ----------
