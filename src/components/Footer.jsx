@@ -8,11 +8,7 @@ const Footer = () => (
         {/* Column 1 */}
         <div className="footer-col">
           <div className="footer-logo">
-            <div className="footer-logo-fpt" style={{ backgroundColor: '#10b981', color: '#fff' }}>TC</div>
-            <div>
-              <div className="footer-logo-name">TCMPAM</div>
-              <div className="footer-logo-sub">Nhà thuốc</div>
-            </div>
+            <img src="/logo.png" alt="TCMPAM Logo" className="footer-logo-img" />
           </div>
           <p className="footer-desc">Hệ thống nhà thuốc chuẩn GPP - Uy tín - Chất lượng. Đủ thuốc, giá tốt, tư vấn tận tâm.</p>
           <div className="footer-ministry">
