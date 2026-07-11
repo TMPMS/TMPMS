@@ -29,3 +29,10 @@ dist-ssr
 .vs/
 *.user
 appsettings.Development.json
+
+# Large binary files
+backend/postgrest.exe
+
+# Sensitive config files
+appsettings.json
+backend/appsettings.json
