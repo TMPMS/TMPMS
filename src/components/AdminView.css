@@ -697,3 +697,203 @@
   .stats-detail-grid { grid-template-columns: 1fr; }
   .inventory-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   PRODUCTS CRUD LAYOUT (Admin)
+   ============================================================ */
+
+.products-crud-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.products-form-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.products-list-panel {
+  min-height: 300px;
+}
+
+.product-img-preview {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #94a3b8;
+}
+
+.product-img-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.cancel-edit-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #e11d48;
+  border-radius: 10px;
+  background: transparent;
+  color: #e11d48;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-edit-btn:hover {
+  background: #e11d48;
+  color: white;
+}
+
+/* Medicine CRUD List */
+.medicine-crud-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.medicine-crud-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.2s;
+}
+
+.medicine-crud-row:hover {
+  border-color: #0d9488;
+  background: rgba(13,148,136,0.04);
+}
+
+.medicine-crud-row.editing {
+  border-color: #f59e0b;
+  background: rgba(245,158,11,0.06);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+}
+
+.medicine-crud-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e2e8f0;
+}
+
+.medicine-crud-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.medicine-crud-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.medicine-crud-info strong {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.med-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d9488;
+}
+
+.med-stock {
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.med-stock.low {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.medicine-crud-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.med-edit-btn,
+.med-delete-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.med-edit-btn {
+  background: rgba(13,148,136,0.1);
+  color: #0d9488;
+  border-color: #0d9488;
+}
+
+.med-edit-btn:hover {
+  background: #0d9488;
+  color: white;
+}
+
+.med-delete-btn {
+  background: rgba(220,38,38,0.07);
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.med-delete-btn:hover {
+  background: #dc2626;
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .products-crud-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .products-form-panel {
+    position: static;
+  }
+}

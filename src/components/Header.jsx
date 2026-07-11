@@ -453,6 +453,8 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 </button>
                 {isUserMenuOpen && (
                   <div className="user-dropdown-menu">
+                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>👤 Hồ sơ của tôi</button>
+                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>🎟️ Voucher của tôi</button>
                     <button className="user-dropdown-item" style={{ color: '#0d9488' }} onClick={() => { onNavigate('history'); setIsUserMenuOpen(false); }}>Lịch sử mua</button>
                     {user.role_id === 2 && (
                       <button className="user-dropdown-item" style={{ color: '#0f766e', fontWeight: 'bold' }} onClick={() => { onNavigate('patient-portal'); setIsUserMenuOpen(false); }}>Sức khỏe & Lịch hẹn</button>
@@ -460,6 +462,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                     {[1, 3, 4].includes(user.role_id) && (
                       <button className="user-dropdown-item" style={{ color: '#0f766e', fontWeight: 'bold' }} onClick={() => { onNavigate('admin'); setIsUserMenuOpen(false); }}>Trang quản trị</button>
                     )}
+                    <div style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }} />
                     <button className="user-dropdown-item" onClick={handleLogout}>Đăng xuất</button>
                   </div>
                 )}
