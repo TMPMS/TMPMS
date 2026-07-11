@@ -3,18 +3,38 @@ const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://tmpms.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
-// Connect to PostgreSQL (using trust auth locally, no password needed)
-const pool = new Pool({
-  host: '127.0.0.1',
-  port: 5432,
-  database: 'tmpms',
-  user: 'postgres',
-});
+// Connect to PostgreSQL via DATABASE_URL (Neon/Render) or local config
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    })
+  : new Pool({
+      host: '127.0.0.1',
+      port: 5432,
+      database: 'tmpms',
+      user: 'postgres',
+    });
 
 // Middleware to log requests
 app.use((req, res, next) => {
