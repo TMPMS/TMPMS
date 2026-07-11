@@ -27,6 +27,8 @@ import StoreFinderView from './components/StoreFinderView';
 import VaccineBookingView from './components/VaccineBookingView';
 import HealthReels from './components/HealthReels';
 import AIChatbot from './components/AIChatbot';
+import ProfileView from './components/ProfileView';
+import HealthVideoSection from './components/HealthVideoSection';
 
 import { fetchMedicines } from './services/api';
 
@@ -164,6 +166,8 @@ function App() {
         return <SelfDiagnosis onBack={() => handleNavigate('home')} />;
       case 'patient-portal':
         return <PatientPortal onBack={() => handleNavigate('home')} />;
+      case 'profile':
+        return <ProfileView onNavigate={handleNavigate} />;
       case 'detail':
         return <ProductDetailView product={selectedProduct} onBack={() => handleNavigate('home')} />;
       case 'home':
@@ -212,6 +216,7 @@ function App() {
                 <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} onProductClick={handleSelectProduct} />
               </>
             )}
+            <HealthVideoSection onNavigate={handleNavigate} />
             <Brands />
             <HealthNews />
             <StorePromoBar />

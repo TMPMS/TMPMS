@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { 
   ShoppingCart, Star, Leaf, Eye, Calendar, Plus, Edit2, Trash2, 
-  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info
+  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag
 } from 'lucide-react';
 import './AdminView.css';
 
@@ -20,6 +20,14 @@ const AdminView = () => {
   const [warehouses, setWarehouses] = useState([]);
   const [users, setUsers] = useState([]);
   const [medicines, setMedicines] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
+
+  // Voucher form state
+  const [editingVoucherId, setEditingVoucherId] = useState(null);
+  const [voucherForm, setVoucherForm] = useState({
+    code: '', name: '', discount_type: 'percent', discount_value: '',
+    min_order_value: '', max_discount: '', end_date: '', usage_limit: 100, is_active: true
+  });
 
   // Form States - Patient
   const [patientModal, setPatientModal] = useState(null); // 'add' | 'edit' | null
@@ -55,7 +63,13 @@ const AdminView = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setLoggedInUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setLoggedInUser(parsedUser);
+      if (parsedUser.role_id === 1) {
+        setActiveTab('users');
+      } else {
+        setActiveTab('orders');
+      }
     }
   }, []);
 
@@ -110,6 +124,9 @@ const AdminView = () => {
       } else if (activeTab === 'products') {
         const medData = await api.fetchMedicines();
         setMedicines(medData);
+      } else if (activeTab === 'vouchers') {
+        const data = await api.fetchAdminVouchers();
+        setVouchers(data);
       }
     } catch (err) {
       console.error(err);
@@ -132,8 +149,8 @@ const AdminView = () => {
 
   // Orders functions
   const handleStatusChange = async (orderId, newStatus) => {
-    if (!hasAccess([1, 4])) {
-      setError('Chỉ Admin hoặc Dược sĩ có quyền cập nhật trạng thái đơn hàng.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền cập nhật trạng thái đơn hàng.');
       return;
     }
     try {
@@ -146,8 +163,8 @@ const AdminView = () => {
   };
 
   const handlePaymentStatusToggle = async (order, currentPaymentStatus) => {
-    if (!hasAccess([1, 4])) {
-      setError('Chỉ Admin hoặc Dược sĩ có quyền cập nhật trạng thái thanh toán.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền cập nhật trạng thái thanh toán.');
       return;
     }
     const newPaymentStatus = currentPaymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
@@ -163,8 +180,8 @@ const AdminView = () => {
   // Patients functions
   const handlePatientSubmit = async (e) => {
     e.preventDefault();
-    if (!hasAccess([1, 3])) {
-      setError('Chỉ Admin hoặc Bác sĩ có quyền chỉnh sửa thông tin bệnh nhân.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền chỉnh sửa thông tin bệnh nhân.');
       return;
     }
     try {
@@ -184,8 +201,8 @@ const AdminView = () => {
   };
 
   const handleDeletePatient = async (id) => {
-    if (!hasAccess([1, 3])) {
-      setError('Chỉ Admin hoặc Bác sĩ có quyền xóa bệnh nhân.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền xóa bệnh nhân.');
       return;
     }
     if (!window.confirm('Bạn có chắc chắn muốn xóa bệnh nhân này? Tất cả hồ sơ liên quan sẽ bị xóa.')) return;
@@ -201,8 +218,8 @@ const AdminView = () => {
   // Appointments functions
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
-    if (!hasAccess([1, 3])) {
-      setError('Chỉ Admin hoặc Bác sĩ có quyền điều chỉnh lịch hẹn.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền điều chỉnh lịch hẹn.');
       return;
     }
     try {
@@ -230,8 +247,8 @@ const AdminView = () => {
   };
 
   const handleDeleteAppointment = async (id) => {
-    if (!hasAccess([1, 3])) {
-      setError('Chỉ Admin hoặc Bác sĩ có quyền xóa lịch hẹn.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền xóa lịch hẹn.');
       return;
     }
     if (!window.confirm('Xóa lịch hẹn này?')) return;
@@ -274,8 +291,8 @@ const AdminView = () => {
 
   const handlePrescriptionSubmit = async (e) => {
     e.preventDefault();
-    if (!hasAccess([1, 3, 4])) {
-      setError('Bạn không có quyền kê đơn thuốc.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền kê đơn thuốc.');
       return;
     }
     if (!currentPrescription.patientId) {
@@ -308,8 +325,8 @@ const AdminView = () => {
   };
 
   const handlePrescriptionStatus = async (id, status) => {
-    if (!hasAccess([1, 4])) {
-      setError('Chỉ Dược sĩ có quyền cập nhật bốc thuốc/cấp phát thuốc.');
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền cập nhật bốc thuốc/cấp phát thuốc.');
       return;
     }
     try {
@@ -351,11 +368,60 @@ const AdminView = () => {
     }
   };
 
-  // Add Product (Herbal Catalog)
+  const [editingMedicineId, setEditingMedicineId] = useState(null);
+
+  const handleEditMedicineClick = (medicine) => {
+    setEditingMedicineId(medicine.id);
+    setProdName(medicine.name || '');
+    setProdCategoryId(medicine.category_id || 1);
+    setProdSupplierId(medicine.supplier_id || 1);
+    setProdPrice(medicine.price || '');
+    setProdOldPrice(medicine.old_price || '');
+    setProdStock(medicine.stock_quantity || '');
+    setProdUnit(medicine.unit || 'Hộp');
+    setProdOrigin(medicine.origin || 'Việt Nam');
+    setProdPackaging(medicine.packaging || '');
+    setProdImgUrl(medicine.image_url || '');
+    setProdDesc(medicine.description || '');
+    setProdReqPrescription(medicine.requires_prescription || false);
+  };
+
+  const handleCancelProductEdit = () => {
+    setEditingMedicineId(null);
+    setProdName('');
+    setProdCategoryId(1);
+    setProdSupplierId(1);
+    setProdPrice('');
+    setProdOldPrice('');
+    setProdStock('100');
+    setProdUnit('Hộp');
+    setProdOrigin('Việt Nam');
+    setProdPackaging('');
+    setProdImgUrl('');
+    setProdDesc('');
+    setProdReqPrescription(false);
+  };
+
+  const handleDeleteMedicine = async (id) => {
+    if (!hasAccess([1])) {
+      setError('Chỉ Admin có quyền xóa thuốc.');
+      return;
+    }
+    if (!window.confirm('Bạn có chắc chắn muốn xóa vị thuốc này khỏi hệ thống?')) return;
+    try {
+      await api.deleteMedicine(id);
+      setMedicines(prev => prev.filter(m => m.id !== id));
+      showSuccess('Xóa vị thuốc thành công!');
+    } catch (err) {
+      setError('Lỗi khi xóa vị thuốc.');
+    }
+  };
+
+  // Add/Edit Product (Herbal Catalog)
   const handleProductSubmit = async (e) => {
     e.preventDefault();
-    if (!hasAccess([1, 4])) {
-      setError('Chỉ Admin hoặc Dược sĩ có quyền quản lý kho dược phẩm.');
+    if (!hasAccess([1])) {
+      setError('Chỉ Admin có quyền quản lý kho dược phẩm.');
       return;
     }
 
@@ -382,22 +448,22 @@ const AdminView = () => {
         expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
       };
 
-      await api.addMedicine(payload);
-      showSuccess('Thêm thuốc/thảo dược mới thành công!');
+      if (editingMedicineId) {
+        const updated = await api.updateMedicine(editingMedicineId, payload);
+        showSuccess('Cập nhật thông tin thảo dược thành công!');
+        setMedicines(prev => prev.map(m => m.id === editingMedicineId ? { ...m, ...payload, id: editingMedicineId } : m));
+      } else {
+        const added = await api.addMedicine(payload);
+        showSuccess('Thêm thảo dược mới thành công!');
+        setMedicines(prev => [added, ...prev]);
+      }
       
-      // Reset form
-      setProdName('');
-      setProdPrice('');
-      setProdOldPrice('');
-      setProdPackaging('');
-      setProdImgUrl('');
-      setProdDesc('');
-      setProdReqPrescription(false);
-      setActiveTab('products');
+      handleCancelProductEdit();
     } catch (err) {
-      setError('Không thể thêm sản phẩm mới. Vui lòng kiểm tra lại!');
+      setError('Lỗi khi lưu sản phẩm. Vui lòng kiểm tra lại!');
     }
   };
+
 
   // Helper Formats
   const formatPrice = (price) => {
@@ -438,8 +504,7 @@ const AdminView = () => {
         <span>Tài khoản: <strong>{loggedInUser?.username}</strong> - Vai trò: 
           <strong className="role-highlight">
             {loggedInUser?.role_id === 1 && ' Quản trị viên (Admin)'}
-            {loggedInUser?.role_id === 3 && ' Thầy thuốc / Bác sĩ'}
-            {loggedInUser?.role_id === 4 && ' Dược sĩ'}
+            {loggedInUser?.role_id === 3 && ' Nhân viên Nhà thuốc (Pharmacy)'}
           </strong>
         </span>
       </div>
@@ -447,49 +512,59 @@ const AdminView = () => {
       <div className="admin-header">
         <div className="admin-title-wrap">
           <Leaf className="admin-title-icon" />
-          <h2 className="admin-title">Bảng Quản Trị & Điều Hành Lâm Sàng</h2>
+          <h2 className="admin-title">
+            {loggedInUser?.role_id === 1 ? 'Bảng Quản Trị Hệ Thống' : 'Bảng Điều Hành Nhà Thuốc & Lâm Sàng'}
+          </h2>
         </div>
         
         {/* Navigation Tabs based on Role */}
         <div className="admin-tabs">
-          {hasAccess([1, 4]) && (
+          {/* PHARMACY TABS: Orders, Patients, Appointments, Prescriptions, Inventory, Stats */}
+          {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
-              <ShoppingCart size={16} /> Đơn hàng & Hóa đơn
+              <ShoppingCart size={16} /> Đơn hàng
             </button>
           )}
-          {hasAccess([1, 3, 4]) && (
+          {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>
               <Users size={16} /> Hồ sơ Bệnh nhân
             </button>
           )}
-          {hasAccess([1, 3, 4]) && (
+          {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'appointments' ? 'active' : ''}`} onClick={() => setActiveTab('appointments')}>
-              <Calendar size={16} /> Quản lý Lịch hẹn
+              <Calendar size={16} /> Lịch hẹn Khám
             </button>
           )}
-          {hasAccess([1, 3, 4]) && (
+          {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'prescriptions' ? 'active' : ''}`} onClick={() => setActiveTab('prescriptions')}>
               <FileText size={16} /> Chẩn đoán & Kê đơn
             </button>
           )}
-          {hasAccess([1, 4]) && (
+          {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'inventory' ? 'active' : ''}`} onClick={() => setActiveTab('inventory')}>
-              <Package size={16} /> Kho hàng & Dược liệu
+              <Package size={16} /> Kho Dược liệu
             </button>
           )}
+          {hasAccess([3]) && (
+            <button className={`admin-tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+              <BarChart2 size={16} /> Báo cáo & Thống kê
+            </button>
+          )}
+
+          {/* ADMIN TABS: User Management + Medicine CRUD + Vouchers */}
           {hasAccess([1]) && (
             <button className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
               <User size={16} /> Quản lý Người dùng
             </button>
           )}
-          {hasAccess([1, 3, 4]) && (
-            <button className={`admin-tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
-              <BarChart2 size={16} /> Báo cáo & Thống kê
+          {hasAccess([1]) && (
+            <button className={`admin-tab-btn ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
+              <Package size={16} /> Quản lý Dược phẩm
             </button>
           )}
-          {hasAccess([1, 4]) && (
-            <button className={`admin-tab-btn ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
-              <Plus size={16} /> Thêm Thảo Dược
+          {hasAccess([1]) && (
+            <button className={`admin-tab-btn ${activeTab === 'vouchers' ? 'active' : ''}`} onClick={() => setActiveTab('vouchers')}>
+              <Tag size={16} /> Voucher & Khuyến mãi
             </button>
           )}
         </div>
@@ -1104,9 +1179,8 @@ const AdminView = () => {
                               onChange={(e) => handleUserRoleChange(u.id, parseInt(e.target.value))}
                             >
                               <option value={1}>Quản trị viên (Admin)</option>
-                              <option value={2}>Khách hàng (Customer)</option>
-                              <option value={3}>Thầy thuốc / Bác sĩ</option>
-                              <option value={4}>Dược sĩ</option>
+                              <option value={2}>Khách hàng (User)</option>
+                              <option value={3}>Nhân viên Nhà thuốc (Pharmacy)</option>
                             </select>
                           </td>
                         </tr>
@@ -1194,162 +1268,368 @@ const AdminView = () => {
             </div>
           )}
 
-          {/* TAB: ADD NEW HERBAL MEDICINES */}
+          {/* TAB: MANAGE MEDICINES (Admin CRUD) */}
           {activeTab === 'products' && (
-            <div className="admin-card">
-              <h3 className="card-title">Thêm Thuốc & Thảo Dược Đông Y mới vào cơ sở dữ liệu</h3>
-              <form className="add-product-form" onSubmit={handleProductSubmit}>
-                <div className="form-grid">
+            <div className="products-crud-layout">
+              {/* LEFT: Add / Edit Form */}
+              <div className="admin-card products-form-panel">
+                <h3 className="card-title">
+                  {editingMedicineId ? '✏️ Chỉnh sửa thông tin Dược phẩm' : '➕ Thêm Dược phẩm mới'}
+                </h3>
+                {prodImgUrl && (
+                  <div className="product-img-preview">
+                    <img src={prodImgUrl} alt="preview" onError={(e) => e.target.style.display='none'} />
+                  </div>
+                )}
+                <form className="add-product-form" onSubmit={handleProductSubmit}>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Tên thuốc/thảo dược *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        required
+                        placeholder="Nhân Sâm Cao Cấp, Hoạt Huyết..."
+                        value={prodName}
+                        onChange={(e) => setProdName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Danh mục dược liệu *</label>
+                      <select
+                        className="form-select"
+                        value={prodCategoryId}
+                        onChange={(e) => setProdCategoryId(e.target.value)}
+                      >
+                        <option value={1}>Thực phẩm chức năng / Bổ dưỡng</option>
+                        <option value={2}>Dược mỹ phẩm thảo dược</option>
+                        <option value={3}>Thuốc điều trị Đông Y</option>
+                        <option value={4}>Chăm sóc cá nhân tự nhiên</option>
+                        <option value={5}>Thiết bị y tế</option>
+                        <option value={6}>Châm cứu &amp; Trị liệu</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Nhà cung cấp *</label>
+                      <select
+                        className="form-select"
+                        value={prodSupplierId}
+                        onChange={(e) => setProdSupplierId(e.target.value)}
+                      >
+                        <option value={1}>Công ty Cổ phần Traphaco</option>
+                        <option value={2}>Công ty TNHH Dược phẩm OPC</option>
+                        <option value={3}>Công ty Cổ phần Bách Thảo Dược</option>
+                        <option value={4}>Nhà sâm KGC Hàn Quốc</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Giá bán lẻ (VND) *</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        required
+                        placeholder="95000"
+                        value={prodPrice}
+                        onChange={(e) => setProdPrice(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Giá niêm yết cũ (để hiện giảm giá)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="105000"
+                        value={prodOldPrice}
+                        onChange={(e) => setProdOldPrice(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Số lượng tồn kho *</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        required
+                        placeholder="100"
+                        value={prodStock}
+                        onChange={(e) => setProdStock(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Đơn vị tính *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        required
+                        placeholder="Hộp, Chai, Lọ, Thang..."
+                        value={prodUnit}
+                        onChange={(e) => setProdUnit(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Quy cách đóng gói</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Hộp 100 viên, Gói 20 túi lọc..."
+                        value={prodPackaging}
+                        onChange={(e) => setProdPackaging(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Xuất xứ *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        required
+                        placeholder="Việt Nam, Hàn Quốc..."
+                        value={prodOrigin}
+                        onChange={(e) => setProdOrigin(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Hình ảnh (URL) *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        required
+                        placeholder="https://images.unsplash.com/..."
+                        value={prodImgUrl}
+                        onChange={(e) => setProdImgUrl(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ display: 'flex', gap: '8px', alignItems: 'center', margin: '8px 0' }}>
+                    <input
+                      type="checkbox"
+                      id="req-pres-herbal"
+                      checked={prodReqPrescription}
+                      onChange={(e) => setProdReqPrescription(e.target.checked)}
+                    />
+                    <label htmlFor="req-pres-herbal" style={{ fontSize: '14px', fontWeight: '600', color: '#374151', cursor: 'pointer' }}>
+                      Yêu cầu có đơn thuốc của Bác sĩ mới được mua
+                    </label>
+                  </div>
+
                   <div className="form-group">
-                    <label className="form-label">Tên thuốc/thảo dược *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      required
-                      placeholder="Nhân Sâm Cao Cấp, Hoạt Huyết..."
-                      value={prodName}
-                      onChange={(e) => setProdName(e.target.value)}
+                    <label className="form-label">Mô tả chi tiết</label>
+                    <textarea
+                      className="form-textarea"
+                      rows="3"
+                      placeholder="Mô tả công dụng, tính vị quy kinh, liều dùng..."
+                      value={prodDesc}
+                      onChange={(e) => setProdDesc(e.target.value)}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Danh mục dược liệu *</label>
-                    <select 
-                      className="form-select"
-                      value={prodCategoryId}
-                      onChange={(e) => setProdCategoryId(e.target.value)}
-                    >
-                      <option value={1}>Thực phẩm chức năng / Bổ dưỡng</option>
-                      <option value={2}>Dược mỹ phẩm thảo dược</option>
-                      <option value={3}>Thuốc điều trị Đông Y</option>
-                      <option value={4}>Chăm sóc cá nhân tự nhiên</option>
-                      <option value={5}>Thiết bị y tế</option>
-                      <option value={6}>Châm cứu & Trị liệu</option>
-                    </select>
+                  <div className="product-form-actions">
+                    <button type="submit" className="add-submit-btn">
+                      {editingMedicineId ? '💾 Lưu thay đổi' : '➕ Nhập kho thảo dược'}
+                    </button>
+                    {editingMedicineId && (
+                      <button type="button" className="cancel-edit-btn" onClick={handleCancelProductEdit}>
+                        ✕ Hủy chỉnh sửa
+                      </button>
+                    )}
                   </div>
+                </form>
+              </div>
 
+              {/* RIGHT: Medicine list with Edit/Delete */}
+              <div className="admin-card products-list-panel">
+                <h3 className="card-title">📋 Danh sách Dược phẩm ({medicines.length} mục)</h3>
+                <div className="medicine-crud-list">
+                  {medicines.length === 0 && (
+                    <div className="admin-empty">Chưa có dược phẩm nào trong kho.</div>
+                  )}
+                  {medicines.map(m => (
+                    <div key={m.id} className={`medicine-crud-row ${editingMedicineId === m.id ? 'editing' : ''}`}>
+                      <div className="medicine-crud-img">
+                        <img src={m.image_url} alt={m.name} onError={(e) => e.target.src='https://via.placeholder.com/60x60?text=🌿'} />
+                      </div>
+                      <div className="medicine-crud-info">
+                        <strong>{m.name}</strong>
+                        <span className="med-meta">{m.packaging || m.unit} · {m.origin}</span>
+                        <span className="med-price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(m.price)}</span>
+                        <span className={`med-stock ${m.stock_quantity < 20 ? 'low' : ''}`}>
+                          Tồn kho: {m.stock_quantity} {m.unit}
+                        </span>
+                      </div>
+                      <div className="medicine-crud-actions">
+                        <button
+                          className="med-edit-btn"
+                          onClick={() => handleEditMedicineClick(m)}
+                          title="Chỉnh sửa"
+                        >
+                          ✏️ Sửa
+                        </button>
+                        <button
+                          className="med-delete-btn"
+                          onClick={() => handleDeleteMedicine(m.id)}
+                          title="Xóa khỏi danh mục"
+                        >
+                          🗑️ Xóa
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── TAB: VOUCHERS (Admin only) ─── */}
+          {activeTab === 'vouchers' && hasAccess([1]) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 20, alignItems: 'start' }}>
+              {/* Form */}
+              <div className="admin-card">
+                <h3 className="admin-section-title">
+                  <Tag size={16} /> {editingVoucherId ? 'Cập nhật Voucher' : 'Thêm Voucher mới'}
+                </h3>
+                <div className="admin-form">
                   <div className="form-group">
-                    <label className="form-label">Nhà cung cấp / Đại lý phân phối *</label>
-                    <select 
-                      className="form-select"
-                      value={prodSupplierId}
-                      onChange={(e) => setProdSupplierId(e.target.value)}
-                    >
-                      <option value={1}>Công ty Cổ phần Traphaco</option>
-                      <option value={2}>Công ty TNHH Dược phẩm OPC</option>
-                      <option value={3}>Công ty Cổ phần Bách Thảo Dược</option>
-                      <option value={4}>Nhà sâm KGC Hàn Quốc</option>
-                    </select>
+                    <label>Mã voucher *</label>
+                    <input className="admin-input" value={voucherForm.code} onChange={e => setVoucherForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="VD: LONGCHAU20" />
                   </div>
-
                   <div className="form-group">
-                    <label className="form-label">Giá bán lẻ (VND) *</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      required
-                      placeholder="95000"
-                      value={prodPrice}
-                      onChange={(e) => setProdPrice(e.target.value)}
-                    />
+                    <label>Tên mô tả</label>
+                    <input className="admin-input" value={voucherForm.name} onChange={e => setVoucherForm(p => ({ ...p, name: e.target.value }))} placeholder="Giảm 20% cho đơn từ 200K" />
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Giá niêm yết cũ (nếu muốn giảm giá)</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      placeholder="105000"
-                      value={prodOldPrice}
-                      onChange={(e) => setProdOldPrice(e.target.value)}
-                    />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="form-group">
+                      <label>Loại giảm</label>
+                      <select className="admin-input" value={voucherForm.discount_type} onChange={e => setVoucherForm(p => ({ ...p, discount_type: e.target.value }))}>
+                        <option value="percent">Phần trăm (%)</option>
+                        <option value="fixed">Số tiền (VNĐ)</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Giá trị giảm *</label>
+                      <input type="number" className="admin-input" value={voucherForm.discount_value} onChange={e => setVoucherForm(p => ({ ...p, discount_value: e.target.value }))} placeholder={voucherForm.discount_type === 'percent' ? '10' : '50000'} />
+                    </div>
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Số lượng nhập kho khởi tạo *</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      required
-                      placeholder="100"
-                      value={prodStock}
-                      onChange={(e) => setProdStock(e.target.value)}
-                    />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="form-group">
+                      <label>Đơn tối thiểu (đ)</label>
+                      <input type="number" className="admin-input" value={voucherForm.min_order_value} onChange={e => setVoucherForm(p => ({ ...p, min_order_value: e.target.value }))} placeholder="200000" />
+                    </div>
+                    <div className="form-group">
+                      <label>Giảm tối đa (đ)</label>
+                      <input type="number" className="admin-input" value={voucherForm.max_discount} onChange={e => setVoucherForm(p => ({ ...p, max_discount: e.target.value }))} placeholder="50000" />
+                    </div>
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Đơn vị tính *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      required
-                      placeholder="Hộp, Chai, Lọ, Thang..."
-                      value={prodUnit}
-                      onChange={(e) => setProdUnit(e.target.value)}
-                    />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="form-group">
+                      <label>Số lượng</label>
+                      <input type="number" className="admin-input" value={voucherForm.usage_limit} onChange={e => setVoucherForm(p => ({ ...p, usage_limit: e.target.value }))} placeholder="100" />
+                    </div>
+                    <div className="form-group">
+                      <label>Ngày hết hạn</label>
+                      <input type="date" className="admin-input" value={voucherForm.end_date} onChange={e => setVoucherForm(p => ({ ...p, end_date: e.target.value }))} />
+                    </div>
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Quy cách đóng gói</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Hộp 100 viên, Gói 20 túi lọc..."
-                      value={prodPackaging}
-                      onChange={(e) => setProdPackaging(e.target.value)}
-                    />
+                  <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <input type="checkbox" id="vIsActive" checked={voucherForm.is_active} onChange={e => setVoucherForm(p => ({ ...p, is_active: e.target.checked }))} />
+                    <label htmlFor="vIsActive" style={{ fontWeight: 600, cursor: 'pointer' }}>Kích hoạt ngay</label>
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Xuất xứ *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      required
-                      placeholder="Việt Nam, Hàn Quốc..."
-                      value={prodOrigin}
-                      onChange={(e) => setProdOrigin(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Hình ảnh minh họa (URL) *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      required
-                      placeholder="https://images.unsplash.com/..."
-                      value={prodImgUrl}
-                      onChange={(e) => setProdImgUrl(e.target.value)}
-                    />
+                  <div className="product-form-actions">
+                    <button className="admin-add-btn" style={{ flex: 2 }} onClick={async () => {
+                      if (!voucherForm.code || !voucherForm.discount_value) { setError('Vui lòng nhập mã và giá trị giảm'); return; }
+                      try {
+                        if (editingVoucherId) {
+                          await api.updateVoucher(editingVoucherId, { ...voucherForm, discount_value: parseFloat(voucherForm.discount_value), min_order_value: parseFloat(voucherForm.min_order_value) || 0, max_discount: voucherForm.max_discount ? parseFloat(voucherForm.max_discount) : null });
+                          showSuccess('Cập nhật voucher thành công!');
+                        } else {
+                          await api.createVoucher({ ...voucherForm, discount_value: parseFloat(voucherForm.discount_value), min_order_value: parseFloat(voucherForm.min_order_value) || 0, max_discount: voucherForm.max_discount ? parseFloat(voucherForm.max_discount) : null });
+                          showSuccess('Thêm voucher thành công!');
+                        }
+                        setVoucherForm({ code: '', name: '', discount_type: 'percent', discount_value: '', min_order_value: '', max_discount: '', end_date: '', usage_limit: 100, is_active: true });
+                        setEditingVoucherId(null);
+                        const data = await api.fetchAdminVouchers(); setVouchers(data);
+                      } catch (e) { setError(e.message); }
+                    }}>
+                      {editingVoucherId ? '💾 Cập nhật' : '➕ Thêm Voucher'}
+                    </button>
+                    {editingVoucherId && (
+                      <button className="cancel-edit-btn" onClick={() => { setEditingVoucherId(null); setVoucherForm({ code: '', name: '', discount_type: 'percent', discount_value: '', min_order_value: '', max_discount: '', end_date: '', usage_limit: 100, is_active: true }); }}>Hủy</button>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                <div className="form-group" style={{ display: 'flex', gap: '8px', alignItems: 'center', margin: '8px 0' }}>
-                  <input 
-                    type="checkbox" 
-                    id="req-pres-herbal" 
-                    checked={prodReqPrescription} 
-                    onChange={(e) => setProdReqPrescription(e.target.checked)} 
-                  />
-                  <label htmlFor="req-pres-herbal" style={{ fontSize: '14px', fontWeight: '600', color: '#374151', cursor: 'pointer' }}>
-                    Yêu cầu có đơn thuốc của Bác sĩ mới được mua
-                  </label>
+              {/* List */}
+              <div className="admin-card">
+                <h3 className="admin-section-title"><Tag size={16} /> Danh sách Voucher ({vouchers.length})</h3>
+                <div className="medicine-crud-list" style={{ maxHeight: 550 }}>
+                  {vouchers.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>Chưa có voucher nào</p>
+                  ) : vouchers.map(v => {
+                    const expired = v.end_date && new Date(v.end_date) < new Date();
+                    const daysLeft = v.end_date ? Math.ceil((new Date(v.end_date) - new Date()) / 86400000) : null;
+                    return (
+                      <div key={v.id} className={`medicine-crud-row ${editingVoucherId === v.id ? 'editing' : ''}`}>
+                        <div className="medicine-crud-info" style={{ flex: 1 }}>
+                          <strong style={{ color: '#0d9488', fontFamily: 'monospace', fontSize: 15 }}>{v.code}</strong>
+                          <span className="med-meta">{v.name || '—'}</span>
+                          <span className="med-price">
+                            {v.discount_type === 'percent' ? `${v.discount_value}%` : new Intl.NumberFormat('vi-VN').format(v.discount_value) + 'đ'} OFF
+                            {v.min_order_value > 0 && <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 400 }}> · Đơn từ {new Intl.NumberFormat('vi-VN').format(v.min_order_value)}đ</span>}
+                          </span>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                            <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: v.is_active && !expired ? '#dcfce7' : '#fee2e2', color: v.is_active && !expired ? '#166534' : '#991b1b', fontWeight: 700 }}>
+                              {v.is_active && !expired ? 'Đang hoạt động' : expired ? 'Hết hạn' : 'Tắt'}
+                            </span>
+                            {daysLeft !== null && !expired && (
+                              <span style={{ fontSize: 11, color: daysLeft <= 3 ? '#dc2626' : '#64748b' }}>
+                                ⏱ Còn {daysLeft} ngày
+                              </span>
+                            )}
+                            <span style={{ fontSize: 11, color: '#94a3b8' }}>Đã dùng: {v.used_count}/{v.usage_limit}</span>
+                          </div>
+                        </div>
+                        <div className="medicine-crud-actions">
+                          <button className="med-edit-btn" onClick={() => {
+                            setEditingVoucherId(v.id);
+                            setVoucherForm({
+                              code: v.code, name: v.name || '', discount_type: v.discount_type,
+                              discount_value: v.discount_value, min_order_value: v.min_order_value || '',
+                              max_discount: v.max_discount || '', end_date: v.end_date ? v.end_date.split('T')[0] : '',
+                              usage_limit: v.usage_limit, is_active: v.is_active
+                            });
+                          }}>✏️ Sửa</button>
+                          <button
+                            className="med-edit-btn"
+                            style={v.is_active
+                              ? { background: 'rgba(245,158,11,0.1)', color: '#d97706', borderColor: '#d97706' }
+                              : { background: 'rgba(13,148,136,0.1)', color: '#0d9488', borderColor: '#0d9488' }
+                            }
+                            onClick={async () => {
+                              await api.updateVoucher(v.id, { is_active: !v.is_active });
+                              const data = await api.fetchAdminVouchers(); setVouchers(data);
+                            }}>
+                            {v.is_active ? '⏸ Tắt' : '▶ Bật'}
+                          </button>
+                          <button className="med-delete-btn" onClick={async () => {
+                            if (!confirm(`Xóa voucher "${v.code}"?`)) return;
+                            await api.deleteVoucher(v.id);
+                            const data = await api.fetchAdminVouchers(); setVouchers(data);
+                            showSuccess('Đã xóa voucher!');
+                          }}>🗑️ Xóa</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Mô tả chi tiết của vị thuốc</label>
-                  <textarea 
-                    className="form-textarea" 
-                    rows="4" 
-                    placeholder="Mô tả công dụng, tính vị quy kinh, chỉ định liều dùng và cách nấu xông uống..."
-                    value={prodDesc}
-                    onChange={(e) => setProdDesc(e.target.value)}
-                  />
-                </div>
-
-                <button type="submit" className="add-submit-btn">Nhập kho thảo dược</button>
-              </form>
+              </div>
             </div>
           )}
 

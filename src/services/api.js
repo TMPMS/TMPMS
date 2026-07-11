@@ -261,6 +261,40 @@ export async function addMedicine(medicineData) {
   return res.json();
 }
 
+export async function updateMedicine(medicineId, medicineData) {
+  const mappedData = {
+    name: medicineData.name,
+    description: medicineData.description,
+    price: parseFloat(medicineData.price),
+    stock_quantity: parseInt(medicineData.stock_quantity || medicineData.stockQuantity),
+    unit: medicineData.unit,
+    origin: medicineData.origin,
+    packaging: medicineData.packaging,
+    image_url: medicineData.image_url || medicineData.imageUrl,
+    requires_prescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
+    category_id: medicineData.category_id || medicineData.categoryId,
+    supplier_id: medicineData.supplier_id || medicineData.supplierId
+  };
+
+  const res = await fetch(`${API_URL}/medicines?id=eq.${medicineId}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(mappedData),
+  });
+  if (!res.ok) throw new Error('Không thể cập nhật thông tin thuốc');
+  return res.json();
+}
+
+export async function deleteMedicine(medicineId) {
+  const res = await fetch(`${API_URL}/medicines?id=eq.${medicineId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể xóa thuốc');
+  return res.json();
+}
+
+
 export async function fetchSuppliers() {
   const res = await fetch(`${API_URL}/suppliers`);
   if (!res.ok) throw new Error('Không thể tải danh sách nhà cung cấp');
@@ -449,6 +483,93 @@ export async function submitProductReview(rating, comment, productId, userId) {
     const errorText = await res.text();
     throw new Error(errorText || 'Không thể gửi đánh giá');
   }
+  return res.json();
+}
+
+// ============ VOUCHER APIs ============
+
+export async function fetchVouchers() {
+  const res = await fetch(`${API_URL}/vouchers`);
+  if (!res.ok) throw new Error('Không thể tải voucher');
+  return res.json();
+}
+
+export async function fetchAdminVouchers() {
+  const res = await fetch(`${API_URL}/admin/vouchers`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Không thể tải danh sách voucher');
+  return res.json();
+}
+
+export async function createVoucher(data) {
+  const res = await fetch(`${API_URL}/admin/vouchers`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Không thể tạo voucher');
+  return res.json();
+}
+
+export async function updateVoucher(id, data) {
+  const res = await fetch(`${API_URL}/admin/vouchers/${id}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Không thể cập nhật voucher');
+  return res.json();
+}
+
+export async function deleteVoucher(id) {
+  const res = await fetch(`${API_URL}/admin/vouchers/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể xóa voucher');
+  return res.json();
+}
+
+export async function validateVoucher(code, orderTotal) {
+  const res = await fetch(`${API_URL}/vouchers/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, order_total: orderTotal }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Voucher không hợp lệ');
+  return data;
+}
+
+// ============ PROFILE APIs ============
+
+function getUserIdHeader() {
+  try {
+    const u = localStorage.getItem('user');
+    if (u) {
+      const parsed = JSON.parse(u);
+      const headers = getAuthHeaders();
+      // Wait, let's see: in user object in localStorage, it could have id or userId
+      const uId = parsed.id || parsed.userId;
+      if (uId) headers['X-User-Id'] = uId;
+      return headers;
+    }
+  } catch (e) {}
+  return getAuthHeaders();
+}
+
+export async function fetchMyProfile() {
+  const res = await fetch(`${API_URL}/api/profile/me`, { headers: getUserIdHeader() });
+  if (!res.ok) throw new Error('Không thể tải hồ sơ');
+  return res.json();
+}
+
+export async function updateMyProfile(data) {
+  const res = await fetch(`${API_URL}/api/profile/me`, {
+    method: 'PATCH',
+    headers: getUserIdHeader(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Không thể cập nhật hồ sơ');
   return res.json();
 }
 
