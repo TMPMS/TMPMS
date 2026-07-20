@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight, FileText } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import CartDrawer from './CartDrawer';
-import UploadPrescriptionModal from './UploadPrescriptionModal';
-import { fetchMedicines } from '../services/api';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import CartDrawer from '../CartDrawer';
+import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
+import { fetchMedicines } from '../../services/api';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { auth, isFirebaseConfigured } from '../services/firebase';
+import { auth, isFirebaseConfigured } from '../../services/firebase';
 import './Header.css';
 
 const categories = [
@@ -344,7 +344,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         <div className="main-header-inner">
           {/* Logo */}
           <a href="/" className="logo" onClick={handleHomeClick}>
-            <img src="/logo.png" alt="TCMPAM Logo" className="logo-img" />
+            <img src="/logo.png" alt="TMPMS Logo" className="logo-img" />
           </a>
 
           {/* Search */}

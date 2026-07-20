@@ -22,6 +22,7 @@ const ProductDetailView = ({ product, onBack }) => {
   const userId = user?.user?.id || user?.id;
 
   useEffect(() => {
+    if (!product) return;
     // Load reviews
     const loadReviews = async () => {
       try {
@@ -52,7 +53,21 @@ const ProductDetailView = ({ product, onBack }) => {
 
     loadReviews();
     checkEligibility();
-  }, [product.id, userId]);
+  }, [product?.id, userId]);
+
+  if (!product) {
+    return (
+      <div className="pd-container">
+        <p style={{ textAlign: 'center', padding: '40px 0', fontSize: '18px' }}>Không tìm thấy thông tin chi tiết sản phẩm.</p>
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={onBack} style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Quay lại trang chủ</button>
+        </div>
+      </div>
+    );
+  }
+
+  const displayPrice = product.price ? (typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0) : 0;
+  const displayOldPrice = product.oldPrice ? (typeof product.oldPrice === 'number' ? product.oldPrice : parseFloat(product.oldPrice) || 0) : null;
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -114,12 +129,12 @@ const ProductDetailView = ({ product, onBack }) => {
 
           <div className="pd-price-card">
             <div className="pd-price-row">
-              <span className="pd-price">{product.price.toLocaleString('vi-VN')}đ</span>
+              <span className="pd-price">{displayPrice.toLocaleString('vi-VN')}đ</span>
               <span className="pd-unit">/ {product.unit}</span>
             </div>
-            {product.oldPrice && (
+            {displayOldPrice && (
               <div className="pd-old-price-row">
-                <span className="pd-old-price">{product.oldPrice.toLocaleString('vi-VN')}đ</span>
+                <span className="pd-old-price">{displayOldPrice.toLocaleString('vi-VN')}đ</span>
                 <span className="pd-discount">-{product.discount}%</span>
               </div>
             )}
@@ -136,19 +151,37 @@ const ProductDetailView = ({ product, onBack }) => {
             </div>
           </div>
 
+          <div style={{ margin: '15px 0', padding: '10px 15px', background: product.stockQuantity <= 0 ? '#fdf2f2' : '#f0fdf4', borderRadius: '8px', border: `1px solid ${product.stockQuantity <= 0 ? '#fde8e8' : '#dcfce7'}`, display: 'inline-block' }}>
+            <span style={{ fontWeight: '600', color: product.stockQuantity <= 0 ? '#9b1c1c' : '#166534' }}>
+              Trạng thái: {product.stockQuantity <= 0 ? 'Tạm hết hàng' : `Còn hàng (Tồn kho: ${product.stockQuantity})`}
+            </span>
+          </div>
+
           <div className="pd-action-row">
-            <div className="quantity-selector">
-              <button onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</button>
-              <input 
-                type="number" 
-                value={quantity} 
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              />
-              <button onClick={() => setQuantity(q => q + 1)}>+</button>
-            </div>
-            <button className="add-to-cart-btn" onClick={handleAddToCart}>
-              Chọn mua
-            </button>
+            {product.stockQuantity <= 0 ? (
+              <button 
+                className="add-to-cart-btn" 
+                disabled 
+                style={{ background: '#cccccc', color: '#666666', cursor: 'not-allowed', width: '100%', maxWidth: '250px' }}
+              >
+                Hết hàng trong kho
+              </button>
+            ) : (
+              <>
+                <div className="quantity-selector">
+                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1}>-</button>
+                  <input 
+                    type="number" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(Math.min(product.stockQuantity, Math.max(1, parseInt(e.target.value) || 1)))}
+                  />
+                  <button onClick={() => setQuantity(q => Math.min(product.stockQuantity, q + 1))} disabled={quantity >= product.stockQuantity}>+</button>
+                </div>
+                <button className="add-to-cart-btn" onClick={handleAddToCart}>
+                  Chọn mua
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -61,9 +61,19 @@ const ProductCard = ({ product, onProductClick }) => {
       {product.packaging && <p className="pc-packaging">{product.packaging}</p>}
 
       {/* CTA */}
-      <button className="pc-cta" onClick={() => addToCart({ ...product, price: current.price })}>
-        Chọn mua
-      </button>
+      {product.stockQuantity <= 0 ? (
+        <button
+          className="pc-cta"
+          disabled
+          style={{ background: '#cccccc', color: '#666666', cursor: 'not-allowed', width: '100%', border: 'none', borderRadius: '4px', padding: '8px 12px' }}
+        >
+          Hết hàng
+        </button>
+      ) : (
+        <button className="pc-cta" onClick={() => addToCart({ ...product, price: current.price })}>
+          Chọn mua
+        </button>
+      )}
     </div>
   );
 };

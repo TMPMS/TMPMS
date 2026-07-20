@@ -32,7 +32,10 @@ appsettings.Development.json
 
 # Large binary files
 backend/postgrest.exe
+*.exe
+*.winmd
 
 # Sensitive config files
+.env
 appsettings.json
 backend/appsettings.json

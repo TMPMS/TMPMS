@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag, MapPin, Truck, Ticket, CreditCard, Landmark, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +40,38 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  const [shippingFee, setShippingFee] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [shippingMessage, setShippingMessage] = useState('');
+
+  useEffect(() => {
+    if (!checkoutMode) return;
+    
+    const calculateFee = async () => {
+      try {
+        const addr = deliveryMode === 'shipping' ? addressDetail : pickupStore;
+        if (deliveryMode === 'shipping' && !addressDetail.trim()) {
+          setShippingFee(0);
+          setDistance(0);
+          setShippingMessage('');
+          return;
+        }
+        const data = await api.calculateShipping(addr, deliveryMode);
+        setShippingFee(data.shippingFee);
+        setDistance(data.distance);
+        setShippingMessage(data.message);
+      } catch (err) {
+        console.error("Error calculating shipping:", err);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      calculateFee();
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [addressDetail, pickupStore, deliveryMode, checkoutMode]);
+
   if (!isOpen) return null;
 
   const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -55,7 +87,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
       discountAmount = 20000;
     }
   }
-  const finalAmount = Math.max(0, totalAmount - discountAmount);
+  const finalAmount = Math.max(0, totalAmount + shippingFee - discountAmount);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -116,6 +148,8 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
         totalAmount: finalAmount,
         shippingAddress: compositeAddress,
         paymentMethod: paymentMethod,
+        deliveryMethod: deliveryMode === 'shipping' ? 'Giao hàng hỏa tốc (Ship 2 Giờ)' : 'Nhận tại cửa hàng',
+        shippingFee: shippingFee,
         items: cartItems.map(item => ({
           medicineId: item.id,
           quantity: item.quantity,
@@ -136,7 +170,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
       }, 3500);
     } catch (err) {
       console.error(err);
-      setError('Không thể tạo đơn hàng. Vui lòng kiểm tra lại kết nối!');
+      setError(err.message || 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại kết nối!');
     } finally {
       setLoading(false);
     }
@@ -202,7 +236,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                   onClick={() => setDeliveryMode('shipping')}
                 >
                   <Truck size={16} />
-                  <span>Giao hàng tận nơi</span>
+                  <span>Giao hàng hỏa tốc (Ship 2 Giờ)</span>
                 </button>
                 <button 
                   type="button" 
@@ -210,7 +244,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                   onClick={() => setDeliveryMode('pickup')}
                 >
                   <MapPin size={16} />
-                  <span>Nhận tại nhà thuốc</span>
+                  <span>Nhận tại cửa hàng</span>
                 </button>
               </div>
               
@@ -338,6 +372,12 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                   <span>Tổng tiền hàng:</span>
                   <span>{formatPrice(totalAmount)}</span>
                 </div>
+                {deliveryMode === 'shipping' && (
+                  <div className="price-calc-row animate-fade-in">
+                    <span>Phí vận chuyển ({distance}km):</span>
+                    <span>{shippingFee > 0 ? formatPrice(shippingFee) : 'Đang tính...'}</span>
+                  </div>
+                )}
                 {discountAmount > 0 && (
                   <div className="price-calc-row discount animate-fade-in">
                     <span>Giảm giá Voucher:</span>

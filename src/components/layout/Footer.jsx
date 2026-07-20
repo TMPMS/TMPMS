@@ -8,7 +8,7 @@ const Footer = () => (
         {/* Column 1 */}
         <div className="footer-col">
           <div className="footer-logo">
-            <img src="/logo.png" alt="TCMPAM Logo" className="footer-logo-img" />
+            <img src="/logo.png" alt="TMPMS Logo" className="footer-logo-img" />
           </div>
           <p className="footer-desc">Hệ thống nhà thuốc chuẩn GPP - Uy tín - Chất lượng. Đủ thuốc, giá tốt, tư vấn tận tâm.</p>
           <div className="footer-ministry">
@@ -33,7 +33,7 @@ const Footer = () => (
         <div className="footer-col">
           <h4 className="footer-col-title">VỀ CHÚNG TÔI</h4>
           <ul className="footer-links">
-            {['Giới thiệu', 'Mua sắm cùng TCMPAM', 'Điều khoản sử dụng', 'Chính sách bảo mật', 'Chính sách hoàn trả', 'Chính sách vận chuyển', 'Tra cứu hóa đơn điện tử', 'Tuyển dụng'].map(l => <li key={l}><a href="#">{l}</a></li>)}
+            {['Giới thiệu', 'Mua sắm cùng TMPMS', 'Điều khoản sử dụng', 'Chính sách bảo mật', 'Chính sách hoàn trả', 'Chính sách vận chuyển', 'Tra cứu hóa đơn điện tử', 'Tuyển dụng'].map(l => <li key={l}><a href="#">{l}</a></li>)}
           </ul>
         </div>
 
@@ -81,7 +81,7 @@ const Footer = () => (
 
       {/* Bottom bar */}
       <div className="footer-bottom">
-        <p>© 2025 Công ty Cổ phần Dược phẩm TCMPAM. Mã số doanh nghiệp: 0316698720. Giấy phép kinh doanh dược liệu số 9975/HCM-BHYT.</p>
+        <p>© 2025 Công ty Cổ phần Dược phẩm TMPMS. Mã số doanh nghiệp: 0316698720. Giấy phép kinh doanh dược liệu số 9975/HCM-BHYT.</p>
       </div>
     </div>
   </footer>

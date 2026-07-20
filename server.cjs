@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const crypto = require('crypto');
+const http = require('http');
 
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
 const allowedOrigins = [
@@ -16,12 +19,12 @@ app.use(cors({
     if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all for now
+      callback(new Error('Origin is not allowed by CORS'));
     }
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Connect to PostgreSQL via DATABASE_URL (Neon/Render) or local config
 const pool = process.env.DATABASE_URL
@@ -34,7 +37,68 @@ const pool = process.env.DATABASE_URL
       port: 5432,
       database: 'tmpms',
       user: 'postgres',
+      password: process.env.POSTGRES_PASSWORD || 'postgres',
     });
+
+const authSecret = process.env.AUTH_SECRET || (process.env.NODE_ENV !== 'production'
+  ? crypto.randomBytes(32).toString('hex')
+  : null);
+
+if (!authSecret) throw new Error('AUTH_SECRET must be configured in production');
+
+const sign = (value) => crypto.createHmac('sha256', authSecret).update(value).digest('base64url');
+
+function createAccessToken(user) {
+  const payload = Buffer.from(JSON.stringify({
+    sub: user.id,
+    role: user.role_name || 'User',
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 8,
+  })).toString('base64url');
+  return `${payload}.${sign(payload)}`;
+}
+
+function readAccessToken(token) {
+  const [payload, signature] = (token || '').split('.');
+  if (!payload || !signature || signature.length !== sign(payload).length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(sign(payload)))) return null;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return claims.exp > Math.floor(Date.now() / 1000) ? claims : null;
+  } catch { return null; }
+}
+
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const claims = readAccessToken(token);
+  if (!claims) return res.status(401).json({ error: 'Authentication is required' });
+  req.user = { id: Number(claims.sub), role: claims.role };
+  next();
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => roles.includes(req.user.role)
+    ? next()
+    : res.status(403).json({ error: 'You do not have permission for this action' });
+}
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  return `scrypt$${salt}$${crypto.scryptSync(password, salt, 64).toString('hex')}`;
+}
+
+function verifyPassword(password, storedHash) {
+  if (!storedHash?.startsWith('scrypt$')) return storedHash === password;
+  const [, salt, hash] = storedHash.split('$');
+  return crypto.timingSafeEqual(crypto.scryptSync(password, salt, 64), Buffer.from(hash, 'hex'));
+}
+
+async function authResponse(user) {
+  const cart = await pool.query('SELECT id FROM carts WHERE user_id = $1', [user.id]);
+  const role = user.role_name === 'Admin' ? 'Admin'
+    : ['Pharmacy', 'Doctor', 'Pharmacist'].includes(user.role_name) ? 'Pharmacy' : 'User';
+  return { userId: user.id, userName: user.username, email: user.email, phone: user.phone,
+    cartId: cart.rows[0]?.id || null, roles: [role], accessToken: createAccessToken(user), refreshToken: null };
+}
 
 // Middleware to log requests
 app.use((req, res, next) => {
@@ -98,6 +162,18 @@ app.get('/medicines', async (req, res) => {
     }
 
     query += ' ORDER BY id ASC';
+
+    // Pagination parameters
+    const limit = parseInt(req.query.limit);
+    const offset = parseInt(req.query.offset);
+    if (!isNaN(limit)) {
+      params.push(limit);
+      query += ` LIMIT $${params.length}`;
+    }
+    if (!isNaN(offset)) {
+      params.push(offset);
+      query += ` OFFSET $${params.length}`;
+    }
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -456,28 +532,19 @@ app.post('/api/auth/login', async (req, res) => {
       `SELECT u.*, r.name as role_name 
        FROM users u 
        LEFT JOIN roles r ON u.role_id = r.id 
-       WHERE (u.username = $1 OR u.email = $1) AND u.password_hash = $2 AND u.is_active = TRUE`,
-      [usernameOrEmail, password]
+       WHERE (u.username = $1 OR u.email = $1) AND u.is_active = TRUE`,
+      [usernameOrEmail]
     );
 
-    if (result.rows.length === 0) {
+    if (result.rows.length === 0 || !verifyPassword(password, result.rows[0].password_hash)) {
       return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
     }
 
     const user = result.rows[0];
-    const roles = [];
-    if (user.role_name === 'Admin') roles.push('Admin');
-    else if (user.role_name === 'Pharmacy' || user.role_name === 'Doctor' || user.role_name === 'Pharmacist') roles.push('Pharmacy');
-    else roles.push('User');
-
-    res.json({
-      userId: user.id,
-      userName: user.username,
-      email: user.email,
-      roles: roles,
-      accessToken: 'mock-access-token-' + user.id,
-      refreshToken: 'mock-refresh-token-' + user.id
-    });
+    if (!user.password_hash.startsWith('scrypt$')) {
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashPassword(password), user.id]);
+    }
+    res.json(await authResponse(user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -487,6 +554,9 @@ app.post('/api/auth/login', async (req, res) => {
 // POST /api/auth/otp-login
 app.post('/api/auth/otp-login', async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_OTP !== 'true') {
+      return res.status(501).json({ error: 'Server-side OTP verification has not been configured' });
+    }
     const { phone, code } = req.body;
     const result = await pool.query(
       `SELECT u.*, r.name as role_name 
@@ -501,19 +571,7 @@ app.post('/api/auth/otp-login', async (req, res) => {
     }
 
     const user = result.rows[0];
-    const roles = [];
-    if (user.role_name === 'Admin') roles.push('Admin');
-    else if (user.role_name === 'Pharmacy' || user.role_name === 'Doctor' || user.role_name === 'Pharmacist') roles.push('Pharmacy');
-    else roles.push('User');
-
-    res.json({
-      userId: user.id,
-      userName: user.username,
-      email: user.email,
-      roles: roles,
-      accessToken: 'mock-access-token-' + user.id,
-      refreshToken: 'mock-refresh-token-' + user.id
-    });
+    res.json(await authResponse(user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -528,7 +586,10 @@ app.post('/api/auth/send-otp', (req, res) => {
 // POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { userName, email, password, roleName, phone } = req.body;
+    const { userName, email, password, phone } = req.body;
+    if (!userName || !email || typeof password !== 'string' || password.length < 8) {
+      return res.status(400).send('Username, email, and a password of at least 8 characters are required');
+    }
     
     // Check if user exists
     const checkRes = await pool.query(
@@ -539,31 +600,19 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).send('Tên tài khoản hoặc email đã tồn tại');
     }
 
-    // Map role
-    let role_id = 2; // User
-    if (roleName === 'Admin') role_id = 1;
-    else if (roleName === 'Pharmacy' || roleName === 'Doctor' || roleName === 'Pharmacist') role_id = 3;
-
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash, phone, role_id, is_active)
        VALUES ($1, $2, $3, $4, $5, TRUE)
        RETURNING *`,
-      [userName, email, password, phone, role_id]
+      [userName, email, hashPassword(password), phone, 2]
     );
     const newUser = result.rows[0];
 
     // Automatically create a cart for the user
     await pool.query('INSERT INTO carts (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING', [newUser.id]);
 
-    const roles = [roleName || 'User'];
-    res.status(201).json({
-      userId: newUser.id,
-      userName: newUser.username,
-      email: newUser.email,
-      roles: roles,
-      accessToken: 'mock-access-token-' + newUser.id,
-      refreshToken: 'mock-refresh-token-' + newUser.id
-    });
+    newUser.role_name = 'User';
+    res.status(201).json(await authResponse(newUser));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -571,7 +620,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // POST /api/auth/assign-role
-app.post('/api/auth/assign-role', async (req, res) => {
+app.post('/api/auth/assign-role', requireAuth, requireRole('Admin'), async (req, res) => {
   try {
     const { userId, roleName } = req.body;
     let role_id = 2;
@@ -590,7 +639,7 @@ app.post('/api/auth/assign-role', async (req, res) => {
 });
 
 // GET /api/profile/users
-app.get('/api/profile/users', async (req, res) => {
+app.get('/api/profile/users', requireAuth, requireRole('Admin'), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT u.*, r.name as role_name 
@@ -620,7 +669,7 @@ app.get('/api/profile/users', async (req, res) => {
 });
 
 // PUT /api/profile/users/:userId/status
-app.put('/api/profile/users/:userId/status', async (req, res) => {
+app.put('/api/profile/users/:userId/status', requireAuth, requireRole('Admin'), async (req, res) => {
   try {
     const { userId } = req.params;
     const { is_active } = req.body;
@@ -1324,8 +1373,294 @@ app.patch('/api/profile/me', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Mock PostgREST server running at http://localhost:${port}`);
+// ==================== AI CHATBOT API ====================
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+    
+    const lowerText = text.toLowerCase();
+    let queryTerm = null;
+    let replyText = 'Tôi đã nhận được thông tin về triệu chứng của bạn. Để được tư vấn chính xác nhất, bạn có thể mô tả chi tiết hơn không? Hoặc bạn có thể tìm các thuốc liên quan đến "đau khớp", "dạ dày", "mệt mỏi", "táo bón".';
+    
+    const hasJointPain = ['khớp', 'khop', 'lưng', 'lung', 'vai gáy', 'vai gay', 'khương thảo đan', 'khuong thao dan'].some(k => lowerText.includes(k));
+    const hasStomachPain = ['dạ dày', 'da day', 'trào ngược', 'trao nguoc', 'bụng', 'bung', 'bình vị', 'binh vi'].some(k => lowerText.includes(k));
+    const hasFatigue = ['mệt mỏi', 'met moi', 'sâm', 'sam', 'yếu', 'yeu', 'sinh lực', 'sinh luc'].some(k => lowerText.includes(k));
+    const hasConstipation = ['táo bón', 'tao bon', 'tiêu hóa', 'tieu hoa', 'phân cứng', 'phan cung', 'gokids', 'nhuận tràng', 'nhuan trang'].some(k => lowerText.includes(k));
+
+    if (hasJointPain) {
+      replyText = 'Đối với các triệu chứng đau nhức xương khớp, thoái hóa khớp, tôi khuyên dùng viên uống Khương Thảo Đan giúp giảm đau xương khớp, tái tạo sụn khớp hiệu quả.';
+      queryTerm = '%Khương Thảo Đan%';
+    } else if (hasStomachPain) {
+      replyText = 'Triệu chứng trào ngược dạ dày, viêm loét dạ dày có thể được hỗ trợ cải thiện rất tốt nhờ Bình Vị giúp giảm tiết acid, bảo vệ niêm mạc dạ dày.';
+      queryTerm = '%Bình Vị%';
+    } else if (hasFatigue) {
+      replyText = 'Để bồi bổ sức khỏe, tăng cường sinh lực và tăng sức đề kháng chống mệt mỏi, Trà Sâm là sự lựa chọn tuyệt vời.';
+      queryTerm = '%Sâm%';
+    } else if (hasConstipation) {
+      replyText = 'Bé hoặc người lớn bị táo bón, khó đi ngoài nên bổ sung Cốm Nhuận Tràng Gokids giúp làm mềm phân, kích thích nhu động ruột an toàn.';
+      queryTerm = '%Gokids%';
+    }
+    
+    let recommendedProduct = null;
+    if (queryTerm) {
+      const dbResult = await pool.query(
+        'SELECT * FROM medicines WHERE name ILIKE $1 OR description ILIKE $1 LIMIT 1',
+        [queryTerm]
+      );
+      if (dbResult.rows.length > 0) {
+        const p = dbResult.rows[0];
+        recommendedProduct = {
+          id: p.id,
+          name: p.name,
+          price: parseFloat(p.price),
+          image: p.image_url || p.imageUrl || 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400&h=400&fit=crop',
+          unit: p.unit || 'Hộp'
+        };
+      }
+    }
+    
+    res.json({
+      text: replyText,
+      product: recommendedProduct
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// ==================== REAL-TIME ORDER TRACKING SIMULATION & WEBHOOK ====================
 
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"]
+  }
+});
+
+const storeCoords = { lat: 10.76008, lng: 106.68220 };
+const userCoords = { lat: 10.75784, lng: 106.67102 };
+
+// Generate waypoints connecting Store to User
+const waypoints = [];
+const steps = 15;
+for (let i = 0; i <= steps; i++) {
+  const t = i / steps;
+  waypoints.push({
+    lat: storeCoords.lat + (userCoords.lat - storeCoords.lat) * t,
+    lng: storeCoords.lng + (userCoords.lng - storeCoords.lng) * t
+  });
+}
+
+let activeSimulations = {};
+
+function startShipperSimulation(orderId) {
+  if (activeSimulations[orderId]) {
+    clearInterval(activeSimulations[orderId].intervalId);
+  }
+
+  const shipperInfo = {
+    name: "Nguyễn Minh Hải",
+    phone: "0912.345.678",
+    plate: "59-A1 789.65"
+  };
+
+  let currentStep = 0;
+  let orderStatus = 'Preparing';
+
+  // Broadcast initial location
+  io.emit(`order-${orderId}-tracking`, {
+    orderId,
+    status: orderStatus,
+    shipper: shipperInfo,
+    coords: waypoints[0]
+  });
+
+  const intervalId = setInterval(async () => {
+    currentStep++;
+    if (currentStep === 1) {
+      orderStatus = 'Shipping';
+    }
+
+    if (currentStep >= waypoints.length) {
+      orderStatus = 'Arrived';
+      clearInterval(intervalId);
+      delete activeSimulations[orderId];
+
+      try {
+        await pool.query("UPDATE orders SET status = 'Delivered' WHERE id = $1", [orderId]);
+      } catch (err) {
+        console.error('Failed to update order status in DB:', err.message);
+      }
+
+      io.emit(`order-${orderId}-tracking`, {
+        orderId,
+        status: orderStatus,
+        shipper: shipperInfo,
+        coords: waypoints[waypoints.length - 1]
+      });
+      return;
+    }
+
+    io.emit(`order-${orderId}-tracking`, {
+      orderId,
+      status: orderStatus,
+      shipper: shipperInfo,
+      coords: waypoints[currentStep]
+    });
+  }, 3000);
+
+  activeSimulations[orderId] = {
+    intervalId,
+    waypoints,
+    currentStep,
+    shipperInfo
+  };
+}
+
+io.on('connection', (socket) => {
+  console.log(`Socket client connected: ${socket.id}`);
+
+  socket.on('start-tracking', (orderId) => {
+    console.log(`Start tracking requested for order #${orderId}`);
+    startShipperSimulation(orderId);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Socket client disconnected: ${socket.id}`);
+  });
+});
+
+app.post('/api/shipping/webhook', (req, res) => {
+  const { orderId, status, coords, shipper } = req.body;
+  if (!orderId || !status) {
+    return res.status(400).json({ error: 'orderId and status are required' });
+  }
+
+  console.log(`Webhook received: Order #${orderId} status changed to ${status}`);
+
+  io.emit(`order-${orderId}-tracking`, {
+    orderId,
+    status,
+    coords: coords || null,
+    shipper: shipper || null
+  });
+
+  if (['Arrived', 'Delivered'].includes(status) && activeSimulations[orderId]) {
+    clearInterval(activeSimulations[orderId].intervalId);
+    delete activeSimulations[orderId];
+  }
+
+  res.json({ success: true, message: 'Status updated and broadcasted' });
+});
+
+// Database auto-creation and initialization helper functions
+async function ensureDatabaseExists() {
+  if (process.env.DATABASE_URL) {
+    // In production or when connection string is provided directly, assume DB exists
+    return;
+  }
+  const dbName = 'tmpms';
+  const { Client } = require('pg');
+  const client = new Client({
+    host: '127.0.0.1',
+    port: 5432,
+    database: 'postgres',
+    user: 'postgres',
+    password: process.env.POSTGRES_PASSWORD || 'postgres',
+  });
+  
+  try {
+    await client.connect();
+    const res = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
+    if (res.rowCount === 0) {
+      console.log(`[PostgreSQL] Database "${dbName}" does not exist. Creating...`);
+      await client.query(`CREATE DATABASE ${dbName}`);
+      console.log(`[PostgreSQL] Database "${dbName}" created successfully.`);
+    } else {
+      console.log(`[PostgreSQL] Database "${dbName}" already exists.`);
+    }
+  } catch (err) {
+    console.error('[PostgreSQL] Error checking/creating database:', err.message);
+  } finally {
+    try {
+      await client.end();
+    } catch (_) {}
+  }
+}
+
+async function initializeDatabase() {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    // Check if the users table exists (indicates schema is already created)
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('[PostgreSQL] Schema not found. Initializing tables...');
+      
+      const schemaPath = path.join(__dirname, 'database', 'schema.sql');
+      const schemaClinicPath = path.join(__dirname, 'database', 'schema_clinic.sql');
+      const seedPath = path.join(__dirname, 'database', 'seed.sql');
+      const seedDongyPath = path.join(__dirname, 'database', 'seed_dongy.sql');
+      
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      const schemaClinicSql = fs.readFileSync(schemaClinicPath, 'utf8');
+      const seedSql = fs.readFileSync(seedPath, 'utf8');
+      const seedDongySql = fs.readFileSync(seedDongyPath, 'utf8');
+      
+      console.log('[PostgreSQL] Executing schema.sql...');
+      await pool.query(schemaSql);
+      
+      console.log('[PostgreSQL] Executing schema_clinic.sql...');
+      await pool.query(schemaClinicSql);
+      
+      console.log('[PostgreSQL] Executing seed.sql...');
+      await pool.query(seedSql);
+      
+      console.log('[PostgreSQL] Executing seed_dongy.sql...');
+      await pool.query(seedDongySql);
+      
+      console.log('[PostgreSQL] Database schema and seeding initialized successfully.');
+    } else {
+      console.log('[PostgreSQL] Schema already initialized. Skipping creation.');
+    }
+
+    // Ensure chatbot specific medicines exist in PostgreSQL
+    console.log('[PostgreSQL] Ensuring chatbot specific medicines exist...');
+    await pool.query(`
+      INSERT INTO medicines (id, category_id, supplier_id, name, description, price, old_price, unit, origin, packaging, stock_quantity, image_url) VALUES
+      (601, 1, 3, 'TPBVSK Khương Thảo Đan Gold', 'Giúp giảm đau xương khớp, tái tạo sụn khớp, hỗ trợ giảm triệu chứng thoái hóa khớp.', 170000, 190000, 'Hộp', 'Việt Nam', 'Hộp 30 viên', 100, 'https://tmp.vn/storage/media/c03d3ce6-2187-43ca-a3ef-b32c1c3fca93.webp'),
+      (611, 1, 3, 'TPBVSK Bình Vị Thái Minh', 'Hỗ trợ giảm acid dịch vị, giảm trào ngược dạ dày thực quản, bảo vệ niêm mạc dạ dày.', 165000, 185000, 'Hộp', 'Việt Nam', 'Hộp 20 viên', 150, 'https://tmp.vn/storage/media/caeb95d2-f674-4b5f-8f83-d5d14dfbb500.webp'),
+      (620, 1, 3, 'Trà sâm 1700 Thái Minh', 'Bồi bổ sức khỏe, tăng cường đề kháng, giảm căng thẳng mệt mỏi từ sâm Lai Châu.', 180000, 200000, 'Hộp', 'Việt Nam', 'Hộp 20 gói', 80, 'https://tmp.vn/storage/media/ddfa6c2b-ea32-4467-b864-4e789bc44d03.webp'),
+      (631, 1, 3, 'Cốm Nhuận Tràng Gokids Thái Minh', 'Hỗ trợ nhuận tràng, bổ sung chất xơ, giảm táo bón cho trẻ nhỏ và người lớn.', 255000, 280000, 'Hộp', 'Việt Nam', 'Hộp 20 gói', 120, 'https://tmp.vn/storage/media/dd0f6dbe-907c-4e58-9352-82bffe5f842d.webp')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    
+    // Reset sequence just in case
+    await pool.query("SELECT setval('medicines_id_seq', COALESCE((SELECT MAX(id)+1 FROM medicines), 1), false);");
+  } catch (err) {
+    console.error('[PostgreSQL] Error initializing database schema:', err.message);
+  }
+}
+
+async function startServer() {
+  await ensureDatabaseExists();
+  await initializeDatabase();
+  server.listen(port, () => {
+    console.log(`Mock PostgREST server with Socket.io running at http://localhost:${port}`);
+  });
+}
+
+startServer();

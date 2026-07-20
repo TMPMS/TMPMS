@@ -31,6 +31,8 @@ namespace TMPMS.Controllers
             public string PaymentMethod { get; set; } = "";
             public decimal TotalAmount { get; set; }
             public List<OrderItemInput> Items { get; set; } = new();
+            public string DeliveryMethod { get; set; } = "Giao hàng hỏa tốc (Ship 2 Giờ)";
+            public decimal ShippingFee { get; set; }
         }
 
         [HttpPost("orders")]
@@ -39,7 +41,21 @@ namespace TMPMS.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Create order
+                // 1. Validate stock quantity
+                foreach (var item in request.Items)
+                {
+                    var medicine = await _context.Medicines.FindAsync(item.MedicineId);
+                    if (medicine == null)
+                    {
+                        return NotFound(new { error = $"Không tìm thấy thuốc với mã ID {item.MedicineId}." });
+                    }
+                    if (medicine.StockQuantity < item.Quantity)
+                    {
+                        return BadRequest(new { error = $"Sản phẩm '{medicine.Name}' hiện đã hết hàng hoặc không đủ số lượng tồn kho (Hiện còn: {medicine.StockQuantity})." });
+                    }
+                }
+
+                // 2. Create order
                 var order = new Order
                 {
                     UserId = request.UserId,
@@ -47,14 +63,22 @@ namespace TMPMS.Controllers
                     Status = "Pending",
                     ShippingAddress = request.ShippingAddress,
                     PaymentStatus = "Unpaid",
+                    DeliveryMethod = request.DeliveryMethod,
+                    ShippingFee = request.ShippingFee,
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
 
-                // 2. Add order items
+                // 3. Add order items & decrement stock quantity
                 foreach (var item in request.Items)
                 {
+                    var medicine = await _context.Medicines.FindAsync(item.MedicineId);
+                    if (medicine != null)
+                    {
+                        medicine.StockQuantity -= item.Quantity;
+                    }
+
                     var orderItem = new OrderItem
                     {
                         OrderId = order.Id,
@@ -110,6 +134,8 @@ namespace TMPMS.Controllers
                     o.Status,
                     o.ShippingAddress,
                     o.PaymentStatus,
+                    o.DeliveryMethod,
+                    o.ShippingFee,
                     o.CreatedAt,
                     Items = _context.OrderItems
                         .Where(oi => oi.OrderId == o.Id)
@@ -144,6 +170,8 @@ namespace TMPMS.Controllers
                     o.Status,
                     o.ShippingAddress,
                     o.PaymentStatus,
+                    o.DeliveryMethod,
+                    o.ShippingFee,
                     o.CreatedAt,
                     Username = _context.Users.Where(u => u.Id == o.UserId).Select(u => u.UserName).FirstOrDefault(),
                     Email = _context.Users.Where(u => u.Id == o.UserId).Select(u => u.Email).FirstOrDefault(),

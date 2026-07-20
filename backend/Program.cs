@@ -11,6 +11,7 @@ using System.Text.Json.Serialization;
 using TMPMS.Data;
 using TMPMS.Repositories;
 using TMPMS.Services;
+using TMPMS.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +20,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:5173", "https://tmpms.vercel.app", "http://127.0.0.1:5173")
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowAnyHeader()
+                  .AllowCredentials();
         });
 });
 
@@ -94,6 +96,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
     });
+
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<TrackingSimulationService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<TrackingSimulationService>());
 
 IConfiguration configuration = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -190,70 +196,10 @@ app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-
-    // Roles
-    var roles = new List<Role>
-    {
-        new Role { Name = "Admin", Description = "System Administrator" },
-        new Role { Name = "Pharmacy", Description = "Pharmacy Staff" },
-        new Role { Name = "User", Description = "Customer" }
-    };
-
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role.Name))
-        {
-            await roleManager.CreateAsync(role);
-        }
-    }
-
-    // Admin
-    if (await userManager.FindByEmailAsync("admin@tmpms.com") == null)
-    {
-        var admin = new User
-        {
-            UserName = "admin",
-            Email = "admin@tmpms.com",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await userManager.CreateAsync(admin, "Admin@123");
-        await userManager.AddToRoleAsync(admin, "Admin");
-    }
-
-    // Pharmacy
-    if (await userManager.FindByEmailAsync("pharmacy@tmpms.com") == null)
-    {
-        var pharmacy = new User
-        {
-            UserName = "pharmacy",
-            Email = "pharmacy@tmpms.com",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await userManager.CreateAsync(pharmacy, "Pharmacy@123");
-        await userManager.AddToRoleAsync(pharmacy, "Pharmacy");
-    }
-
-    // User
-    if (await userManager.FindByEmailAsync("user@tmpms.com") == null)
-    {
-        var user = new User
-        {
-            UserName = "user",
-            Email = "user@tmpms.com",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await userManager.CreateAsync(user, "User@123");
-        await userManager.AddToRoleAsync(user, "User");
-    }
+    await DatabaseInitializer.InitializeAsync(scope.ServiceProvider);
 }
+
+app.MapHub<TrackingHub>("/trackingHub");
 app.MapControllers();
 
 app.Run();

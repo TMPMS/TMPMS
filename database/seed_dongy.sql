@@ -59,7 +59,7 @@ INSERT INTO medicines (id, category_id, supplier_id, name, description, price, o
  'Bổ thận âm, điều trị thận âm hư, đau lưng mỏi gối, di tinh, ù tai, hoa mắt chóng mặt.',
  175000, 195000, 'Hộp', 10, 'Việt Nam', 'Hộp 200 viên', 95,
  '2026-01-05', '2029-01-05', FALSE,
- 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=400&h=400&fit=crop'),
+ 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=400&h=400&fit=crop'),
 
 (310, 3, 2, 'Bát Vị Quế Phụ OPC (Hộp 60 viên)',
  'Bổ thận dương, điều trị thận dương hư, đau lưng lạnh, tiểu đêm nhiều lần, liệt dương.',

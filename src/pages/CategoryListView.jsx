@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, SlidersHorizontal, ArrowUpDown, ChevronRight, X, RotateCcw, AlertCircle } from 'lucide-react';
-import { ProductCard } from './ProductSection';
+import { ProductCard } from '../components/ProductSection';
 import './CategoryListView.css';
 
 const supplierNames = {

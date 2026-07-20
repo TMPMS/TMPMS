@@ -24,7 +24,7 @@ export async function fetchCategories() {
   return res.json();
 }
 
-export async function fetchMedicines(categoryId = null, search = '') {
+export async function fetchMedicines(categoryId = null, search = '', limit = null, offset = null) {
   let url = `${API_URL}/medicines`;
   const params = [];
 
@@ -34,6 +34,12 @@ export async function fetchMedicines(categoryId = null, search = '') {
   if (search) {
     params.push(`name=ilike.*${encodeURIComponent(search)}*`);
   }
+  if (limit !== null) {
+    params.push(`limit=${limit}`);
+  }
+  if (offset !== null) {
+    params.push(`offset=${offset}`);
+  }
 
   if (params.length > 0) {
     url += `?${params.join('&')}`;
@@ -41,7 +47,18 @@ export async function fetchMedicines(categoryId = null, search = '') {
 
   const res = await fetch(url);
   if (!res.ok) throw new Error('Không thể tải danh sách thuốc');
-  return res.json();
+  const data = await res.json();
+  return data.map(m => ({
+    ...m,
+    stock_quantity: m.stockQuantity !== undefined ? m.stockQuantity : m.stock_quantity,
+    stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : m.stock_quantity,
+    image_url: m.imageUrl !== undefined ? m.imageUrl : m.image_url,
+    imageUrl: m.imageUrl !== undefined ? m.imageUrl : m.image_url,
+    requires_prescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
+    requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
+    old_price: m.oldPrice !== undefined ? m.oldPrice : m.old_price,
+    oldPrice: m.oldPrice !== undefined ? m.oldPrice : m.old_price,
+  }));
 }
 
 export async function loginUser(username, password) {
@@ -156,6 +173,22 @@ export async function syncCart(userId, items) {
   if (!res.ok) throw new Error('Không thể đồng bộ giỏ hàng');
 }
 
+export async function fetchCarts(userId) {
+  const res = await fetch(`${API_URL}/carts?user_id=eq.${userId}`);
+  if (!res.ok) throw new Error('Không thể tải danh sách giỏ hàng');
+  return res.json();
+}
+
+export async function createCart(userId) {
+  const res = await fetch(`${API_URL}/carts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  if (!res.ok) throw new Error('Không thể tạo giỏ hàng mới');
+  return res.json();
+}
+
 export async function fetchCartItems(cartId) {
   const res = await fetch(`${API_URL}/cart_items?cart_id=eq.${cartId}`);
   if (!res.ok) throw new Error('Không thể tải vật phẩm giỏ hàng');
@@ -200,7 +233,24 @@ export async function createOrder(orderData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(orderData),
   });
-  if (!res.ok) throw new Error('Không thể tạo đơn hàng');
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.error || errorData.message || 'Không thể tạo đơn hàng');
+    } catch (e) {
+      throw new Error(e.message || 'Không thể tạo đơn hàng');
+    }
+  }
+  return res.json();
+}
+
+export async function calculateShipping(address, deliveryMethod) {
+  const res = await fetch(`${API_URL}/api/shipping/calculate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address, deliveryMethod }),
+  });
+  if (!res.ok) throw new Error('Không thể tính phí vận chuyển');
   return res.json();
 }
 
@@ -570,6 +620,16 @@ export async function updateMyProfile(data) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error('Không thể cập nhật hồ sơ');
+  return res.json();
+}
+
+export async function askAiChatbot(messageText) {
+  const res = await fetch(`${API_URL}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: messageText }),
+  });
+  if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
 }
 

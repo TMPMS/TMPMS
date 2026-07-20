@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, CheckCircle2, ShieldAlert, FileText } from 'lucide-react';
-import { createPrescription } from '../services/api';
+import { createPrescription } from '../../services/api';
 import './UploadPrescriptionModal.css';
 
 const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {

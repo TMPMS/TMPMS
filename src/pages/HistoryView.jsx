@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
+import OrderTrackingView from '../components/OrderTrackingView';
 import './HistoryView.css';
 
 const HistoryView = () => {
@@ -8,6 +9,7 @@ const HistoryView = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTrackingOrder, setActiveTrackingOrder] = useState(null);
 
   useEffect(() => {
     const getHistory = async () => {
@@ -132,14 +134,45 @@ const HistoryView = () => {
                 <div className="order-shipping-address">
                   <strong>Địa chỉ giao hàng:</strong> {order.shipping_address || order.shippingAddress}
                 </div>
-                <div className="order-total-block">
-                  <span className="total-label">Tổng tiền đơn hàng:</span>
-                  <span className="total-val">{formatPrice(order.total_amount || order.totalAmount)}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                  <button 
+                    className="track-shipper-btn"
+                    onClick={() => setActiveTrackingOrder(order)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#0f766e',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0d9488'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0f766e'}
+                  >
+                    🏍️ Theo dõi Shipper
+                  </button>
+                  <div className="order-total-block">
+                    <span className="total-label">Tổng tiền đơn hàng:</span>
+                    <span className="total-val">{formatPrice(order.total_amount || order.totalAmount)}</span>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+      
+      {activeTrackingOrder && (
+        <OrderTrackingView 
+          order={activeTrackingOrder} 
+          onClose={() => setActiveTrackingOrder(null)} 
+        />
       )}
     </div>
   );

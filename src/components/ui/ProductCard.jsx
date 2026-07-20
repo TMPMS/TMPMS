@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
 import { ShoppingCart, Star, Leaf, Eye } from 'lucide-react';
 import './ProductCard.css';
 
@@ -41,7 +41,7 @@ const StarRating = ({ rating }) => {
   );
 };
 
-const ProductCard = ({ product, isFlashSale }) => {
+const ProductCard = ({ product, isFlashSale, onProductClick }) => {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -100,11 +100,15 @@ const ProductCard = ({ product, isFlashSale }) => {
       )}
 
       {/* Image */}
-      <div className="product-image">
+      <div 
+        className="product-image"
+        onClick={onProductClick ? () => onProductClick(product) : undefined}
+        style={onProductClick ? { cursor: 'pointer' } : {}}
+      >
         <img src={product.image} alt={product.name} loading="lazy" />
         {hovered && !isFlashSale && (
-          <div className="pc-image-overlay">
-            <button className="pc-quick-view" onClick={handleAddToCart}>
+          <div className="pc-image-overlay" onClick={(e) => e.stopPropagation()}>
+            <button className="pc-quick-view" onClick={onProductClick ? () => onProductClick(product) : undefined}>
               <Eye size={14} /> Xem nhanh
             </button>
           </div>
@@ -117,16 +121,19 @@ const ProductCard = ({ product, isFlashSale }) => {
       {/* Info */}
       <div className="product-info">
         <StarRating rating={rating} />
-        <h3 className="product-name" title={product.name}>{product.name}</h3>
+        <h3 
+          className="product-name" 
+          title={product.name}
+          onClick={onProductClick ? () => onProductClick(product) : undefined}
+          style={onProductClick ? { cursor: 'pointer' } : {}}
+        >{product.name}</h3>
         {product.packaging && (
           <p className="pc-packaging">{product.packaging}</p>
         )}
 
         <div className="product-price-container">
           <span className="product-price">
-            {isFlashSale
-              ? formatMaskedPrice(product.price)
-              : product.price.toLocaleString('vi-VN') + 'đ'}
+            {product.price.toLocaleString('vi-VN') + 'đ'}
             {!isFlashSale && <span className="pc-unit">/{product.unit || 'Hộp'}</span>}
           </span>
           {product.oldPrice && (
@@ -140,16 +147,26 @@ const ProductCard = ({ product, isFlashSale }) => {
       {/* Action */}
       {!isFlashSale && (
         <div className="product-action">
-          <button
-            className={`btn-add-cart${added ? ' btn-add-cart--added' : ''}${dongy ? ' btn-add-cart--dongy' : ''}`}
-            onClick={handleAddToCart}
-          >
-            {added ? (
-              <>✓ Đã thêm</>
-            ) : (
-              <><ShoppingCart size={14} /> Chọn mua</>
-            )}
-          </button>
+          {product.stockQuantity <= 0 ? (
+            <button
+              className="btn-add-cart"
+              disabled
+              style={{ background: '#cccccc', color: '#666666', cursor: 'not-allowed', width: '100%', border: 'none', padding: '8px 12px', borderRadius: '20px', fontWeight: 'bold' }}
+            >
+              Hết hàng
+            </button>
+          ) : (
+            <button
+              className={`btn-add-cart${added ? ' btn-add-cart--added' : ''}${dongy ? ' btn-add-cart--dongy' : ''}`}
+              onClick={handleAddToCart}
+            >
+              {added ? (
+                <>✓ Đã thêm</>
+              ) : (
+                <><ShoppingCart size={14} /> Chọn mua</>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>

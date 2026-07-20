@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, ShoppingCart } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
+import { askAiChatbot } from '../../services/api';
 import './AIChatbot.css';
 
 const MOCK_PRODUCTS = {
@@ -25,14 +26,14 @@ const AIChatbot = () => {
   
   const { addToCart } = useCart();
   const chatEndRef = useRef(null);
-
+ 
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isTyping]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!inputVal.trim()) return;
 
@@ -44,38 +45,30 @@ const AIChatbot = () => {
     };
 
     setMessages(prev => [...prev, userMsg]);
+    const currentInput = inputVal;
     setInputVal('');
     setIsTyping(true);
 
-    // Mock bot response logic after 1.5s
-    setTimeout(() => {
+    try {
+      const data = await askAiChatbot(currentInput);
       setIsTyping(false);
-      let replyText = 'Tôi đã nhận được thông tin. Bạn có thể cho tôi biết rõ hơn về thời gian bị triệu chứng này không? Để hỗ trợ nhanh nhất, hãy thử hỏi về các triệu chứng như "đau khớp", "dạ dày", "mệt mỏi", hoặc "táo bón".';
-      let recommendedProduct = null;
-
-      const lowerText = userMsg.text.toLowerCase();
-      if (lowerText.includes('khớp') || lowerText.includes('lưng') || lowerText.includes('vai gáy') || lowerText.includes('khương thảo đan')) {
-        replyText = 'Đối với các triệu chứng đau nhức xương khớp, thoái hóa khớp, tôi khuyên dùng viên uống Khương Thảo Đan Gold của Thái Minh giúp giảm đau xương khớp, tái tạo sụn khớp hiệu quả.';
-        recommendedProduct = MOCK_PRODUCTS.khop;
-      } else if (lowerText.includes('dạ dày') || lowerText.includes('trào ngược') || lowerText.includes('bụng') || lowerText.includes('bình vị')) {
-        replyText = 'Triệu chứng trào ngược dạ dày, viêm loét dạ dày có thể được hỗ trợ cải thiện rất tốt nhờ Bình Vị Thái Minh giúp giảm tiết acid, bảo vệ niêm mạc dạ dày.';
-        recommendedProduct = MOCK_PRODUCTS.daday;
-      } else if (lowerText.includes('mệt mỏi') || lowerText.includes('sâm') || lowerText.includes('yếu') || lowerText.includes('sinh lực')) {
-        replyText = 'Để bồi bổ sức khỏe, tăng cường sinh lực và tăng sức đề kháng chống mệt mỏi, Trà Sâm 1700 Thái Minh (chứa sâm Lai Châu cực quý) là sự lựa chọn tuyệt vời.';
-        recommendedProduct = MOCK_PRODUCTS.sam;
-      } else if (lowerText.includes('táo bón') || lowerText.includes('tiêu hóa') || lowerText.includes('phân cứng') || lowerText.includes('gokids')) {
-        replyText = 'Bé hoặc người lớn bị táo bón, khó đi ngoài nên bổ sung Cốm Nhuận Tràng Gokids Thái Minh giúp làm mềm phân, kích thích nhu động ruột an toàn.';
-        recommendedProduct = MOCK_PRODUCTS.taobon;
-      }
-
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: replyText,
-        product: recommendedProduct,
+        text: data.text,
+        product: data.product,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
-    }, 1200);
+    } catch (err) {
+      console.error(err);
+      setIsTyping(false);
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: 'Có lỗi xảy ra khi kết nối tới Trợ lý Dược sĩ AI. Xin vui lòng thử lại sau!',
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      }]);
+    }
   };
 
   const handleAddToCart = (product) => {

@@ -17,8 +17,23 @@ export const CartProvider = ({ children }) => {
   // Load cart from DB when user logs in, or from localStorage when guest
   useEffect(() => {
     const loadCart = async () => {
-      if (user && user.cart_id) {
+      if (user) {
         try {
+          // Always fetch active cart from DB using user.id to avoid stale cached IDs
+          const carts = await api.fetchCarts(user.id);
+          let cartId;
+          if (carts && carts.length > 0) {
+            cartId = carts[0].id;
+          } else {
+            // Create a new cart
+            const newCart = await api.createCart(user.id);
+            cartId = newCart.id;
+          }
+
+          // Update user object to persist resolved cartId
+          user.cart_id = cartId;
+          localStorage.setItem('user', JSON.stringify(user));
+
           // If we had guest items, sync them to database first
           const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
           if (guestItems.length > 0) {
@@ -27,7 +42,7 @@ export const CartProvider = ({ children }) => {
           }
 
           // Fetch items from DB
-          const dbItems = await api.fetchCartItems(user.cart_id);
+          const dbItems = await api.fetchCartItems(cartId);
           // Map DB items to standard format (id, name, price, quantity, etc.)
           const mappedItems = dbItems.map(item => ({
             db_item_id: item.id, // Keep reference to cart_items.id for updates/deletes
@@ -60,17 +75,18 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = useCallback(async (product) => {
     let showToastMessage = `Đã thêm ${product.name} vào giỏ hàng`;
+    const cartId = user ? (user.cart_id || user.cartId) : null;
     
-    if (user && user.cart_id) {
+    if (user && cartId) {
       try {
         const existing = cartItems.find(item => item.id === product.id);
         const newQty = existing ? existing.quantity + 1 : 1;
         
         // Add or update item in DB
-        await api.addCartItem(user.cart_id, product.id, newQty);
+        await api.addCartItem(cartId, product.id, newQty);
         
         // Re-fetch cart items to get updated state and database item IDs
-        const dbItems = await api.fetchCartItems(user.cart_id);
+        const dbItems = await api.fetchCartItems(cartId);
         const mappedItems = dbItems.map(item => ({
           db_item_id: item.id,
           id: item.medicine.id,
@@ -106,7 +122,9 @@ export const CartProvider = ({ children }) => {
       return removeFromCart(productId);
     }
     
-    if (user && user.cart_id) {
+    const cartId = user ? (user.cart_id || user.cartId) : null;
+    
+    if (user && cartId) {
       try {
         const item = cartItems.find(x => x.id === productId);
         if (item && item.db_item_id) {
@@ -122,7 +140,9 @@ export const CartProvider = ({ children }) => {
   }, [user, cartItems]);
 
   const removeFromCart = useCallback(async (productId) => {
-    if (user && user.cart_id) {
+    const cartId = user ? (user.cart_id || user.cartId) : null;
+    
+    if (user && cartId) {
       try {
         const item = cartItems.find(x => x.id === productId);
         if (item && item.db_item_id) {
