@@ -1,16 +1,27 @@
-# React + Vite
+# TMPMS - Hệ Thống Nhà Thuốc Long Châu Clone
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ứng dụng quản lý nhà thuốc và bán hàng trực tuyến kết hợp AI Trợ lý Dược sĩ và theo dõi đơn hàng thời gian thực.
 
-Currently, two official plugins are available:
+## Công nghệ sử dụng
+- **Frontend:** React + Vite, TailwindCSS / Vanilla CSS, Lucide Icons
+- **Backend Node.js:** Express + Socket.io + PostgreSQL
+- **Backend C#:** .NET 8 Web API + Entity Framework Core + SignalR
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Hướng dẫn cài đặt và chạy ứng dụng
 
-## React Compiler
+### 1. Frontend React
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Express Backend (Node.js + PostgreSQL)
+```bash
+node server.cjs
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 3. .NET Core Backend (C#)
+```bash
+cd backend
+dotnet run
+```
