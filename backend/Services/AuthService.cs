@@ -12,6 +12,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TMPMS.DTOs;
 using TMPMS.Models;
@@ -46,8 +47,18 @@ namespace TMPMS.Services
         // ---------- REGISTER ----------
         public async Task<AuthResponseDTO> Register(RegisterRequestDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.UserName) || !Regex.IsMatch(dto.UserName, "^[A-Za-z]+$"))
+                throw new ArgumentException("Tên đăng nhập chỉ được chứa chữ cái, không có số, khoảng trắng hoặc ký tự đặc biệt.");
+
+            if (string.IsNullOrEmpty(dto.Password) ||
+                !Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,}$"))
+                throw new ArgumentException("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+
             if (dto.Password != dto.ConfirmPassword)
                 throw new ArgumentException("Mật khẩu xác nhận không khớp.");
+
+            if (string.IsNullOrWhiteSpace(dto.Phone) || !Regex.IsMatch(dto.Phone, "^0[0-9]{9}$"))
+                throw new ArgumentException("Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.");
 
             var existing = await _userManager.FindByEmailAsync(dto.Email);
             if (existing != null)
@@ -77,15 +88,10 @@ namespace TMPMS.Services
         // ---------- LOGIN ----------
         public async Task<AuthResponseDTO> Login(LoginRequestDTO dto, string ipAddress)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user == null)
-            {
-                user = await _userManager.FindByNameAsync(dto.Email);
-            }
-            if (user == null)
-            {
-                user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.Email);
-            }
+            if (string.IsNullOrWhiteSpace(dto.UserName) || !Regex.IsMatch(dto.UserName, "^[A-Za-z]+$"))
+                return null;
+
+            var user = await _userManager.FindByNameAsync(dto.UserName);
             if (user == null || !user.IsActive)
                 return null;
 

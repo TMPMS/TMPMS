@@ -33,7 +33,7 @@ namespace TMPMS.Controllers
             try
             {
                 var result = await _authService.Login(dto, GetIp());
-                if (result == null) return Unauthorized("Email hoặc mật khẩu không đúng.");
+                if (result == null) return Unauthorized("Tên đăng nhập hoặc mật khẩu không đúng.");
                 return Ok(result);
             }
             catch (InvalidOperationException ex) { return StatusCode(423, ex.Message); } // Locked

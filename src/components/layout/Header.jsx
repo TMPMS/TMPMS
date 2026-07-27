@@ -5,9 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
 import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
 import { fetchMedicines } from '../../services/api';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { auth, isFirebaseConfigured } from '../../services/firebase';
 import './Header.css';
+
+const USERNAME_PATTERN = /^[A-Za-z]+$/;
+const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,}$/;
 
 const categories = [
   { label: 'Thực phẩm chức năng', sub: ['Vitamin & Khoáng chất', 'Bổ não', 'Hỗ trợ gan', 'Đẹp da'] },
@@ -24,7 +25,7 @@ const categories = [
 
 const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
-  const { user, login, loginByOtp, sendOtp, register, logout } = useAuth();
+  const { user, login, register, logout } = useAuth();
   
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -38,13 +39,6 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [authError, setAuthError] = useState('');
-
-  // Login by Phone OTP states
-  const [loginMethod, setLoginMethod] = useState('password'); // 'password' | 'otp'
-  const [phoneForOtp, setPhoneForOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
 
   // Voice & Image Search states
   const [isVoiceSearchOpen, setIsVoiceSearchOpen] = useState(false);
@@ -61,21 +55,8 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
 
-  // Dọn dẹp recaptcha và reset các trường nhập liệu khi đóng modal đăng nhập
   useEffect(() => {
     if (!isAuthModalOpen) {
-      if (window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier.clear();
-        } catch (e) {
-          console.warn('Error clearing recaptcha verifier:', e);
-        }
-        window.recaptchaVerifier = null;
-      }
-      setOtpSent(false);
-      setOtpCode('');
-      setPhoneForOtp('');
-      setOtpSuccessMsg('');
       setAuthError('');
     }
   }, [isAuthModalOpen]);
@@ -207,111 +188,23 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setPassword('');
     setEmail('');
     setPhone('');
-    setLoginMethod('password');
-    setPhoneForOtp('');
-    setOtpSent(false);
-    setOtpCode('');
-    setOtpSuccessMsg('');
     setIsAuthModalOpen(true);
-  };
-
-  // OTP Login flow (support Firebase Phone Auth & Fallbacks)
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-    if (!phoneForOtp.trim()) {
-      setAuthError('Vui lòng nhập số điện thoại!');
-      return;
-    }
-    
-    setAuthError('');
-    
-    // Nếu có cấu hình Firebase thực tế
-    if (isFirebaseConfigured) {
-      try {
-        let formattedPhone = phoneForOtp.trim();
-        if (formattedPhone.startsWith('0')) {
-          formattedPhone = '+84' + formattedPhone.substring(1);
-        }
-        
-        // Khởi tạo Recaptcha ẩn (luôn tạo mới để tránh lỗi DOM element bị xóa)
-        if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-          } catch (e) {
-            console.warn('Error clearing recaptcha verifier:', e);
-          }
-          window.recaptchaVerifier = null;
-        }
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: () => {
-            console.log('Recaptcha verified');
-          }
-        });
-        
-        const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
-        window.confirmationResult = confirmationResult;
-        
-        setOtpSent(true);
-        setOtpSuccessMsg('Mã OTP của Google Firebase đã được gửi tới số điện thoại của bạn!');
-      } catch (err) {
-        setAuthError('Lỗi Firebase: ' + err.message);
-      }
-    } else {
-      // Fallback sang Twilio / Mock SMS
-      try {
-        await sendOtp(phoneForOtp);
-        setOtpSent(true);
-        setOtpSuccessMsg('Yêu cầu gửi mã OTP thành công! Vui lòng nhập mã OTP nhận được trong tin nhắn điện thoại.');
-      } catch (err) {
-        console.warn('Twilio SMS delivery failed, falling back to mock OTP:', err);
-        setOtpSent(true);
-        setOtpSuccessMsg('Tài khoản Twilio Trial chưa xác minh số điện thoại này. Hệ thống tự động chuyển sang chế độ thử nghiệm (sử dụng mã OTP mặc định: 123456).');
-      }
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    
-    if (isFirebaseConfigured && window.confirmationResult) {
-      try {
-        setAuthError('');
-        const result = await window.confirmationResult.confirm(otpCode);
-        const firebaseUser = result.user;
-        
-        // Gửi thông tin SĐT đã xác thực về Backend của bạn để lưu phiên/đăng ký
-        const loggedInUser = await loginByOtp(firebaseUser.phoneNumber, '123456');
-        setIsAuthModalOpen(false);
-        if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
-          onNavigate('admin');
-        }
-      } catch (err) {
-        setAuthError('Lỗi xác thực OTP Firebase: ' + err.message);
-      }
-    } else {
-      // Fallback
-      if (otpCode !== '123456') {
-        setAuthError('Mã OTP không chính xác. Vui lòng nhập 123456 để thử nghiệm.');
-        return;
-      }
-
-      try {
-        setAuthError('');
-        const loggedInUser = await loginByOtp(phoneForOtp, otpCode);
-        setIsAuthModalOpen(false);
-        if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
-          onNavigate('admin');
-        }
-      } catch (err) {
-        setAuthError('Lỗi đăng nhập bằng OTP: ' + err.message);
-      }
-    }
   };
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+
+    if (!USERNAME_PATTERN.test(username)) {
+      setAuthError('Tên đăng nhập chỉ được chứa chữ cái, không có số, khoảng trắng hoặc ký tự đặc biệt.');
+      return;
+    }
+
+    if (authMode === 'register' && !PASSWORD_PATTERN.test(password)) {
+      setAuthError('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+      return;
+    }
+
     try {
       if (authMode === 'login') {
         const loggedInUser = await login(username, password);
@@ -588,125 +481,75 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               {authMode === 'login' ? 'Đăng nhập tài khoản' : 'Đăng ký tài khoản'}
             </h3>
             
-            {/* Login tabs for Password vs SĐT */}
-            {authMode === 'login' && (
-              <div className="auth-method-tabs">
-                <button 
-                  type="button" 
-                  className={`auth-tab-btn ${loginMethod === 'password' ? 'active' : ''}`}
-                  onClick={() => { setLoginMethod('password'); setAuthError(''); }}
-                >
-                  Dùng mật khẩu
-                </button>
-                <button 
-                  type="button" 
-                  className={`auth-tab-btn ${loginMethod === 'otp' ? 'active' : ''}`}
-                  onClick={() => { setLoginMethod('otp'); setAuthError(''); }}
-                >
-                  Dùng Số điện thoại (OTP)
-                </button>
-              </div>
-            )}
-
             {authError && <div className="auth-error">{authError}</div>}
-            {otpSuccessMsg && <div className="auth-success-toast">{otpSuccessMsg}</div>}
-            
-            {authMode === 'login' && loginMethod === 'otp' ? (
-              /* Phone OTP Login Form */
-              <form className="auth-form" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
-                {!otpSent ? (
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Số điện thoại *</label>
-                    <input 
-                      type="tel" 
-                      className="auth-input" 
-                      required 
-                      value={phoneForOtp}
-                      onChange={(e) => setPhoneForOtp(e.target.value)}
-                      placeholder="Nhập số điện thoại của bạn" 
-                    />
-                    <button type="submit" className="auth-submit-btn">
-                      Gửi mã OTP đăng nhập
-                    </button>
-                  </div>
-                ) : (
-                  <div className="auth-input-group animate-fade-in">
-                    <label className="auth-input-label">Mã xác thực OTP *</label>
-                    <input 
-                      type="text" 
-                      className="auth-input" 
-                      required 
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
-                      placeholder="Nhập mã OTP (123456)" 
-                    />
-                    <button type="submit" className="auth-submit-btn font-bold">
-                      Xác nhận đăng nhập OTP ✔
-                    </button>
-                    <span className="otp-resend-tip" onClick={() => setOtpSent(false)}>← Đổi số điện thoại khác</span>
-                  </div>
-                )}
-                <div id="recaptcha-container"></div>
-              </form>
-            ) : (
-              /* Password Login & Register Form */
-              <form className="auth-form" onSubmit={handleAuthSubmit}>
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
+              <div className="auth-input-group">
+                <label className="auth-input-label">Tên tài khoản</label>
+                <input
+                  type="text"
+                  className="auth-input"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  pattern="[A-Za-z]+"
+                  title="Tên đăng nhập chỉ được chứa chữ cái."
+                  placeholder="Ví dụ: nguyenvana"
+                />
+                <span className="auth-field-hint">Chỉ dùng chữ cái, không có số hoặc ký tự đặc biệt.</span>
+              </div>
+
+              {authMode === 'register' && (
                 <div className="auth-input-group">
-                  <label className="auth-input-label">Tên tài khoản</label>
-                  <input 
-                    type="text" 
+                  <label className="auth-input-label">Email</label>
+                  <input
+                    type="email"
                     className="auth-input" 
                     required 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Nhập tên đăng nhập" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@gmail.com"
                   />
                 </div>
+              )}
 
+              <div className="auth-input-group">
+                <label className="auth-input-label">Mật khẩu</label>
+                <input
+                  type="password"
+                  className="auth-input"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu"
+                />
                 {authMode === 'register' && (
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Email</label>
-                    <input 
-                      type="email" 
-                      className="auth-input" 
-                      required 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@gmail.com" 
-                    />
-                  </div>
+                  <span className="auth-field-hint">
+                    Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
+                  </span>
                 )}
+              </div>
 
+              {authMode === 'register' && (
                 <div className="auth-input-group">
-                  <label className="auth-input-label">Mật khẩu</label>
-                  <input 
-                    type="password" 
-                    className="auth-input" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu" 
+                  <label className="auth-input-label">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    className="auth-input"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    pattern="0[0-9]{9}"
+                    inputMode="numeric"
+                    title="Số điện thoại gồm 10 chữ số và bắt đầu bằng số 0."
+                    placeholder="Ví dụ: 0912345678"
                   />
                 </div>
+              )}
 
-                {authMode === 'register' && (
-                  <div className="auth-input-group">
-                    <label className="auth-input-label">Số điện thoại</label>
-                    <input 
-                      type="tel" 
-                      className="auth-input" 
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Nhập số điện thoại" 
-                    />
-                  </div>
-                )}
-
-                <button type="submit" className="auth-submit-btn">
-                  {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
-                </button>
-              </form>
-            )}
+              <button type="submit" className="auth-submit-btn">
+                {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+              </button>
+            </form>
 
             <p className="auth-switch-text">
               {authMode === 'login' ? (
