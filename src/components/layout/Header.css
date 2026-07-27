@@ -494,6 +494,12 @@
   border: 1px solid #fee2e2;
 }
 
+.auth-field-hint {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* User Account Dropdown */
 .user-menu-container {
   position: relative;
@@ -651,61 +657,6 @@
 .presc-upload-btn:hover {
   background: rgba(255, 255, 255, 0.15) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
-}
-
-/* ============ LOGIN BY PHONE OTP TABS ============ */
-.auth-method-tabs {
-  display: flex;
-  background: #f1f5f9;
-  border-radius: 10px;
-  padding: 4px;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.auth-tab-btn {
-  flex: 1;
-  border: none;
-  background: none;
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  padding: 8px 0;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.auth-tab-btn.active {
-  background: #ffffff;
-  color: #0d9488;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.auth-success-toast {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.otp-resend-tip {
-  display: block;
-  font-size: 12px;
-  color: #0d9488;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 10px;
-  text-align: center;
-}
-
-.otp-resend-tip:hover {
-  text-decoration: underline;
 }
 
 /* ============ VOICE & IMAGE SEARCH MODAL OVERLAYS ============ */
@@ -918,6 +869,5 @@
   color: #0d9488;
   margin: 0;
 }
-
 
 

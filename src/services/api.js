@@ -65,7 +65,7 @@ export async function loginUser(username, password) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: username, password: password }),
+    body: JSON.stringify({ userName: username, password }),
   });
   if (!res.ok) {
     const err = await res.text();
@@ -134,7 +134,7 @@ export async function registerUser(username, email, password, phone) {
       password: password,
       confirmPassword: password,
       roleName: 'User',
-      phone: phone
+      phone
     }),
   });
   if (!res.ok) {
@@ -632,5 +632,3 @@ export async function askAiChatbot(messageText) {
   if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
 }
-
-
