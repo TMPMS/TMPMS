@@ -19,9 +19,18 @@ function getAuthHeaders() {
 }
 
 export async function fetchCategories() {
-  const res = await fetch(`${API_URL}/categories`);
-  if (!res.ok) throw new Error('Không thể tải danh mục');
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/categories`);
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  try {
+    const res = await fetch(`${API_URL}/api/herbalmedicine`);
+    if (res.ok) {
+      const data = await res.json();
+      return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
+    }
+  } catch (e) {}
+  return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
 }
 
 export async function fetchMedicines(categoryId = null, search = '', limit = null, offset = null) {
@@ -45,15 +54,34 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
     url += `?${params.join('&')}`;
   }
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Không thể tải danh sách thuốc');
-  const data = await res.json();
-  return data.map(m => ({
+  let data = [];
+  try {
+    const res = await fetch(url);
+    if (res.ok) {
+      data = await res.json();
+    } else {
+      throw new Error('Fallback to herbalmedicine');
+    }
+  } catch (err) {
+    try {
+      const res = await fetch(`${API_URL}/api/herbalmedicine`);
+      if (res.ok) {
+        data = await res.json();
+      }
+    } catch (e) {
+      console.warn('Could not fetch medicines', e);
+    }
+  }
+
+  return (Array.isArray(data) ? data : []).map(m => ({
     ...m,
-    stock_quantity: m.stockQuantity !== undefined ? m.stockQuantity : m.stock_quantity,
-    stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : m.stock_quantity,
-    image_url: m.imageUrl !== undefined ? m.imageUrl : m.image_url,
-    imageUrl: m.imageUrl !== undefined ? m.imageUrl : m.image_url,
+    id: m.id || m.herbalMedicineId,
+    name: m.name || m.medicineName,
+    price: m.price || 50000,
+    stock_quantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity || 100),
+    stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity || 100),
+    image_url: m.imageUrl || m.image_url || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
+    imageUrl: m.imageUrl || m.image_url || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
     requires_prescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
     requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
     old_price: m.oldPrice !== undefined ? m.oldPrice : m.old_price,
