@@ -104,38 +104,25 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
     url += `?${params.join('&')}`;
   }
 
-  let data = [];
-  try {
-    const res = await fetch(url);
-    if (res.ok) {
-      data = await res.json();
-    } else {
-      throw new Error('Fallback to herbalmedicine');
-    }
-  } catch (err) {
-    try {
-      const res = await fetch(`${API_URL}/api/herbalmedicine`);
-      if (res.ok) {
-        data = await res.json();
-      }
-    } catch (e) {
-      console.warn('Could not fetch medicines', e);
-    }
-  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Không thể tải danh sách dược phẩm');
+  const data = await res.json();
 
   return (Array.isArray(data) ? data : []).map(m => ({
     ...m,
-    id: m.id || m.herbalMedicineId,
-    name: m.name || m.medicineName,
-    price: m.price || 50000,
-    stock_quantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity || 100),
-    stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity || 100),
-    image_url: m.imageUrl || m.image_url || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
-    imageUrl: m.imageUrl || m.image_url || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
-    requires_prescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
-    requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : m.requires_prescription,
-    old_price: m.oldPrice !== undefined ? m.oldPrice : m.old_price,
-    oldPrice: m.oldPrice !== undefined ? m.oldPrice : m.old_price,
+    id: m.id || m.Id,
+    name: m.name || m.Name,
+    price: m.price !== undefined ? m.price : m.Price,
+    old_price: m.old_price !== undefined ? m.old_price : m.OldPrice,
+    oldPrice: m.old_price !== undefined ? m.old_price : m.OldPrice,
+    stock_quantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0),
+    stockQuantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0),
+    image_url: m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
+    imageUrl: m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
+    packaging: m.packaging || m.Packaging,
+    unit: m.unit || m.Unit,
+    requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription,
+    requiresPrescription: m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription
   }));
 }
 
