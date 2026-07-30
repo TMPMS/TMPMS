@@ -128,22 +128,26 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
   if (!res.ok) throw new Error('Không thể tải danh sách dược phẩm');
   const data = await res.json();
 
-  return (Array.isArray(data) ? data : []).map(m => ({
-    ...m,
-    id: m.id || m.Id,
-    name: m.name || m.Name,
-    price: m.price !== undefined ? m.price : m.Price,
-    old_price: m.old_price !== undefined ? m.old_price : m.OldPrice,
-    oldPrice: m.old_price !== undefined ? m.old_price : m.OldPrice,
-    stock_quantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0),
-    stockQuantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0),
-    image_url: m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
-    imageUrl: m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500',
-    packaging: m.packaging || m.Packaging,
-    unit: m.unit || m.Unit,
-    requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription,
-    requiresPrescription: m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription
-  }));
+  return (Array.isArray(data) ? data : []).map(m => {
+    const imgUrl = m.imageUrl || m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500';
+    return {
+      ...m,
+      id: m.id || m.Id,
+      name: m.name || m.Name,
+      price: m.price !== undefined ? m.price : (m.Price !== undefined ? m.Price : 0),
+      old_price: m.old_price !== undefined ? m.old_price : m.OldPrice,
+      oldPrice: m.oldPrice !== undefined ? m.oldPrice : (m.old_price !== undefined ? m.old_price : m.OldPrice),
+      stock_quantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.stockQuantity !== undefined ? m.stockQuantity : (m.StockQuantity || 0)),
+      stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0)),
+      image_url: imgUrl,
+      imageUrl: imgUrl,
+      image: imgUrl,
+      packaging: m.packaging || m.Packaging,
+      unit: m.unit || m.Unit,
+      requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : (m.requiresPrescription !== undefined ? m.requiresPrescription : m.RequiresPrescription),
+      requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : (m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription)
+    };
+  });
 }
 
 export async function loginUser(username, password) {
