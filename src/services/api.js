@@ -380,7 +380,9 @@ export async function fetchSuppliers() {
 }
 
 export async function fetchWarehouses() {
-  const res = await fetch(`${API_URL}/warehouses-info`);
+  const res = await fetch(`${API_URL}/api/Warehouse`, {
+    headers: getAuthHeaders()
+  });
   if (!res.ok) throw new Error('Không thể tải danh sách nhà kho');
   return res.json();
 }
