@@ -1,5 +1,5 @@
 /* ============================================================
-   SELF DIAGNOSIS & HEALTH ADVISORY COMPONENT
+   SELF DIAGNOSIS & HEALTH ADVISORY COMPONENT (WIZARD 10 CÂU HỎI)
    ============================================================ */
 
 .self-diagnosis-container {
@@ -31,7 +31,26 @@
   color: #0f766e;
 }
 
-/* Diagnosis Main Card */
+/* Loading state */
+.loading-state-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 60px 20px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.03);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: #0d9488;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Diagnosis Main Cards */
 .diag-quiz-card, .diag-result-card {
   background: #fff;
   border-radius: 24px;
@@ -46,127 +65,193 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Quiz Header */
+/* Quiz Header & Progress Bar */
 .quiz-header {
-  text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+}
+
+.quiz-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .pulse-icon {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   color: #0d9488;
-  animation: heartPulse 1.8s infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes heartPulse {
-  0% { transform: scale(1); }
-  15% { transform: scale(1.12); }
-  30% { transform: scale(1); }
-  45% { transform: scale(1.15); }
-  60% { transform: scale(1); }
+  flex-shrink: 0;
 }
 
 .quiz-header h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   color: #0f766e;
-  margin: 0 0 8px 0;
+  margin: 0;
   letter-spacing: -0.5px;
 }
 
 .quiz-header p {
-  font-size: 14px;
+  font-size: 13.5px;
   color: #64748b;
-  margin: 0 auto;
-  max-width: 580px;
+  margin: 0 0 20px 0;
   line-height: 1.5;
 }
 
-/* Symptoms Selection Grid */
-.symptoms-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 32px;
+.progress-bar-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
 }
 
-.symptom-item {
+.progress-bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0d9488;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0d9488 0%, #059669 100%);
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+/* Question Wizard Step */
+.question-wizard-step {
+  margin-bottom: 24px;
+}
+
+.category-tag {
+  display: inline-block;
+  background-color: #f0fdf4;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid #a7f3d0;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wizard-question-text {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.4;
+  margin: 0 0 20px 0;
+}
+
+/* Options List Buttons */
+.wizard-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wizard-option-btn {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1.5px solid #e2e8f0;
+  background-color: #fff;
   cursor: pointer;
-  transition: all 0.22s ease;
-  user-select: none;
+  text-align: left;
+  transition: all 0.2s ease;
 }
 
-.symptom-item:hover {
+.wizard-option-btn:hover {
   background-color: #f8fafc;
-  border-color: #cbd5e1;
+  border-color: #0d9488;
+  transform: translateY(-1px);
 }
 
-.symptom-item.selected {
+.wizard-option-btn.selected {
   background-color: #f0fdf4;
   border-color: #0d9488;
-  box-shadow: 0 4px 12px rgba(13,148,136,0.06);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.1);
 }
 
-.checkbox-indicator {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
+.option-check-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   border: 2px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
-  transition: all 0.15s;
-  color: #fff;
   flex-shrink: 0;
+  color: #fff;
+  transition: all 0.15s;
 }
 
-.symptom-item.selected .checkbox-indicator {
+.wizard-option-btn.selected .option-check-circle {
   background-color: #0d9488;
   border-color: #0d9488;
 }
 
-.symptom-item span {
-  font-size: 13.5px;
+.wizard-option-btn span {
+  font-size: 14px;
   font-weight: 600;
   color: #334155;
-  line-height: 1.4;
 }
 
-.symptom-item.selected span {
+.wizard-option-btn.selected span {
   color: #0f766e;
+  font-weight: 700;
 }
 
-/* Diagnose Action Button */
-.submit-diag-btn {
-  width: 100%;
-  padding: 16px;
-  border-radius: 30px;
-  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
-  color: #fff;
-  border: none;
-  font-weight: 800;
-  font-size: 15px;
+/* Wizard Footer */
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.wizard-prev-btn {
+  background: none;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  transition: all 0.25s;
-  box-shadow: 0 4px 18px rgba(13,148,136,0.3);
+  transition: all 0.15s;
 }
 
-.submit-diag-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(13,148,136,0.4);
+.wizard-prev-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.submitting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d9488;
 }
 
 /* Result Card style sheet */
@@ -183,11 +268,6 @@
   color: #f59e0b;
   width: 26px;
   height: 26px;
-  animation: sparkleRotate 2.5s infinite linear;
-}
-
-@keyframes sparkleRotate {
-  to { transform: rotate(360deg); }
 }
 
 .result-header h3 {
@@ -209,121 +289,67 @@
   text-transform: uppercase;
 }
 
+.syndrome-title-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background-color: #f0fdf4;
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.syndrome-code {
+  background-color: #0d9488;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  padding: 8px 12px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
 .disease-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: #0f766e;
-  margin: 0 0 10px 0;
+  margin: 0 0 6px 0;
+}
+
+.secondary-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #047857;
 }
 
 .disease-desc {
-  font-size: 14.5px;
-  color: #475569;
+  font-size: 14px;
+  color: #334155;
   line-height: 1.6;
-  margin: 0 0 24px 0;
+  margin: 0;
 }
 
-/* Sub Sections */
-.advice-section, .acupuncture-section {
+.advice-section {
   background-color: #f8fafc;
   border-left: 4px solid #0d9488;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 0 12px 12px 0;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
-.advice-section h5, .acupuncture-section h5 {
+.advice-section h5 {
   font-size: 14px;
   font-weight: 800;
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   color: #0f766e;
 }
 
-.advice-section p, .acupuncture-section p {
+.advice-section p {
   font-size: 13.5px;
   color: #334155;
   margin: 0;
-  line-height: 1.5;
-}
-
-.acupuncture-section {
-  border-left-color: #7c3aed;
-  background-color: #faf5ff;
-}
-.acupuncture-section h5 { color: #6d28d9; }
-
-/* Herbs Recommendations */
-.suggested-herbs-box {
-  margin-top: 24px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
-}
-
-.suggested-herbs-box h5 {
-  font-size: 14.5px;
-  font-weight: 800;
-  margin: 0 0 12px 0;
-  color: #1e293b;
-}
-
-.herbs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.herb-card-suggestion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 16px;
-  transition: all 0.2s;
-}
-
-.herb-card-suggestion:hover {
-  background-color: #f0fdf4;
-  border-color: #a7f3d0;
-}
-
-.herb-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.herb-details strong {
-  font-size: 13.5px;
-  color: #1e293b;
-}
-
-.herb-details span {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.add-herb-cart {
-  background-color: #0d9488;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 18px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 8px rgba(13,148,136,0.15);
-  transition: all 0.15s;
-}
-
-.add-herb-cart:hover {
-  background-color: #0f766e;
-  transform: scale(1.03);
+  line-height: 1.6;
 }
 
 /* Appointment clinical booking */
@@ -403,6 +429,7 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.5;
 }
 
 .reset-diag-btn {
@@ -416,6 +443,10 @@
   font-weight: 700;
   font-size: 13.5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.15s;
 }
 
@@ -426,7 +457,6 @@
 }
 
 @media (max-width: 600px) {
-  .symptoms-grid { grid-template-columns: 1fr; }
   .booking-inputs .inputs-row { flex-direction: column; }
   .booking-input, .confirm-booking-btn { width: 100%; }
 }

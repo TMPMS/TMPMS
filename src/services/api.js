@@ -36,6 +36,26 @@ export async function fetchPatientDiagnoses(patientId) {
   return res.json();
 }
 
+export async function fetchDiagnosisQuestions() {
+  const res = await fetch(`${API_URL}/api/Diagnosis/questions`);
+  if (!res.ok) throw new Error('Không thể tải bộ câu hỏi chẩn đoán');
+  return res.json();
+}
+
+export async function classifyDiagnosis(answers) {
+  const token = localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}/api/Diagnosis/classify`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ answers })
+  });
+  if (!res.ok) throw new Error('Không thể phân tích chẩn đoán');
+  return res.json();
+}
+
 export async function fetchInvoiceByOrder(orderId) {
   try {
     const res = await fetch(`${API_URL}/api/Invoice/order/${orderId}`, {
