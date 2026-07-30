@@ -18,6 +18,24 @@ function getAuthHeaders() {
   return { 'Content-Type': 'application/json' };
 }
 
+export async function createDiagnosis(diagnosisData) {
+  const res = await fetch(`${API_URL}/api/Diagnosis`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(diagnosisData)
+  });
+  if (!res.ok) throw new Error('Không thể lưu hồ sơ chẩn đoán');
+  return res.json();
+}
+
+export async function fetchPatientDiagnoses(patientId) {
+  const res = await fetch(`${API_URL}/api/Diagnosis/patient/${patientId}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch sử chẩn đoán');
+  return res.json();
+}
+
 export async function fetchCategories() {
   try {
     const res = await fetch(`${API_URL}/categories`);

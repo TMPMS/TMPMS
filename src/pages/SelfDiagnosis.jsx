@@ -106,7 +106,33 @@ const SelfDiagnosis = ({ onBack }) => {
       }
     });
 
-    setResult(DIAGNOSES[maxCat]);
+    const diagResult = DIAGNOSES[maxCat];
+    setResult(diagResult);
+
+    // Non-blocking background call to save diagnosis history into SQL Server DB
+    try {
+      const currentUserStr = localStorage.getItem('user');
+      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+      const patientId = currentUser?.id || 1;
+      
+      const selectedNames = selectedSymptoms
+        .map(id => SYMPTOMS.find(s => s.id === id)?.label)
+        .filter(Boolean)
+        .join(', ');
+
+      await api.createDiagnosis({
+        patientId: patientId,
+        doctorId: 1,
+        symptoms: selectedNames || 'Tự chọn triệu chứng Đông Y',
+        clinicalExamination: 'Tự kiểm tra triệu chứng qua hệ thống AI Đông Y',
+        diagnosisResult: diagResult.title,
+        note: `Mô tả: ${diagResult.description}. Khuyên dùng: ${diagResult.recommendation}`,
+        diagnosisDate: new Date().toISOString()
+      });
+      console.log('Saved self-diagnosis result into database successfully.');
+    } catch (err) {
+      console.warn('Could not save diagnosis history to database:', err);
+    }
   };
 
   const handleBookAppointment = async () => {
