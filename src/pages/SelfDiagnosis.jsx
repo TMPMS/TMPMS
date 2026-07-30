@@ -116,22 +116,13 @@ const SelfDiagnosis = ({ onBack }) => {
     }
 
     try {
-      // 1. Create Patient profile first
-      const patient = await api.createPatient({
-        name: name,
-        gender: 'Khác',
-        phone: phone,
-        medicalHistory: `Tự chẩn đoán: ${result.title}. Triệu chứng chọn: ${selectedSymptoms.map(id => SYMPTOMS.find(s => s.id === id)?.label).join(', ')}`
-      });
-
-      // 2. Schedule Appointment with default Doctor (id = 10)
+      // Schedule Appointment with default Doctor (id = 10) directly via customer endpoint
       await api.createAppointment({
-        patientId: patient.id,
-        doctorId: 10, // Doctor ID
+        doctorId: 10,
         appointmentDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         reason: `Đặt lịch hẹn khám chuyên sâu: ${result.title}`,
         status: 'Scheduled',
-        notes: 'Hệ thống tự chẩn đoán Đông Y khuyên khám chuyên sâu.'
+        notes: `Tự chẩn đoán: ${result.title}. SĐT liên hệ: ${phone}. Tên: ${name}`
       });
 
       setBookingSuccess(true);

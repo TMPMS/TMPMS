@@ -23,27 +23,41 @@ const PatientPortal = ({ onBack }) => {
   const loadPatientData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch appointments & filter by user phone or name
-      const allAppts = await api.fetchAppointments();
-      const filteredAppts = allAppts.filter(a => 
-        (a.patientPhone && a.patientPhone === user.phone) || 
-        (a.patientName && a.patientName.toLowerCase() === user.username.toLowerCase())
-      );
-      setMyAppointments(filteredAppts);
+      // 1. Fetch user's own appointments using customer endpoint /api/Appointment/my-appointments
+      try {
+        const myAppts = await api.fetchUserAppointments();
+        setMyAppointments(myAppts);
+      } catch (e) {
+        console.warn('Could not fetch user appointments:', e);
+      }
 
-      // 2. Fetch prescriptions & filter by user id or username
-      const allPrescs = await api.fetchPrescriptions();
-      const filteredPrescs = allPrescs.filter(p => 
-        p.userId === user.id || 
-        (p.patientName && p.patientName.toLowerCase() === user.username.toLowerCase())
-      );
-      setMyPrescriptions(filteredPrescs);
+      // 2. Fetch user's prescriptions
+      try {
+        const myPrescs = await api.fetchUserPrescriptions(user.id);
+        setMyPrescriptions(myPrescs);
+      } catch (e) {
+        console.warn('Could not fetch user prescriptions:', e);
+      }
 
-      // 3. Find clinical patient record matching user phone
-      const allPatients = await api.fetchPatients();
-      const record = allPatients.find(p => p.phone === user.phone);
-      if (record) {
-        setPatientRecord(record);
+      // 3. Fetch user profile for patient record
+      try {
+        const profile = await api.fetchMyProfile();
+        if (profile) {
+          setPatientRecord({
+            gender: profile.gender || 'Nam',
+            dateOfBirth: profile.dateOfBirth || profile.createdAt,
+            address: profile.address || '',
+            medicalHistory: profile.medicalHistory || 'Chưa ghi nhận bệnh nền.'
+          });
+        }
+      } catch (e) {
+        // Fallback to logged in user state
+        setPatientRecord({
+          gender: user.gender || 'Nam',
+          dateOfBirth: user.dateOfBirth || null,
+          address: user.address || '',
+          medicalHistory: ''
+        });
       }
     } catch (err) {
       console.error('Lỗi khi tải hồ sơ sức khỏe:', err);

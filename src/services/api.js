@@ -387,24 +387,25 @@ export async function fetchWarehouses() {
 
 // User & Role Management APIs
 export async function fetchUsers() {
-  const res = await fetch(`${API_URL}/api/profile/users`, {
+  const res = await fetch(`${API_URL}/api/users/list`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách người dùng');
   const data = await res.json();
-  return data.map(u => {
+  return (Array.isArray(data) ? data : []).map(u => {
     let role_id = 2;
-    if (u.role === "Admin") role_id = 1;
-    else if (u.role === "Pharmacy") role_id = 3;
+    const rName = u.roleName || u.RoleName || u.role || "User";
+    if (rName === "Admin") role_id = 1;
+    else if (rName === "Pharmacy") role_id = 3;
     return {
-      id: u.id,
-      username: u.username,
-      email: u.email,
-      phone: u.phone,
-      roleName: u.role,
+      id: u.id || u.Id,
+      username: u.username || u.Username,
+      email: u.email || u.Email,
+      phone: u.phone || u.Phone,
+      roleName: rName,
       role_id: role_id,
-      is_active: u.isActive,
-      created_at: u.createdAt
+      is_active: u.isActive !== undefined ? u.isActive : u.IsActive,
+      created_at: u.createdAt || u.CreatedAt
     };
   });
 }
@@ -424,10 +425,10 @@ export async function updateUserRole(userId, roleId) {
 }
 
 export async function toggleUserStatus(userId, isActive) {
-  const res = await fetch(`${API_URL}/api/profile/users/${userId}/status`, {
+  const endpoint = isActive ? `/api/users/unlock/${userId}` : `/api/users/lock/${userId}`;
+  const res = await fetch(`${API_URL}${endpoint}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ is_active: isActive }),
   });
   if (!res.ok) throw new Error('Không thể cập nhật trạng thái người dùng');
   return res.json();
@@ -435,34 +436,72 @@ export async function toggleUserStatus(userId, isActive) {
 
 // Patient Management APIs
 export async function fetchPatients() {
-  const res = await fetch(`${API_URL}/patients`);
+  const res = await fetch(`${API_URL}/api/patients`, {
+    headers: getAuthHeaders()
+  });
   if (!res.ok) throw new Error('Không thể tải danh sách bệnh nhân');
-  return res.json();
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(p => ({
+    id: p.id || p.Id,
+    name: p.name || p.Name || p.username || p.Username || "Bệnh nhân",
+    username: p.username || p.Username || "",
+    email: p.email || p.Email || "",
+    phone: p.phoneNumber || p.PhoneNumber || p.phone || p.Phone || "",
+    phoneNumber: p.phoneNumber || p.PhoneNumber || p.phone || p.Phone || "",
+    gender: p.gender || p.Gender || "Nam",
+    date_of_birth: p.dateOfBirth || p.DateOfBirth || null,
+    dateOfBirth: p.dateOfBirth || p.DateOfBirth || null,
+    address: p.address || p.Address || "",
+    is_active: p.isActive !== undefined ? p.isActive : p.IsActive,
+    created_at: p.createdAt || p.CreatedAt
+  }));
 }
 
 export async function createPatient(patientData) {
-  const res = await fetch(`${API_URL}/patients`, {
+  const payload = {
+    name: patientData.name || patientData.Name,
+    username: patientData.username || patientData.Username,
+    email: patientData.email || patientData.Email,
+    phone: patientData.phone || patientData.phoneNumber || patientData.Phone,
+    phoneNumber: patientData.phone || patientData.phoneNumber || patientData.Phone,
+    gender: patientData.gender || patientData.Gender || 'Nam',
+    dateOfBirth: patientData.date_of_birth || patientData.dateOfBirth,
+    address: patientData.address || patientData.Address
+  };
+  const res = await fetch(`${API_URL}/api/patients`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patientData),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Không thể thêm bệnh nhân');
   return res.json();
 }
 
 export async function updatePatient(patientId, patientData) {
-  const res = await fetch(`${API_URL}/patients/${patientId}`, {
+  const payload = {
+    name: patientData.name || patientData.Name,
+    username: patientData.username || patientData.Username,
+    email: patientData.email || patientData.Email,
+    phone: patientData.phone || patientData.phoneNumber || patientData.Phone,
+    phoneNumber: patientData.phone || patientData.phoneNumber || patientData.Phone,
+    gender: patientData.gender || patientData.Gender,
+    dateOfBirth: patientData.date_of_birth || patientData.dateOfBirth,
+    address: patientData.address || patientData.Address,
+    isActive: patientData.is_active !== undefined ? patientData.is_active : patientData.isActive
+  };
+  const res = await fetch(`${API_URL}/api/patients/${patientId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patientData),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Không thể cập nhật thông tin bệnh nhân');
   return res.json();
 }
 
 export async function deletePatient(patientId) {
-  const res = await fetch(`${API_URL}/patients/${patientId}`, {
+  const res = await fetch(`${API_URL}/api/patients/${patientId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể xóa bệnh nhân');
   return res.json();
@@ -470,34 +509,65 @@ export async function deletePatient(patientId) {
 
 // Appointment Management APIs
 export async function fetchAppointments() {
-  const res = await fetch(`${API_URL}/appointments`);
+  const res = await fetch(`${API_URL}/api/Appointment/all`, {
+    headers: getAuthHeaders()
+  });
   if (!res.ok) throw new Error('Không thể tải danh sách lịch hẹn');
-  return res.json();
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(a => ({
+    id: a.id || a.Id,
+    patientId: a.patientId || a.PatientId,
+    patientName: a.patientName || a.PatientName || "Bệnh nhân",
+    patientPhone: a.patientPhone || a.PatientPhone || "",
+    doctorId: a.doctorId || a.DoctorId || 10,
+    doctorName: a.doctorName || a.DoctorName || "Bác sĩ phụ trách",
+    appointmentDate: a.appointmentDate || a.AppointmentDate,
+    reason: a.reason || a.Reason || "",
+    status: a.status || a.Status || "Scheduled",
+    notes: a.notes || a.Notes || a.note || a.Note || "",
+    created_at: a.createdAt || a.CreatedAt
+  }));
 }
 
 export async function createAppointment(appointmentData) {
-  const res = await fetch(`${API_URL}/appointments`, {
+  const payload = {
+    patientId: appointmentData.patientId || appointmentData.PatientId,
+    staffId: appointmentData.doctorId || appointmentData.DoctorId || appointmentData.staffId,
+    doctorId: appointmentData.doctorId || appointmentData.DoctorId || appointmentData.staffId,
+    appointmentDate: appointmentData.appointmentDate || appointmentData.AppointmentDate,
+    reason: appointmentData.reason || appointmentData.Reason || "",
+    note: appointmentData.notes || appointmentData.Notes || appointmentData.note,
+    notes: appointmentData.notes || appointmentData.Notes || appointmentData.note,
+    status: appointmentData.status || appointmentData.Status || "Scheduled"
+  };
+  const res = await fetch(`${API_URL}/api/Appointment/book`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(appointmentData),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Không thể tạo lịch hẹn');
   return res.json();
 }
 
 export async function updateAppointment(appointmentId, appointmentData) {
-  const res = await fetch(`${API_URL}/appointments/${appointmentId}`, {
+  const payload = {
+    appointmentDate: appointmentData.appointmentDate || appointmentData.AppointmentDate,
+    reason: appointmentData.reason || appointmentData.Reason || "",
+    note: appointmentData.notes || appointmentData.Notes || appointmentData.note
+  };
+  const res = await fetch(`${API_URL}/api/Appointment/${appointmentId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(appointmentData),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Không thể cập nhật lịch hẹn');
   return res.json();
 }
 
 export async function deleteAppointment(appointmentId) {
-  const res = await fetch(`${API_URL}/appointments/${appointmentId}`, {
+  const res = await fetch(`${API_URL}/api/Appointment/${appointmentId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể xóa lịch hẹn');
   return res.json();
@@ -659,4 +729,41 @@ export async function askAiChatbot(messageText) {
   });
   if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
+}
+
+// Customer-facing Patient APIs
+export async function fetchUserAppointments() {
+  const res = await fetch(`${API_URL}/api/Appointment/my-appointments`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch hẹn cá nhân');
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(a => ({
+    id: a.id || a.Id,
+    patientName: a.patientName || a.PatientName || "Bệnh nhân",
+    doctorName: a.staffName || a.StaffName || a.doctorName || "Bác sĩ phụ trách",
+    appointmentDate: a.appointmentDate || a.AppointmentDate,
+    reason: a.reason || a.Reason || "",
+    status: a.status || a.Status || "Scheduled",
+    notes: a.note || a.Note || ""
+  }));
+}
+
+export async function fetchUserPrescriptions(userId) {
+  const endpoint = userId ? `${API_URL}/api/prescription/user/${userId}` : `${API_URL}/api/prescription`;
+  const res = await fetch(endpoint, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(p => ({
+    id: p.id || p.Id,
+    userId: p.userId || p.UserId,
+    userName: p.userName || p.UserName || "",
+    doctorName: p.doctorName || p.DoctorName || "Thầy thuốc Đông Y",
+    hospital: p.hospital || p.Hospital || "Phòng khám Đông Y",
+    prescriptionDate: p.prescriptionDate || p.PrescriptionDate,
+    status: p.status || p.Status || "Active",
+    items: p.items || p.Items || []
+  }));
 }
