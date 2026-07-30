@@ -36,6 +36,22 @@ export async function fetchPatientDiagnoses(patientId) {
   return res.json();
 }
 
+export async function fetchInvoiceByOrder(orderId) {
+  try {
+    const res = await fetch(`${API_URL}/api/Invoice/order/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {}
+
+  const genRes = await fetch(`${API_URL}/api/Invoice/generate/${orderId}`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  if (!genRes.ok) throw new Error('Không thể tải hoặc tạo hóa đơn GTGT');
+  return genRes.json();
+}
+
 export async function fetchCategories() {
   try {
     const res = await fetch(`${API_URL}/categories`);
