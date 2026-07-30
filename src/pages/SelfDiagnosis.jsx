@@ -81,7 +81,7 @@ const SelfDiagnosis = ({ onBack }) => {
     );
   };
 
-  const handleDiagnose = () => {
+  const handleDiagnose = async () => {
     if (selectedSymptoms.length === 0) {
       alert('Vui lòng chọn ít nhất một triệu chứng cơ thể đang gặp phải!');
       return;

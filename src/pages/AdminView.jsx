@@ -21,6 +21,7 @@ const AdminView = () => {
   const [users, setUsers] = useState([]);
   const [medicines, setMedicines] = useState([]);
   const [vouchers, setVouchers] = useState([]);
+  const [reportData, setReportData] = useState(null);
 
   // Voucher form state
   const [editingVoucherId, setEditingVoucherId] = useState(null);
@@ -113,14 +114,18 @@ const AdminView = () => {
         const data = await api.fetchUsers();
         setUsers(data);
       } else if (activeTab === 'stats') {
-        const ordersData = await api.fetchAdminOrders();
+        const [ordersData, patientsData, appointmentsData, medData, repData] = await Promise.all([
+          api.fetchAdminOrders().catch(() => []),
+          api.fetchPatients().catch(() => []),
+          api.fetchAppointments().catch(() => []),
+          api.fetchMedicines().catch(() => []),
+          api.fetchReportDashboard().catch(err => { console.warn(err); return null; })
+        ]);
         setOrders(ordersData);
-        const patientsData = await api.fetchPatients();
         setPatients(patientsData);
-        const appointmentsData = await api.fetchAppointments();
         setAppointments(appointmentsData);
-        const medData = await api.fetchMedicines();
         setMedicines(medData);
+        setReportData(repData);
       } else if (activeTab === 'products') {
         const medData = await api.fetchMedicines();
         setMedicines(medData);
@@ -480,7 +485,20 @@ const AdminView = () => {
 
   // Stats Logic
   const getStats = () => {
-    const totalRev = orders.filter(o => o.payment_status === 'Paid').reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+    if (reportData) {
+      return {
+        revenue: reportData.totalRevenue !== undefined ? reportData.totalRevenue : (reportData.TotalRevenue || 0),
+        ordersCount: reportData.totalOrders !== undefined ? reportData.totalOrders : (reportData.TotalOrders || 0),
+        patientsCount: reportData.totalCustomers !== undefined ? reportData.totalCustomers : (reportData.TotalCustomers || patients.length),
+        appointmentsCount: appointments.length,
+        pendingOrders: orders.filter(o => o.status === 'Pending').length,
+        activeAppointments: appointments.filter(a => a.status === 'Scheduled').length,
+        lowStockCount: reportData.lowStockCount !== undefined ? reportData.lowStockCount : (reportData.LowStockCount || 0),
+        medicinesCount: reportData.totalMedicines !== undefined ? reportData.totalMedicines : (reportData.TotalMedicines || medicines.length)
+      };
+    }
+
+    const totalRev = orders.filter(o => o.payment_status === 'Paid').reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
     const lowStock = medicines.filter(m => m.stock_quantity < 20);
     return {
       revenue: totalRev,

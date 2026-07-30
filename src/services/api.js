@@ -52,6 +52,22 @@ export async function fetchInvoiceByOrder(orderId) {
   return genRes.json();
 }
 
+export async function fetchReportDashboard() {
+  const res = await fetch(`${API_URL}/api/Report/dashboard`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải báo cáo doanh thu & thống kê');
+  return res.json();
+}
+
+export async function fetchReportTopSelling(from, to, top = 10) {
+  const res = await fetch(`${API_URL}/api/Report/top-selling?from=${from}&to=${to}&top=${top}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách bán chạy');
+  return res.json();
+}
+
 export async function fetchCategories() {
   try {
     const res = await fetch(`${API_URL}/categories`);
