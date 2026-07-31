@@ -1,19 +1,27 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-function getAuthHeaders() {
+export function getAuthToken() {
   try {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      if (parsed && parsed.token) {
-        return {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${parsed.token}`
-        };
+      if (parsed && (parsed.token || parsed.accessToken)) {
+        return parsed.token || parsed.accessToken;
       }
     }
   } catch (e) {
     console.error('Error reading auth token', e);
+  }
+  return '';
+}
+
+function getAuthHeaders() {
+  const token = getAuthToken();
+  if (token) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
   }
   return { 'Content-Type': 'application/json' };
 }
@@ -534,7 +542,10 @@ export async function createPatient(patientData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể thêm bệnh nhân');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Không thể thêm bệnh nhân');
+  }
   return res.json();
 }
 
@@ -555,7 +566,10 @@ export async function updatePatient(patientId, patientData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể cập nhật thông tin bệnh nhân');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Không thể cập nhật thông tin bệnh nhân');
+  }
   return res.json();
 }
 
@@ -880,5 +894,11 @@ export async function assignPharmacyChatSession(sessionId) {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tiếp nhận phiên tư vấn');
+  return res.json();
+}
+
+export async function fetchHealthReelsVideos() {
+  const res = await fetch(`${API_URL}/api/HealthReels/videos`);
+  if (!res.ok) throw new Error('Không thể tải bản tin video sức khỏe');
   return res.json();
 }

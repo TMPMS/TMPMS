@@ -1,88 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, ShoppingCart, Volume2, VolumeX, Play, Pause, ChevronLeft } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ShoppingCart, Volume2, VolumeX, ChevronLeft, Tv, RotateCw, Loader2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import * as api from '../services/api';
 import './HealthReels.css';
 
-const REELS_DATA = [
-  {
-    id: 1,
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    author: '@dr_duocsiviet',
-    description: 'Bí quyết xua tan cơn đau nhức xương khớp nhạy bén nhờ bộ đôi Thảo dược & Khương Thảo Đan Gold. Đau nhức vai gáy, thoái hóa khớp chớ nên coi thường!',
-    likes: 1240,
-    comments: 89,
-    shares: 45,
-    product: {
-      id: 601,
-      name: 'TPBVSK Khương Thảo Đan Gold',
-      price: 170000,
-      image: 'https://tmp.vn/storage/media/c03d3ce6-2187-43ca-a3ef-b32c1c3fca93.webp',
-      unit: 'Hộp'
-    }
-  },
-  {
-    id: 2,
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    author: '@longchau_mecafe',
-    description: 'Cách tắm cho trẻ sơ sinh bị rôm sảy, hăm đỏ da bằng Nước tắm thảo dược Sachi. Chiết xuất cúc la mã organic bảo vệ da bé nhẹ nhàng lành tính!',
-    likes: 3105,
-    comments: 245,
-    shares: 112,
-    product: {
-      id: 501,
-      name: 'Nước tắm thảo dược Sachi 250ml',
-      price: 135000,
-      image: 'https://cdn.nhathuoclongchau.com.vn/v1/static/nuoc_tam_thao_duoc_sachi_0_month_250ml_lam_diu_da_giup_phong_ngua-rom-say_00050586_1_33a0e9338c.png',
-      unit: 'Chai'
-    }
-  },
-  {
-    id: 3,
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    author: '@duocsi_longchau_247',
-    description: 'Trào ngược dạ dày, ợ chua liên tục làm bạn mất ngủ? Xem ngay 3 thói quen và cách uống Bình Vị Thái Minh để dạ dày êm ru sau 1 tuần nhé.',
-    likes: 456,
-    comments: 32,
-    shares: 18,
-    product: {
-      id: 611,
-      name: 'TPBVSK Bình Vị Thái Minh',
-      price: 165000,
-      image: 'https://tmp.vn/storage/media/caeb95d2-f674-4b5f-8f83-d5d14dfbb500.webp',
-      unit: 'Hộp'
-    }
-  }
-];
-
 const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
-  const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(reel.likes);
+  const [likeCount, setLikeCount] = useState(reel.likeCount || reel.likes || 120);
   const { addToCart } = useCart();
-
-  useEffect(() => {
-    if (videoRef.current) {
-      if (active) {
-        videoRef.current.play().catch(e => console.log("Auto play prevented", e));
-        setIsPlaying(true);
-      } else {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
-    }
-  }, [active]);
-
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play().catch(e => console.log("Play failed", e));
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
 
   const handleLike = () => {
     if (liked) {
@@ -94,28 +19,24 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
     }
   };
 
+  // Build YouTube embed URL with autoplay, mute, and loop parameters
+  const embedUrl = reel.embedUrl || `https://www.youtube.com/embed/${reel.videoId}`;
+  const iframeSrc = `${embedUrl}?autoplay=${active ? 1 : 0}&mute=${isMuted ? 1 : 0}&loop=1&playlist=${reel.videoId}&enablejsapi=1`;
+
   return (
     <div className="reel-slide">
-      {/* Video element */}
-      <video
-        ref={videoRef}
-        src={reel.videoUrl}
-        loop
-        muted={isMuted}
-        playsInline
-        onClick={handlePlayPause}
-        className="reel-video"
+      {/* YouTube Embedded Iframe */}
+      <iframe
+        src={iframeSrc}
+        title={reel.title || 'Health Reel'}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        frameBorder="0"
+        className="reel-iframe"
       />
 
-      {/* Floating controls indicator */}
-      {!isPlaying && (
-        <div className="reel-play-indicator" onClick={handlePlayPause}>
-          <Play size={48} fill="#fff" />
-        </div>
-      )}
-
       {/* Mute toggle overlay */}
-      <button className="reel-mute-btn" onClick={toggleMute}>
+      <button className="reel-mute-btn" onClick={toggleMute} title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}>
         {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
       </button>
 
@@ -134,7 +55,7 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
           <div className="action-icon-circle">
             <MessageCircle size={22} />
           </div>
-          <span>{reel.comments}</span>
+          <span>{reel.comments || 45}</span>
         </div>
 
         {/* Share */}
@@ -142,15 +63,15 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
           <div className="action-icon-circle">
             <Share2 size={22} />
           </div>
-          <span>{reel.shares}</span>
+          <span>{reel.shares || 18}</span>
         </div>
       </div>
 
       {/* Bottom Information Details */}
       <div className="reel-bottom-info">
-        <h4 className="author">{reel.author}</h4>
-        <p className="description">{reel.description}</p>
-        
+        <h4 className="author">{reel.channelName || reel.author || '@tmpms_health'}</h4>
+        <p className="description">{reel.title || reel.description}</p>
+
         {/* Recommended Product Tag Card */}
         {reel.product && (
           <div className="reel-product-badge animate-slide-up">
@@ -158,7 +79,7 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
             <div className="prod-badge-info">
               <h5>{reel.product.name}</h5>
               <div className="row-price">
-                <span className="price">{reel.product.price.toLocaleString('vi-VN')}đ</span>
+                <span className="price">{reel.product.price?.toLocaleString('vi-VN')}đ</span>
                 <button className="buy-now-btn" onClick={() => addToCart(reel.product)}>
                   <ShoppingCart size={12} />
                   <span>Mua</span>
@@ -173,18 +94,46 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
 };
 
 const HealthReels = ({ onBack }) => {
+  const [reels, setReels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [activeReelIndex, setActiveReelIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const containerRef = useRef(null);
+
+  const loadVideos = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const data = await api.fetchHealthReelsVideos();
+      
+      if (data && data.videos && data.videos.length > 0) {
+        setReels(data.videos);
+      } else {
+        setReels([]);
+        setErrorMessage(data?.errorMessage || 'Chưa có video khả dụng lúc này.');
+      }
+    } catch (err) {
+      console.error('Lỗi tải video Health Reels:', err);
+      setReels([]);
+      setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVideos();
+  }, []);
 
   const toggleMute = () => setIsMuted(prev => !prev);
 
   const handleScroll = () => {
-    if (containerRef.current) {
+    if (containerRef.current && reels.length > 0) {
       const containerHeight = containerRef.current.clientHeight;
       const scrollTop = containerRef.current.scrollTop;
       const index = Math.round(scrollTop / containerHeight);
-      if (index !== activeReelIndex && index >= 0 && index < REELS_DATA.length) {
+      if (index !== activeReelIndex && index >= 0 && index < reels.length) {
         setActiveReelIndex(index);
       }
     }
@@ -205,22 +154,47 @@ const HealthReels = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Reels Vertical Scroll Container */}
-      <div 
-        ref={containerRef}
-        className="reels-scroller"
-        onScroll={handleScroll}
-      >
-        {REELS_DATA.map((reel, idx) => (
-          <ReelItem
-            key={reel.id}
-            reel={reel}
-            active={idx === activeReelIndex}
-            isMuted={isMuted}
-            toggleMute={toggleMute}
-          />
-        ))}
-      </div>
+      {/* Main Content Area */}
+      {loading ? (
+        <div className="reels-fallback-container">
+          <div className="reels-fallback-icon-wrap">
+            <Loader2 size={40} className="animate-spin" />
+          </div>
+          <h3 className="reels-fallback-title">Đang tải Bản tin Sức khỏe...</h3>
+        </div>
+      ) : reels.length > 0 ? (
+        /* Vertical Scroll Container for Videos */
+        <div
+          ref={containerRef}
+          className="reels-scroller"
+          onScroll={handleScroll}
+        >
+          {reels.map((reel, idx) => (
+            <ReelItem
+              key={reel.videoId || reel.id || idx}
+              reel={reel}
+              active={idx === activeReelIndex}
+              isMuted={isMuted}
+              toggleMute={toggleMute}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Fallback UI for Empty Video Array (No broken layout, aesthetic center card) */
+        <div className="reels-fallback-container">
+          <div className="reels-fallback-icon-wrap">
+            <Tv size={40} />
+          </div>
+          <h3 className="reels-fallback-title">Bản tin Sức khỏe Đông Y</h3>
+          <p className="reels-fallback-desc">
+            Chưa có video khả dụng. Vui lòng cấu hình YouTube API Key để tải các bản tin video Shorts sức khỏe mới nhất từ nhà thuốc.
+          </p>
+          <button className="reels-retry-btn" onClick={loadVideos}>
+            <RotateCw size={16} />
+            <span>Thử lại</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

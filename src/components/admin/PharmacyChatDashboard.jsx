@@ -36,11 +36,16 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
   useEffect(() => {
     loadSessions();
 
-    // SignalR Real-time setup
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    // SignalR Real-time setup with helper getAuthToken() from api.js
+    const token = api.getAuthToken();
+    if (!token) {
+      console.warn('SignalR Pharmacy Dashboard: Chưa có token xác thực, tạm dừng kết nối SignalR.');
+      return;
+    }
+
     const connection = new signalR.HubConnectionBuilder()
       .withUrl('http://localhost:5000/hubs/pharmacy-chat', {
-        accessTokenFactory: () => token || ''
+        accessTokenFactory: () => api.getAuthToken()
       })
       .withAutomaticReconnect()
       .build();

@@ -35,11 +35,16 @@ const PharmacyChatWidget = ({ isOpen, onClose, user }) => {
 
     initSession();
 
-    // Setup SignalR Connection
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    // Setup SignalR Connection with helper getAuthToken() from api.js
+    const token = api.getAuthToken();
+    if (!token) {
+      console.warn('SignalR Pharmacy Chat: Chưa có token xác thực, tạm dừng kết nối SignalR.');
+      return;
+    }
+
     const connection = new signalR.HubConnectionBuilder()
       .withUrl('http://localhost:5000/hubs/pharmacy-chat', {
-        accessTokenFactory: () => token || ''
+        accessTokenFactory: () => api.getAuthToken()
       })
       .withAutomaticReconnect()
       .build();
@@ -64,14 +69,16 @@ const PharmacyChatWidget = ({ isOpen, onClose, user }) => {
     connection
       .start()
       .then(() => {
-        console.log('SignalR Pharmacy Chat connected');
+        console.log('SignalR Pharmacy Chat connected successfully');
       })
       .catch((err) => console.error('SignalR Pharmacy Chat Connection Error: ', err));
 
     setHubConnection(connection);
 
     return () => {
-      connection.stop();
+      if (connection) {
+        connection.stop();
+      }
     };
   }, [isOpen, user]);
 
@@ -89,6 +96,10 @@ const PharmacyChatWidget = ({ isOpen, onClose, user }) => {
     setInputText('');
 
     try {
+      if (hubConnection.state !== signalR.HubConnectionState.Connected) {
+        console.warn('SignalR connection is not connected. Attempting to reconnect...');
+        await hubConnection.start();
+      }
       await hubConnection.invoke('SendMessage', session.id, text);
     } catch (err) {
       console.error('Lỗi gửi tin nhắn:', err);

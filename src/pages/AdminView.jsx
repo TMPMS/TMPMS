@@ -202,7 +202,7 @@ const AdminView = () => {
       }
       setPatientModal(null);
     } catch (err) {
-      setError('Lỗi khi lưu bệnh nhân.');
+      setError(err.message || 'Lỗi khi lưu bệnh nhân.');
     }
   };
 
