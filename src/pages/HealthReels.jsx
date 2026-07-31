@@ -19,18 +19,20 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
     }
   };
 
-  // Build YouTube embed URL with autoplay, mute, and loop parameters
+  // Build YouTube embed URL with origin, autoplay, mute, and loop parameters cleanly
   const embedUrl = reel.embedUrl || `https://www.youtube.com/embed/${reel.videoId}`;
-  const iframeSrc = `${embedUrl}?autoplay=${active ? 1 : 0}&mute=${isMuted ? 1 : 0}&loop=1&playlist=${reel.videoId}&enablejsapi=1`;
+  const pageOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const iframeSrc = `${embedUrl}?autoplay=${active ? 1 : 0}&mute=${isMuted ? 1 : 0}&loop=1&playlist=${reel.videoId}&enablejsapi=1&origin=${encodeURIComponent(pageOrigin)}`;
 
   return (
     <div className="reel-slide">
-      {/* YouTube Embedded Iframe */}
+      {/* YouTube Embedded Iframe with strict origin security policy */}
       <iframe
         src={iframeSrc}
         title={reel.title || 'Health Reel'}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
         frameBorder="0"
         className="reel-iframe"
       />
@@ -180,7 +182,7 @@ const HealthReels = ({ onBack }) => {
           ))}
         </div>
       ) : (
-        /* Fallback UI for Empty Video Array (No broken layout, aesthetic center card) */
+        /* Fallback UI for Empty Video Array */
         <div className="reels-fallback-container">
           <div className="reels-fallback-icon-wrap">
             <Tv size={40} />
