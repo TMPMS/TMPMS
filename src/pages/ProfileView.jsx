@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Gift, Calendar, Phone, MapPin, Mail, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield } from 'lucide-react';
 import * as api from '../services/api';
 import './ProfileView.css';
 
@@ -21,6 +21,7 @@ export default function ProfileView({ onNavigate }) {
   const [vouchers, setVouchers] = useState([]);
   const [copiedCode, setCopiedCode] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -30,6 +31,7 @@ export default function ProfileView({ onNavigate }) {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setLoadError('');
       try {
         const [prof, vouch] = await Promise.allSettled([
           api.fetchMyProfile(),
@@ -38,10 +40,10 @@ export default function ProfileView({ onNavigate }) {
         if (prof.status === 'fulfilled') {
           setProfile(prof.value);
           setFormData(prof.value);
+        } else {
+          setLoadError(prof.reason?.message || 'Không thể tải hồ sơ.');
         }
         if (vouch.status === 'fulfilled') setVouchers(vouch.value);
-      } catch (e) {
-        // fallback to localStorage
       } finally {
         setLoading(false);
       }
@@ -54,12 +56,13 @@ export default function ProfileView({ onNavigate }) {
     setError('');
     try {
       const updated = await api.updateMyProfile(formData);
-      setProfile({ ...profile, ...formData });
+      setProfile(updated);
+      setFormData(updated);
       setEditing(false);
       setSuccess('Cập nhật hồ sơ thành công!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
-      setError('Không thể cập nhật hồ sơ. Vui lòng thử lại.');
+      setError(e.message || 'Không thể cập nhật hồ sơ. Vui lòng thử lại.');
     } finally {
       setSaving(false);
     }
@@ -79,15 +82,25 @@ export default function ProfileView({ onNavigate }) {
   const formatPrice = (p) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p || 0);
 
-  const displayName = profile?.full_name || profile?.username || user?.username || 'Người dùng';
+  const displayName = profile?.fullName || profile?.username || user?.username || 'Người dùng';
   const avatarLetter = (displayName || 'U')[0].toUpperCase();
   const roleName = profile?.role_name === 'Customer' || profile?.role_name === 'User' ? 'Thành viên' :
     profile?.role_name === 'Admin' ? 'Quản trị viên' : profile?.role_name || 'Thành viên';
 
   if (loading) return (
-    <div className="profile-loading">
-      <div className="profile-loading-spinner" />
-      <p>Đang tải hồ sơ...</p>
+    <div className="profile-loading" aria-live="polite">
+      <div className="profile-skeleton profile-skeleton-avatar" />
+      <div className="profile-skeleton profile-skeleton-line" />
+      <div className="profile-skeleton profile-skeleton-panel" />
+    </div>
+  );
+
+  if (loadError || !profile) return (
+    <div className="profile-load-error" role="alert">
+      <Shield size={34} />
+      <h2>Không thể tải hồ sơ</h2>
+      <p>{loadError || 'Bạn cần đăng nhập để xem thông tin tài khoản.'}</p>
+      <button type="button" onClick={() => window.location.reload()}>Thử lại</button>
     </div>
   );
 
@@ -98,28 +111,15 @@ export default function ProfileView({ onNavigate }) {
         {/* Avatar + Name */}
         <div className="profile-avatar-block">
           <div className="profile-avatar">
-            {profile?.avatar_url
-              ? <img src={profile.avatar_url} alt="avatar" />
+            {profile?.avatarUrl
+              ? <img src={profile.avatarUrl} alt={`Ảnh đại diện của ${displayName}`} />
               : <span>{avatarLetter}</span>
             }
             <div className="profile-avatar-ring" />
           </div>
           <h3 className="profile-name">{displayName}</h3>
           <span className="profile-role-badge">{roleName}</span>
-          <p className="profile-member-since">Thành viên từ {formatDate(profile?.created_at)}</p>
-        </div>
-
-        {/* Points Card */}
-        <div className="profile-points-card">
-          <div className="points-header">
-            <Gift size={18} />
-            <span>Điểm tích lũy</span>
-          </div>
-          <div className="points-value">1.250 điểm</div>
-          <div className="points-bar-bg">
-            <div className="points-bar-fill" style={{ width: '62%' }} />
-          </div>
-          <p className="points-note">Còn 750 điểm để lên hạng Vàng</p>
+          <p className="profile-member-since">{profile?.email}</p>
         </div>
 
         {/* Nav Tabs */}
@@ -148,8 +148,8 @@ export default function ProfileView({ onNavigate }) {
 
       {/* MAIN CONTENT */}
       <main className="profile-main">
-        {success && <div className="profile-success">{success}</div>}
-        {error && <div className="profile-error">{error}</div>}
+        {success && <div className="profile-success" role="status">{success}</div>}
+        {error && <div className="profile-error" role="alert">{error}</div>}
 
         {/* ─── TAB: PROFILE ─── */}
         {activeTab === 'profile' && (
@@ -157,15 +157,15 @@ export default function ProfileView({ onNavigate }) {
             <div className="profile-card-header">
               <h2>Thông tin cá nhân</h2>
               {!editing ? (
-                <button className="edit-btn" onClick={() => setEditing(true)}>
+                <button type="button" className="edit-btn" onClick={() => { setEditing(true); setError(''); setSuccess(''); }}>
                   <Edit3 size={15} /> Chỉnh sửa
                 </button>
               ) : (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="save-btn" onClick={handleSave} disabled={saving}>
+                  <button type="button" className="save-btn" onClick={handleSave} disabled={saving}>
                     <Save size={15} /> {saving ? 'Đang lưu...' : 'Lưu lại'}
                   </button>
-                  <button className="cancel-btn" onClick={() => { setEditing(false); setFormData(profile); }}>
+                  <button type="button" className="cancel-btn" onClick={() => { setEditing(false); setFormData(profile); setError(''); }}>
                     <X size={15} /> Hủy
                   </button>
                 </div>
@@ -177,8 +177,8 @@ export default function ProfileView({ onNavigate }) {
               <div className="pform-group">
                 <label><User size={13} /> Họ và tên</label>
                 {editing
-                  ? <input className="pform-input" value={formData.full_name || ''} onChange={e => setFormData(p => ({ ...p, full_name: e.target.value }))} placeholder="Nguyễn Văn A" />
-                  : <span>{profile?.full_name || <em>Chưa cập nhật</em>}</span>
+                  ? <input className="pform-input" autoComplete="name" value={formData.fullName || ''} onChange={e => setFormData(p => ({ ...p, fullName: e.target.value }))} placeholder="Nhập họ và tên" />
+                  : <span>{profile?.fullName || <em>Chưa cập nhật</em>}</span>
                 }
               </div>
 
@@ -198,7 +198,7 @@ export default function ProfileView({ onNavigate }) {
               <div className="pform-group">
                 <label><Phone size={13} /> Số điện thoại</label>
                 {editing
-                  ? <input className="pform-input" value={formData.phone || ''} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} placeholder="0901234567" />
+                  ? <input className="pform-input" type="tel" autoComplete="tel" value={formData.phone || ''} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} placeholder="Nhập số điện thoại" />
                   : <span>{profile?.phone || <em>Chưa cập nhật</em>}</span>
                 }
               </div>
@@ -207,8 +207,8 @@ export default function ProfileView({ onNavigate }) {
               <div className="pform-group">
                 <label><Calendar size={13} /> Ngày sinh</label>
                 {editing
-                  ? <input type="date" className="pform-input" value={formData.date_of_birth ? formData.date_of_birth.split('T')[0] : ''} onChange={e => setFormData(p => ({ ...p, date_of_birth: e.target.value }))} />
-                  : <span>{profile?.date_of_birth ? formatDate(profile.date_of_birth) : <em>Chưa cập nhật</em>}</span>
+                  ? <input type="date" className="pform-input" value={formData.dateOfBirth ? formData.dateOfBirth.split('T')[0] : ''} onChange={e => setFormData(p => ({ ...p, dateOfBirth: e.target.value }))} />
+                  : <span>{profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : <em>Chưa cập nhật</em>}</span>
                 }
               </div>
 
@@ -236,7 +236,7 @@ export default function ProfileView({ onNavigate }) {
               <div className="pform-group pform-full">
                 <label><MapPin size={13} /> Địa chỉ giao hàng</label>
                 {editing
-                  ? <input className="pform-input" value={formData.address || ''} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
+                  ? <input className="pform-input" autoComplete="street-address" value={formData.address || ''} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
                   : <span>{profile?.address || <em>Chưa cập nhật</em>}</span>
                 }
               </div>
@@ -245,7 +245,7 @@ export default function ProfileView({ onNavigate }) {
               {editing && (
                 <div className="pform-group pform-full">
                   <label>URL ảnh đại diện</label>
-                  <input className="pform-input" value={formData.avatar_url || ''} onChange={e => setFormData(p => ({ ...p, avatar_url: e.target.value }))} placeholder="https://..." />
+                  <input className="pform-input" type="url" value={formData.avatarUrl || ''} onChange={e => setFormData(p => ({ ...p, avatarUrl: e.target.value }))} placeholder="https://example.com/avatar.jpg" />
                 </div>
               )}
             </div>
@@ -256,7 +256,7 @@ export default function ProfileView({ onNavigate }) {
         {activeTab === 'vouchers' && (
           <div className="profile-card">
             <div className="profile-card-header">
-              <h2>🎟️ Voucher của tôi</h2>
+              <h2>Voucher của tôi</h2>
             </div>
 
             {vouchers.length === 0 ? (
