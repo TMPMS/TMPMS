@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { 
   ShoppingCart, Star, Leaf, Eye, Calendar, Plus, Edit2, Trash2, 
-  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag
+  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare
 } from 'lucide-react';
+import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
 import './AdminView.css';
 
 const AdminView = () => {
@@ -566,6 +567,11 @@ const AdminView = () => {
           {hasAccess([3]) && (
             <button className={`admin-tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
               <BarChart2 size={16} /> Báo cáo & Thống kê
+            </button>
+          )}
+          {hasAccess([1, 3]) && (
+            <button className={`admin-tab-btn ${activeTab === 'pharmacy-chat' ? 'active' : ''}`} onClick={() => setActiveTab('pharmacy-chat')}>
+              <MessageSquare size={16} /> Tư vấn trực tuyến
             </button>
           )}
 
@@ -1653,6 +1659,11 @@ const AdminView = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* TAB: PHARMACY LIVE CHAT */}
+          {activeTab === 'pharmacy-chat' && (
+            <PharmacyChatDashboard loggedInUser={loggedInUser} />
           )}
 
         </div>
