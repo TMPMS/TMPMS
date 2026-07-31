@@ -61,6 +61,14 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     }
   }, [isAuthModalOpen]);
 
+  useEffect(() => {
+    const handleOpenAuth = (e) => {
+      openAuthModal(e.detail || 'login');
+    };
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+    return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
+  }, []);
+
   const loadSuggestions = async () => {
     try {
       const data = await fetchMedicines();

@@ -75,6 +75,7 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
   const handleBookAppointment = async () => {
     if (!user) {
       alert('Vui lòng đăng nhập tài khoản để đăng ký lịch hẹn khám!');
+      window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
       if (onNavigateToLogin) onNavigateToLogin();
       return;
     }

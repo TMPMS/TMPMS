@@ -43,13 +43,9 @@ export async function fetchDiagnosisQuestions() {
 }
 
 export async function classifyDiagnosis(answers) {
-  const token = localStorage.getItem('token');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
   const res = await fetch(`${API_URL}/api/Diagnosis/classify`, {
     method: 'POST',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({ answers })
   });
   if (!res.ok) throw new Error('Không thể phân tích chẩn đoán');
