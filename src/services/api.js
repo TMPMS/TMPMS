@@ -828,3 +828,38 @@ export async function fetchUserPrescriptions(userId) {
     items: p.items || p.Items || []
   }));
 }
+
+// Pharmacy Live Chat APIs
+export async function fetchMyPharmacyChatSession() {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/my-session`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải phiên tư vấn Dược sĩ');
+  return res.json();
+}
+
+export async function fetchPharmacyChatSessions(status) {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions${query}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách phiên tư vấn');
+  return res.json();
+}
+
+export async function fetchPharmacyChatMessages(sessionId) {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/messages`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch sử tin nhắn');
+  return res.json();
+}
+
+export async function assignPharmacyChatSession(sessionId) {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/assign`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tiếp nhận phiên tư vấn');
+  return res.json();
+}

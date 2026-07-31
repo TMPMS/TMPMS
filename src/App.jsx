@@ -239,7 +239,7 @@ function App() {
         {renderContent()}
       </main>
 
-      <FloatingActions />
+      <FloatingActions user={user} />
       <AIChatbot />
       <Footer />
     </div>
