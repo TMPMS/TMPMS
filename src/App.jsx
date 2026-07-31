@@ -101,6 +101,18 @@ function App() {
     }
   }, [selectedCategoryId]);
 
+  // Global event listener for app navigation from AI Chatbot or Floating buttons
+  useEffect(() => {
+    const handleAppNav = (e) => {
+      if (e.detail) {
+        setCurrentPage(e.detail);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('app-navigate', handleAppNav);
+    return () => window.removeEventListener('app-navigate', handleAppNav);
+  }, []);
+
   // Load Category Products
   useEffect(() => {
     const loadCategoryProducts = async () => {

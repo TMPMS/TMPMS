@@ -9,7 +9,23 @@ const FloatingActions = ({ user }) => {
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
     window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+
+    const handleOpenChat = () => {
+      const activeUser = getCurrentUser();
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || activeUser?.token;
+      if (!token && !activeUser) {
+        window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
+        return;
+      }
+      setIsChatOpen(true);
+    };
+
+    window.addEventListener('open-pharmacy-chat-widget', handleOpenChat);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('open-pharmacy-chat-widget', handleOpenChat);
+    };
   }, []);
 
   const getCurrentUser = () => {

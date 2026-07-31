@@ -1,15 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, ShoppingCart } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { askAiChatbot } from '../../services/api';
 import './AIChatbot.css';
-
-const MOCK_PRODUCTS = {
-  khop: { id: 601, name: 'TPBVSK Khương Thảo Đan Gold', price: 170000, image: 'https://tmp.vn/storage/media/c03d3ce6-2187-43ca-a3ef-b32c1c3fca93.webp', unit: 'Hộp' },
-  daday: { id: 611, name: 'TPBVSK Bình Vị Thái Minh', price: 165000, image: 'https://tmp.vn/storage/media/caeb95d2-f674-4b5f-8f83-d5d14dfbb500.webp', unit: 'Hộp' },
-  sam: { id: 620, name: 'Trà sâm 1700 Thái Minh', price: 180000, image: 'https://tmp.vn/storage/media/ddfa6c2b-ea32-4467-b864-4e789bc44d03.webp', unit: 'Hộp' },
-  taobon: { id: 631, name: 'Cốm Nhuận Tràng Gokids Thái Minh', price: 255000, image: 'https://tmp.vn/storage/media/dd0f6dbe-907c-4e58-9352-82bffe5f842d.webp', unit: 'Hộp' }
-};
 
 const AIChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +10,7 @@ const AIChatbot = () => {
     {
       id: 1,
       sender: 'bot',
-      text: 'Xin chào! Tôi là Trợ lý Dược sĩ AI của Long Châu. Tôi có thể tư vấn sức khỏe và khuyên dùng sản phẩm Thái Minh/Đông Y phù hợp cho bạn. Bạn đang có triệu chứng gì thế?',
+      text: 'Xin chào! Tôi là Trợ lý Dược sĩ AI của TMPMS. Tôi có thể tư vấn sức khỏe Đông y, giúp bạn đặt lịch hẹn khám bệnh hoặc kết nối với Dược sĩ thật. Bạn cần tôi hỗ trợ gì?',
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -26,7 +19,7 @@ const AIChatbot = () => {
   
   const { addToCart } = useCart();
   const chatEndRef = useRef(null);
- 
+
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -55,25 +48,42 @@ const AIChatbot = () => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
+        intent: data.intent,
         text: data.text,
         product: data.product,
+        suggestedAction: data.suggestedAction,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     } catch (err) {
-      console.error(err);
+      console.error('Lỗi kết nối AI Chatbot:', err);
       setIsTyping(false);
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: 'Có lỗi xảy ra khi kết nối tới Trợ lý Dược sĩ AI. Xin vui lòng thử lại sau!',
+        text: 'Có lỗi xảy ra khi kết nối tới Trợ lý Dược sĩ AI. Vui lòng thử lại sau!',
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
     }
   };
 
+  const handleActionClick = (action) => {
+    if (!action || !action.type || action.type === 'none') return;
+
+    if (action.type === 'navigate_to_booking') {
+      // Switch main view to SelfDiagnosis appointment booking page
+      window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'diagnose' }));
+    } else if (action.type === 'open_pharmacist_chat') {
+      // Close AI Chatbot drawer and open Live Pharmacy Chat Widget
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('open-pharmacy-chat-widget'));
+    } else if (action.type === 'navigate_to_history') {
+      // Navigate to patient portal / diagnosis & prescription history
+      window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'history' }));
+    }
+  };
+
   const handleAddToCart = (product) => {
     addToCart(product);
-    // Add custom system msg indicating item added
     setMessages(prev => [...prev, {
       id: Date.now(),
       sender: 'system',
@@ -121,7 +131,7 @@ const AIChatbot = () => {
                 )}
                 <div className="msg-bubble-wrap">
                   <div className="msg-bubble">
-                    <p>{msg.text}</p>
+                    <p style={{ whiteSpace: 'pre-line' }}>{msg.text}</p>
                     
                     {/* Embedded Product Suggestion */}
                     {msg.product && (
@@ -129,12 +139,25 @@ const AIChatbot = () => {
                         <img src={msg.product.image} alt={msg.product.name} />
                         <div className="msg-prod-details">
                           <h5>{msg.product.name}</h5>
-                          <span className="price">{msg.product.price.toLocaleString('vi-VN')}đ</span>
+                          <span className="price">{msg.product.price?.toLocaleString('vi-VN')}đ</span>
                           <button onClick={() => handleAddToCart(msg.product)}>
                             <ShoppingCart size={12} />
                             <span>Thêm vào giỏ</span>
                           </button>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Suggested Action Quick Button */}
+                    {msg.suggestedAction && msg.suggestedAction.type !== 'none' && (
+                      <div className="msg-action-box">
+                        <button
+                          className="msg-action-btn"
+                          onClick={() => handleActionClick(msg.suggestedAction)}
+                        >
+                          <span>{msg.suggestedAction.label}</span>
+                          <ArrowRight size={14} />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -165,7 +188,7 @@ const AIChatbot = () => {
           <form onSubmit={handleSend} className="ai-chat-input-form">
             <input 
               type="text" 
-              placeholder="Nhập câu hỏi của bạn (vd: bị đau khớp)..." 
+              placeholder="Nhập câu hỏi (vd: đặt lịch hẹn, bị đau khớp)..." 
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
             />
