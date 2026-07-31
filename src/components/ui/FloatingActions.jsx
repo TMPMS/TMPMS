@@ -12,14 +12,28 @@ const FloatingActions = ({ user }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const getCurrentUser = () => {
+    if (user) return user;
+    try {
+      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
   const handlePharmacyChatClick = (e) => {
     e.preventDefault();
-    if (!user) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const activeUser = getCurrentUser();
+    if (!token && !activeUser) {
       window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
       return;
     }
     setIsChatOpen(true);
   };
+
+  const activeUser = getCurrentUser();
 
   return (
     <>
@@ -50,7 +64,7 @@ const FloatingActions = ({ user }) => {
       <PharmacyChatWidget
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-        user={user}
+        user={activeUser}
       />
     </>
   );
