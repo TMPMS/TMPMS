@@ -344,14 +344,14 @@ const AdminView = () => {
   };
 
   // User Administration
-  const handleUserRoleChange = async (userId, roleId) => {
+  const handleUserRoleChange = async (userId, roleName) => {
     if (!hasAccess([1])) {
       setError('Chỉ Quản trị viên hệ thống (Admin) có quyền phân quyền người dùng.');
       return;
     }
     try {
-      await api.updateUserRole(userId, roleId);
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role_id: roleId } : u));
+      await api.updateUserRole(userId, roleName);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, roleName: roleName } : u));
       showSuccess('Cập nhật quyền người dùng thành công!');
       loadTabContent();
     } catch (err) {
@@ -1193,12 +1193,16 @@ const AdminView = () => {
                           <td>
                             <select 
                               className="role-assign-select"
-                              value={u.role_id}
-                              onChange={(e) => handleUserRoleChange(u.id, parseInt(e.target.value))}
+                              value={u.roleName || "User"}
+                              onChange={(e) => handleUserRoleChange(u.id, e.target.value)}
                             >
-                              <option value={1}>Quản trị viên (Admin)</option>
-                              <option value={2}>Khách hàng (User)</option>
-                              <option value={3}>Nhân viên Nhà thuốc (Pharmacy)</option>
+                              <option value="Admin">Quản trị viên (Admin)</option>
+                              <option value="User">Khách hàng / Bệnh nhân (User)</option>
+                              <option value="Pharmacy">Nhân viên Nhà thuốc (Pharmacy)</option>
+                              <option value="Staff">Nhân viên Lễ tân / Bệnh viện (Staff)</option>
+                              <option value="Doctor">Bác sĩ / Thầy thuốc (Doctor)</option>
+                              <option value="Accountant">Kế toán (Accountant)</option>
+                              <option value="Warehouse">Thủ kho (Warehouse)</option>
                             </select>
                           </td>
                         </tr>

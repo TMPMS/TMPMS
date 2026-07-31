@@ -469,12 +469,14 @@ export async function fetchUsers() {
   });
 }
 
-export async function updateUserRole(userId, roleId) {
-  let roleName = "User";
-  if (roleId === 1) roleName = "Admin";
-  else if (roleId === 3) roleName = "Pharmacy";
+export async function updateUserRole(userId, roleInput) {
+  let roleName = roleInput;
+  if (typeof roleInput === 'number') {
+    const roleMap = { 1: "Admin", 2: "User", 3: "Pharmacy", 4: "Staff", 5: "Doctor", 6: "Accountant", 7: "Warehouse" };
+    roleName = roleMap[roleInput] || "User";
+  }
 
-  const res = await fetch(`${API_URL}/api/auth/assign-role`, {
+  const res = await fetch(`${API_URL}/api/users/assign-role`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ userId: userId, roleName: roleName }),
