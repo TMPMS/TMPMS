@@ -762,23 +762,42 @@ function getUserIdHeader() {
       if (uId) headers['X-User-Id'] = uId;
       return headers;
     }
-  } catch (e) {}
+  } catch {
+    return getAuthHeaders();
+  }
   return getAuthHeaders();
 }
 
 export async function fetchMyProfile() {
   const res = await fetch(`${API_URL}/api/profile/me`, { headers: getUserIdHeader() });
-  if (!res.ok) throw new Error('Không thể tải hồ sơ');
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || 'Không thể tải hồ sơ');
+  }
   return res.json();
 }
 
 export async function updateMyProfile(data) {
+  const payload = {
+    username: data.username,
+    email: data.email,
+    phone: data.phone || '',
+    address: data.address || '',
+    fullName: data.fullName || null,
+    avatarUrl: data.avatarUrl || null,
+    dateOfBirth: data.dateOfBirth || null,
+    gender: data.gender || null,
+  };
+
   const res = await fetch(`${API_URL}/api/profile/me`, {
     method: 'PATCH',
     headers: getUserIdHeader(),
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể cập nhật hồ sơ');
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || 'Không thể cập nhật hồ sơ');
+  }
   return res.json();
 }
 
