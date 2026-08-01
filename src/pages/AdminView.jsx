@@ -529,6 +529,42 @@ const AdminView = () => {
     setImportResult(null);
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const res = await fetch(api.getImportTemplateUrl());
+      if (!res.ok) throw new Error('Không thể tải file mẫu');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mau_nhap_duoc_pham.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi tải file mẫu');
+    }
+  };
+
+  const handleDownloadExport = async () => {
+    try {
+      const res = await fetch(api.getExportUrl());
+      if (!res.ok) throw new Error('Không thể xuất file danh mục');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `danh_muc_duoc_pham_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi xuất danh mục Excel');
+    }
+  };
+
   // Add/Edit Product (Herbal Catalog)
   const handleProductSubmit = async (e) => {
     e.preventDefault();
@@ -1903,36 +1939,34 @@ const AdminView = () => {
               {/* Step 1: Download + Upload */}
               {!importResult && (
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                  <a
-                    href={api.getImportTemplateUrl()}
-                    download="mau_nhap_duoc_pham.xlsx"
+                  <button
+                    type="button"
+                    onClick={handleDownloadTemplate}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
-                      borderRadius: '8px', padding: '10px 16px', textDecoration: 'none',
+                      borderRadius: '8px', padding: '10px 16px', cursor: 'pointer',
                       fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap'
                     }}
                   >
                     ⬇️ Tải file mẫu rỗng
-                  </a>
+                  </button>
 
                   {/* NÚT XUẤT TOÀN BỘ DANH MỤC */}
-                  <a
-                    href={`${api.getExportUrl()}?t=${Date.now()}`}
-                    download={`danh_muc_duoc_pham.xlsx`}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={handleDownloadExport}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
                       background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                       color: '#fff', border: 'none',
-                      borderRadius: '8px', padding: '10px 16px', textDecoration: 'none',
+                      borderRadius: '8px', padding: '10px 16px', cursor: 'pointer',
                       fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap',
                       boxShadow: '0 2px 8px rgba(14,165,233,0.35)'
                     }}
                   >
                     📥 Xuất toàn bộ danh mục ra Excel
-                  </a>
+                  </button>
 
                   <label style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
