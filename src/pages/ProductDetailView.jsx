@@ -128,26 +128,34 @@ const ProductDetailView = ({ product, onBack }) => {
           <p className="pd-sku">Mã sản phẩm: SP-{product.id}</p>
 
           <div className="pd-price-card">
-            <div className="pd-price-row">
-              <span className="pd-price">{displayPrice.toLocaleString('vi-VN')}đ</span>
-              <span className="pd-unit">/ {product.unit}</span>
-            </div>
-            {displayOldPrice && (
-              <div className="pd-old-price-row">
-                <span className="pd-old-price">{displayOldPrice.toLocaleString('vi-VN')}đ</span>
-                <span className="pd-discount">-{product.discount}%</span>
+            {product.priceStatus === 'contact' || product.price === null || product.price === undefined ? (
+              <div className="pd-price-row">
+                <span className="pd-price" style={{ color: '#d97706', fontSize: '20px' }}>📞 Liên hệ Dược sĩ để nhận báo giá</span>
               </div>
+            ) : (
+              <>
+                <div className="pd-price-row">
+                  <span className="pd-price">{(displayPrice || 0).toLocaleString('vi-VN')}đ</span>
+                  <span className="pd-unit">/ {product.unit}</span>
+                </div>
+                {displayOldPrice && (
+                  <div className="pd-old-price-row">
+                    <span className="pd-old-price">{displayOldPrice.toLocaleString('vi-VN')}đ</span>
+                    <span className="pd-discount">-{product.discount}%</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           <div className="pd-meta-grid">
             <div className="pd-meta-item">
               <span className="meta-label">Xuất xứ</span>
-              <span className="meta-value">{product.origin}</span>
+              <span className="meta-value">{product.origin || 'Việt Nam'}</span>
             </div>
             <div className="pd-meta-item">
               <span className="meta-label">Quy cách</span>
-              <span className="meta-value">{product.packaging}</span>
+              <span className="meta-value">{product.packaging || product.unit || 'Túi/Kg'}</span>
             </div>
           </div>
 
@@ -158,7 +166,32 @@ const ProductDetailView = ({ product, onBack }) => {
           </div>
 
           <div className="pd-action-row">
-            {product.stockQuantity <= 0 ? (
+            {product.priceStatus === 'contact' || product.price === null || product.price === undefined ? (
+              <button
+                className="add-to-cart-btn"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('open-pharmacy-chat-widget', {
+                    detail: { initialMessage: `Tôi muốn hỏi giá và mua vị thuốc: ${product.name}` }
+                  }));
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '24px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                💬 Liên hệ Dược sĩ
+              </button>
+            ) : product.stockQuantity <= 0 ? (
               <button 
                 className="add-to-cart-btn" 
                 disabled 

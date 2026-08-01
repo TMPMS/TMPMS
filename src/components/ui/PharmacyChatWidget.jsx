@@ -3,7 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import * as api from '../../services/api';
 import './PharmacyChatWidget.css';
 
-const PharmacyChatWidget = ({ isOpen, onClose, user }) => {
+const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
   const [session, setSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -11,6 +11,12 @@ const PharmacyChatWidget = ({ isOpen, onClose, user }) => {
   const [assignedPharmacistName, setAssignedPharmacistName] = useState(null);
   const [systemNotice, setSystemNotice] = useState('');
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && initialMessage) {
+      setInputText(initialMessage);
+    }
+  }, [isOpen, initialMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

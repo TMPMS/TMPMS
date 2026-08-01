@@ -5,17 +5,23 @@ import './FloatingActions.css';
 const FloatingActions = ({ user }) => {
   const [visible, setVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [initialMessage, setInitialMessage] = useState('');
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
     window.addEventListener('scroll', onScroll);
 
-    const handleOpenChat = () => {
+    const handleOpenChat = (e) => {
       const activeUser = getCurrentUser();
       const token = localStorage.getItem('token') || sessionStorage.getItem('token') || activeUser?.token;
       if (!token && !activeUser) {
         window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
         return;
+      }
+      if (e?.detail?.initialMessage) {
+        setInitialMessage(e.detail.initialMessage);
+      } else {
+        setInitialMessage('');
       }
       setIsChatOpen(true);
     };
@@ -81,6 +87,7 @@ const FloatingActions = ({ user }) => {
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         user={activeUser}
+        initialMessage={initialMessage}
       />
     </>
   );

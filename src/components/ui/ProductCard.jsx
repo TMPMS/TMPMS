@@ -132,14 +132,22 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
         )}
 
         <div className="product-price-container">
-          <span className="product-price">
-            {product.price.toLocaleString('vi-VN') + 'đ'}
-            {!isFlashSale && <span className="pc-unit">/{product.unit || 'Hộp'}</span>}
-          </span>
-          {product.oldPrice && (
-            <span className="product-old-price">
-              {product.oldPrice.toLocaleString('vi-VN')}đ
+          {product.priceStatus === 'contact' || product.price === null || product.price === undefined ? (
+            <span className="price-contact-badge" style={{ color: '#d97706', backgroundColor: '#fef3c7', padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              📞 Liên hệ
             </span>
+          ) : (
+            <>
+              <span className="product-price">
+                {product.price.toLocaleString('vi-VN') + 'đ'}
+                {!isFlashSale && <span className="pc-unit">/{product.unit || 'Hộp'}</span>}
+              </span>
+              {product.oldPrice && (
+                <span className="product-old-price">
+                  {product.oldPrice.toLocaleString('vi-VN')}đ
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -147,7 +155,35 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
       {/* Action */}
       {!isFlashSale && (
         <div className="product-action">
-          {product.stockQuantity <= 0 ? (
+          {product.priceStatus === 'contact' || product.price === null || product.price === undefined ? (
+            <button
+              className="btn-contact-pharmacist"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('open-pharmacy-chat-widget', {
+                  detail: { initialMessage: `Tôi muốn hỏi giá và mua vị thuốc: ${product.name}` }
+                }));
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #059669, #10b981)',
+                color: '#ffffff',
+                width: '100%',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '20px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              💬 Liên hệ Dược sĩ
+            </button>
+          ) : product.stockQuantity <= 0 ? (
             <button
               className="btn-add-cart"
               disabled

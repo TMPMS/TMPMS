@@ -273,6 +273,16 @@ const AdminView = () => {
     const med = medicines.find(m => m.id === parseInt(selectedMedicineId));
     if (!med) return;
 
+    const stock = med.stock_quantity ?? med.stockQuantity ?? 0;
+    if (stock <= 0) {
+      setError(`Vị thuốc '${med.name}' hiện đã hết hàng trong kho!`);
+      return;
+    }
+    if (selectedMedicineQty > stock) {
+      setError(`Vị thuốc '${med.name}' chỉ còn ${stock}${med.unit || 'g'} trong kho, không đủ để kê ${selectedMedicineQty}${med.unit || 'g'}!`);
+      return;
+    }
+
     // Check duplicate
     if (currentPrescription.items.some(i => i.medicineId === med.id)) {
       setError('Dược phẩm này đã được chọn trong đơn thuốc.');
@@ -326,7 +336,7 @@ const AdminView = () => {
       setPrescriptionModal(null);
       loadTabContent();
     } catch (err) {
-      setError('Không thể kê đơn thuốc. Vui lòng kiểm tra lại.');
+      setError(err.message || 'Không thể kê đơn thuốc. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -1025,10 +1035,18 @@ const AdminView = () => {
                     <h5>Thêm vị thuốc / Thảo dược vào thang đơn</h5>
                     <div className="prescribe-inputs">
                       <select className="form-select flex-1" value={selectedMedicineId} onChange={e => setSelectedMedicineId(e.target.value)}>
-                        <option value="">-- Chọn thảo dược/thuốc --</option>
-                        {medicines.map(m => (
-                          <option key={m.id} value={m.id}>{m.name} ({m.price.toLocaleString()}đ/{m.unit}) - Tồn kho: {m.stock_quantity}</option>
-                        ))}
+                        <option value="">-- Chọn thảo dược/thuốc Đông Y --</option>
+                        {medicines.map(m => {
+                          const stock = m.stock_quantity ?? m.stockQuantity ?? 0;
+                          const unit = m.unit || 'gram';
+                          const priceText = m.price != null ? `${m.price.toLocaleString('vi-VN')}đ/${unit}` : 'Liên hệ';
+                          const isOutOfStock = stock <= 0;
+                          return (
+                            <option key={m.id} value={m.id} disabled={isOutOfStock}>
+                              {m.name} ({priceText}) - {isOutOfStock ? '❌ Hết hàng (còn 0g)' : `Tồn kho: còn ${stock}${unit}`}
+                            </option>
+                          );
+                        })}
                       </select>
                       <input type="number" className="form-input w-24" min="1" value={selectedMedicineQty} onChange={e => setSelectedMedicineQty(parseInt(e.target.value))} placeholder="SL" />
                       <button type="button" className="btn-add-item" onClick={addMedicineToPrescription}><Plus size={16} /> Thêm vị</button>
