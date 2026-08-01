@@ -28,7 +28,7 @@ import VaccineBookingView from './pages/VaccineBookingView';
 import HealthReels from './pages/HealthReels';
 import AIChatbot from './components/ui/AIChatbot';
 import ProfileView from './pages/ProfileView';
-import HealthVideoSection from './components/HealthVideoSection';
+import FeaturedVideosCarousel from './components/ui/FeaturedVideosCarousel';
 
 import { fetchMedicines } from './services/api';
 
@@ -229,7 +229,7 @@ function App() {
                 <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} onProductClick={handleSelectProduct} />
               </>
             )}
-            <HealthVideoSection onNavigate={handleNavigate} />
+            <FeaturedVideosCarousel onNavigate={handleNavigate} />
             <Brands />
             <HealthNews />
             <StorePromoBar />

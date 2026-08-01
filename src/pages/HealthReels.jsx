@@ -111,6 +111,22 @@ const HealthReels = ({ onBack }) => {
       
       if (data && data.videos && data.videos.length > 0) {
         setReels(data.videos);
+
+        // Read query param "start" for deep-linking to selected video
+        const searchParams = new URLSearchParams(window.location.search);
+        const startVideoId = searchParams.get('start');
+        if (startVideoId) {
+          const foundIdx = data.videos.findIndex(v => v.videoId === startVideoId);
+          if (foundIdx !== -1) {
+            setActiveReelIndex(foundIdx);
+            setTimeout(() => {
+              if (containerRef.current) {
+                const containerHeight = containerRef.current.clientHeight;
+                containerRef.current.scrollTop = foundIdx * containerHeight;
+              }
+            }, 150);
+          }
+        }
       } else {
         setReels([]);
         setErrorMessage(data?.errorMessage || 'Chưa có video khả dụng lúc này.');
