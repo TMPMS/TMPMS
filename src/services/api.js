@@ -337,6 +337,31 @@ export async function createOrder(orderData) {
   return res.json();
 }
 
+export async function createPayOSPaymentLink(orderId, returnUrl, cancelUrl) {
+  const res = await fetch(`${API_URL}/api/payos/payment-link`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ orderId, returnUrl, cancelUrl }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Không thể tạo link thanh toán PayOS');
+  }
+  return res.json();
+}
+
+export async function verifyPayOSPayment(orderId) {
+  const res = await fetch(`${API_URL}/api/payos/verify/${orderId}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Không thể kiểm tra trạng thái thanh toán PayOS');
+  }
+  return res.json();
+}
+
 export async function calculateShipping(address, deliveryMethod) {
   const res = await fetch(`${API_URL}/api/shipping/calculate`, {
     method: 'POST',

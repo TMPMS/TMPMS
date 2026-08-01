@@ -31,6 +31,7 @@ import ProfileView from './pages/ProfileView';
 import FeaturedVideosCarousel from './components/ui/FeaturedVideosCarousel';
 import HealthQuizList from './pages/HealthQuizList';
 import HealthQuizPlayer from './pages/HealthQuizPlayer';
+import PaymentResultView from './pages/PaymentResultView';
 
 import { fetchMedicines } from './services/api';
 
@@ -61,7 +62,11 @@ const categoryNames = {
 };
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'history' | 'admin' | 'suppliers' | 'detail'
+  const [paymentOrderCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('payment') ? params.get('orderCode') : null;
+  });
+  const [currentPage, setCurrentPage] = useState(paymentOrderCode ? 'payment-result' : 'home');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
@@ -205,6 +210,8 @@ function App() {
         return <ProfileView onNavigate={handleNavigate} />;
       case 'detail':
         return <ProductDetailView product={selectedProduct} onBack={() => handleNavigate('home')} />;
+      case 'payment-result':
+        return <PaymentResultView orderCode={paymentOrderCode} onNavigate={handleNavigate} />;
       case 'home':
       default:
         if (isSearching) {
