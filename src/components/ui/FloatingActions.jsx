@@ -1,34 +1,88 @@
 import React, { useState, useEffect } from 'react';
+import PharmacyChatWidget from './PharmacyChatWidget';
 import './FloatingActions.css';
 
-const FloatingActions = () => {
+const FloatingActions = ({ user }) => {
   const [visible, setVisible] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
     window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+
+    const handleOpenChat = () => {
+      const activeUser = getCurrentUser();
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || activeUser?.token;
+      if (!token && !activeUser) {
+        window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
+        return;
+      }
+      setIsChatOpen(true);
+    };
+
+    window.addEventListener('open-pharmacy-chat-widget', handleOpenChat);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('open-pharmacy-chat-widget', handleOpenChat);
+    };
   }, []);
 
-  return (
-    <div className="float-wrap">
-      {/* Chat / Tư vấn */}
-      <a href="#" className="float-btn float-chat">
-        <span className="float-icon">💬</span>
-        <span className="float-label">Tư vấn<br/>Dược sĩ</span>
-      </a>
+  const getCurrentUser = () => {
+    if (user) return user;
+    try {
+      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
 
-      {/* Scroll to top */}
-      {visible && (
+  const handlePharmacyChatClick = (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const activeUser = getCurrentUser();
+    if (!token && !activeUser) {
+      window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
+      return;
+    }
+    setIsChatOpen(true);
+  };
+
+  const activeUser = getCurrentUser();
+
+  return (
+    <>
+      <div className="float-wrap">
+        {/* Chat / Tư vấn */}
         <button
-          className="float-btn float-top fade-in"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          title="Lên đầu trang"
+          className="float-btn float-chat"
+          onClick={handlePharmacyChatClick}
+          title="Tư vấn Dược sĩ Trực tuyến"
+          style={{ cursor: 'pointer', border: 'none' }}
         >
-          ↑
+          <span className="float-icon">💬</span>
+          <span className="float-label">Tư vấn<br />Dược sĩ</span>
         </button>
-      )}
-    </div>
+
+        {/* Scroll to top */}
+        {visible && (
+          <button
+            className="float-btn float-top fade-in"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Lên đầu trang"
+          >
+            ↑
+          </button>
+        )}
+      </div>
+
+      <PharmacyChatWidget
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        user={activeUser}
+      />
+    </>
   );
 };
 

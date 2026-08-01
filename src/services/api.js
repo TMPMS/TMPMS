@@ -1,19 +1,27 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-function getAuthHeaders() {
+export function getAuthToken() {
   try {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      if (parsed && parsed.token) {
-        return {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${parsed.token}`
-        };
+      if (parsed && (parsed.token || parsed.accessToken)) {
+        return parsed.token || parsed.accessToken;
       }
     }
   } catch (e) {
     console.error('Error reading auth token', e);
+  }
+  return '';
+}
+
+function getAuthHeaders() {
+  const token = getAuthToken();
+  if (token) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
   }
   return { 'Content-Type': 'application/json' };
 }
@@ -494,12 +502,14 @@ export async function fetchUsers() {
   });
 }
 
-export async function updateUserRole(userId, roleId) {
-  let roleName = "User";
-  if (roleId === 1) roleName = "Admin";
-  else if (roleId === 3) roleName = "Pharmacy";
+export async function updateUserRole(userId, roleInput) {
+  let roleName = roleInput;
+  if (typeof roleInput === 'number') {
+    const roleMap = { 1: "Admin", 2: "User", 3: "Pharmacy", 4: "Staff", 5: "Doctor", 6: "Accountant", 7: "Warehouse" };
+    roleName = roleMap[roleInput] || "User";
+  }
 
-  const res = await fetch(`${API_URL}/api/auth/assign-role`, {
+  const res = await fetch(`${API_URL}/api/users/assign-role`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ userId: userId, roleName: roleName }),
@@ -557,7 +567,10 @@ export async function createPatient(patientData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể thêm bệnh nhân');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Không thể thêm bệnh nhân');
+  }
   return res.json();
 }
 
@@ -578,7 +591,10 @@ export async function updatePatient(patientId, patientData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể cập nhật thông tin bệnh nhân');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Không thể cập nhật thông tin bệnh nhân');
+  }
   return res.json();
 }
 
@@ -824,15 +840,16 @@ export async function updateMyProfile(data) {
   return res.json();
 }
 
-export async function askAiChatbot(messageText) {
+export async function askAiChatbot(messageText, history = []) {
   const res = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: messageText }),
+    body: JSON.stringify({ text: messageText, history }),
   });
   if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
 }
+
 
 // Customer-facing Patient APIs
 export async function fetchUserAppointments() {
@@ -869,4 +886,45 @@ export async function fetchUserPrescriptions(userId) {
     status: p.status || p.Status || "Active",
     items: p.items || p.Items || []
   }));
+}
+
+// Pharmacy Live Chat APIs
+export async function fetchMyPharmacyChatSession() {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/my-session`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải phiên tư vấn Dược sĩ');
+  return res.json();
+}
+
+export async function fetchPharmacyChatSessions(status) {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions${query}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách phiên tư vấn');
+  return res.json();
+}
+
+export async function fetchPharmacyChatMessages(sessionId) {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/messages`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch sử tin nhắn');
+  return res.json();
+}
+
+export async function assignPharmacyChatSession(sessionId) {
+  const res = await fetch(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/assign`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tiếp nhận phiên tư vấn');
+  return res.json();
+}
+
+export async function fetchHealthReelsVideos() {
+  const res = await fetch(`${API_URL}/api/HealthReels/videos`);
+  if (!res.ok) throw new Error('Không thể tải bản tin video sức khỏe');
+  return res.json();
 }

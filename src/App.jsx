@@ -28,7 +28,9 @@ import VaccineBookingView from './pages/VaccineBookingView';
 import HealthReels from './pages/HealthReels';
 import AIChatbot from './components/ui/AIChatbot';
 import ProfileView from './pages/ProfileView';
-import HealthVideoSection from './components/HealthVideoSection';
+import FeaturedVideosCarousel from './components/ui/FeaturedVideosCarousel';
+import HealthQuizList from './pages/HealthQuizList';
+import HealthQuizPlayer from './pages/HealthQuizPlayer';
 import PaymentResultView from './pages/PaymentResultView';
 
 import { fetchMedicines } from './services/api';
@@ -106,6 +108,18 @@ function App() {
     }
   }, [selectedCategoryId]);
 
+  // Global event listener for app navigation from AI Chatbot or Floating buttons
+  useEffect(() => {
+    const handleAppNav = (e) => {
+      if (e.detail) {
+        setCurrentPage(e.detail);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('app-navigate', handleAppNav);
+    return () => window.removeEventListener('app-navigate', handleAppNav);
+  }, []);
+
   // Load Category Products
   useEffect(() => {
     const loadCategoryProducts = async () => {
@@ -154,6 +168,8 @@ function App() {
     setSearchQuery('');
   };
 
+  const [selectedQuizCode, setSelectedQuizCode] = useState(null);
+
   const renderContent = () => {
     switch (currentPage) {
       case 'history':
@@ -170,6 +186,24 @@ function App() {
         return <HealthReels onBack={() => handleNavigate('home')} />;
       case 'diagnose':
         return <SelfDiagnosis onBack={() => handleNavigate('home')} />;
+      case 'health-quiz':
+        return (
+          <HealthQuizList 
+            onSelectQuiz={(code) => {
+              setSelectedQuizCode(code);
+              handleNavigate('health-quiz-player');
+            }} 
+            onBack={() => handleNavigate('home')} 
+          />
+        );
+      case 'health-quiz-player':
+        return (
+          <HealthQuizPlayer 
+            quizCode={selectedQuizCode || 'cardio-risk'} 
+            onBack={() => handleNavigate('health-quiz')}
+            onNavigateBooking={() => handleNavigate('patient-portal')}
+          />
+        );
       case 'patient-portal':
         return <PatientPortal onBack={() => handleNavigate('home')} />;
       case 'profile':
@@ -224,10 +258,10 @@ function App() {
                 <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} onProductClick={handleSelectProduct} />
               </>
             )}
-            <HealthVideoSection onNavigate={handleNavigate} />
+            <FeaturedVideosCarousel onNavigate={handleNavigate} />
             <Brands />
             <HealthNews />
-            <StorePromoBar />
+            <StorePromoBar onNavigate={handleNavigate} />
           </>
         );
     }

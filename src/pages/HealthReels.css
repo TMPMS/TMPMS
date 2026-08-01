@@ -79,6 +79,13 @@
   background: #0f172a;
 }
 
+.reel-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000000;
+}
+
 .reel-video {
   width: 100%;
   height: 100%;
@@ -141,6 +148,7 @@
   gap: 16px;
   align-items: center;
   z-index: 5;
+  color: #ffffff;
 }
 
 .action-btn-wrap {
@@ -148,7 +156,6 @@
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  color: #ffffff;
 }
 
 .action-icon-circle {
@@ -274,6 +281,79 @@
 .buy-now-btn:hover {
   background: #ffffff;
   transform: translateY(-1px);
+}
+
+/* Fallback UI container */
+.reels-fallback-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.reels-fallback-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: #2dd4bf;
+}
+
+.reels-fallback-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  color: #ffffff;
+}
+
+.reels-fallback-desc {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #94a3b8;
+  max-width: 320px;
+  margin: 0 0 24px 0;
+}
+
+.reels-retry-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+}
+
+.reels-retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.4);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-slide-up {
