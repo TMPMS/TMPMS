@@ -107,6 +107,14 @@ export async function fetchCategories() {
   return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
 }
 
+export function formatImageUrl(url) {
+  if (!url) return 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500';
+  if (url.startsWith('/uploads/')) {
+    return `${API_URL}${url}`;
+  }
+  return url;
+}
+
 export async function fetchMedicines(categoryId = null, search = '', limit = null, offset = null) {
   let url = `${API_URL}/medicines`;
   const params = [];
@@ -133,7 +141,8 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
   const data = await res.json();
 
   return (Array.isArray(data) ? data : []).map(m => {
-    const imgUrl = m.imageUrl || m.image_url || m.ImageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500';
+    const rawUrl = m.imageUrl || m.image_url || m.ImageUrl || '';
+    const imgUrl = formatImageUrl(rawUrl);
     return {
       ...m,
       id: m.id || m.Id,

@@ -7,6 +7,8 @@ import {
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
 import './AdminView.css';
 
+const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
+
 const AdminView = () => {
   const [activeTab, setActiveTab] = useState('orders'); // orders | patients | appointments | prescriptions | inventory | users | stats | products
   const [loading, setLoading] = useState(false);
@@ -1536,7 +1538,7 @@ const AdminView = () => {
                 </div>
                 {prodImgUrl && (
                   <div className="product-img-preview">
-                    <img src={prodImgUrl} alt="preview" onError={(e) => e.target.style.display='none'} />
+                    <img src={api.formatImageUrl(prodImgUrl)} alt="preview" onError={(e) => e.target.style.display='none'} />
                   </div>
                 )}
                 <form className="add-product-form" onSubmit={handleProductSubmit}>
@@ -1712,7 +1714,7 @@ const AdminView = () => {
                   {medicines.map(m => (
                     <div key={m.id} className={`medicine-crud-row ${editingMedicineId === m.id ? 'editing' : ''}`}>
                       <div className="medicine-crud-img">
-                        <img src={m.image_url} alt={m.name} onError={(e) => e.target.src='https://via.placeholder.com/60x60?text=🌿'} />
+                        <img src={api.formatImageUrl(m.image_url)} alt={m.name} onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_MED_IMG; }} />
                       </div>
                       <div className="medicine-crud-info">
                         <strong>{m.name}</strong>
