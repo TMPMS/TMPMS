@@ -142,11 +142,11 @@
   box-shadow: 0 6px 16px rgba(5,150,105,0.3);
 }
 
-/* Custom Table Design */
 .table-wrapper {
   overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--color-border, #e2e8f0);
+  max-height: 70vh;
 }
 
 .admin-table {
@@ -157,11 +157,14 @@
 }
 
 .admin-table th {
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   padding: 14px 16px;
   font-weight: 700;
-  color: #475569;
-  border-bottom: 1.5px solid #e2e8f0;
+  color: #334155;
+  border-bottom: 2px solid #cbd5e1;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .admin-table td {
@@ -169,6 +172,15 @@
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   line-height: 1.4;
+  transition: background-color 0.15s ease;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f0fdfa;
 }
 
 .admin-table tr:last-child td {
