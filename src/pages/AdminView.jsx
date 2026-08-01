@@ -333,6 +333,7 @@ const AdminView = () => {
         patientId: patientIdInt,
         doctorName: currentPrescription.doctorName || 'Bác sĩ Đông Y',
         hospital: currentPrescription.hospital || 'Phòng khám Đông Y TMPMS',
+        diagnosisNote: currentPrescription.diagnosisNote || 'Thể bệnh Tâm Tỳ Lưỡng Hư',
         items: currentPrescription.items.map(i => ({
           medicineId: parseInt(i.medicineId),
           quantity: parseInt(i.quantity)
@@ -914,7 +915,7 @@ const AdminView = () => {
               <div className="card-header-actions">
                 <h3 className="card-title">Danh sách Đơn thuốc & Kê đơn Lâm sàng</h3>
                 <button className="btn-add-action" onClick={() => {
-                  setCurrentPrescription({ patientId: patients[0]?.id || '', doctorName: `Thầy thuốc ${loggedInUser?.username || ''}`, hospital: 'Phòng khám Đông Y', items: [] });
+                  setCurrentPrescription({ patientId: patients[0]?.id || '', doctorName: `Thầy thuốc ${loggedInUser?.username || ''}`, hospital: 'Phòng khám Đông Y', diagnosisNote: 'Thể bệnh Tâm Tỳ Lưỡng Hư', items: [] });
                   setPrescriptionModal('add');
                 }}><Plus size={16} /> Kê đơn thuốc thảo dược</button>
               </div>
@@ -924,7 +925,7 @@ const AdminView = () => {
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#0f766e', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Danh sách bệnh nhân chờ kê đơn (Lịch hẹn khám chưa có đơn thuốc)
                 </h4>
-                {appointments.filter(appt => !prescriptions.some(presc => presc.patientId === appt.patientId) && appt.status !== 'Cancelled').length === 0 ? (
+                {appointments.filter(appt => !prescriptions.some(presc => (presc.patientId || presc.userId) === (appt.patientId || appt.userId)) && appt.status !== 'Cancelled').length === 0 ? (
                   <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Hàng chờ trống. Không có lịch hẹn khám nào cần kê đơn thuốc.</p>
                 ) : (
                   <div className="table-wrapper" style={{ border: '1px solid #d1fae5' }}>
@@ -940,7 +941,7 @@ const AdminView = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.filter(appt => !prescriptions.some(presc => presc.patientId === appt.patientId) && appt.status !== 'Cancelled').map(appt => (
+                        {appointments.filter(appt => !prescriptions.some(presc => (presc.patientId || presc.userId) === (appt.patientId || appt.userId)) && appt.status !== 'Cancelled').map(appt => (
                           <tr key={appt.id}>
                             <td><strong>{appt.patientName}</strong></td>
                             <td>{appt.patientPhone}</td>
@@ -971,9 +972,10 @@ const AdminView = () => {
                                   }
 
                                   setCurrentPrescription({
-                                    patientId: appt.patientId,
+                                    patientId: appt.patientId || appt.userId,
                                     doctorName: nameForDoctor,
                                     hospital: 'Phòng khám Đông Y',
+                                    diagnosisNote: appt.reason || 'Thể bệnh Tâm Tỳ Lưỡng Hư',
                                     items: suggestedHerbs
                                   });
                                   setPrescriptionModal('add');
@@ -1026,6 +1028,17 @@ const AdminView = () => {
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label className="form-label">Nơi khám bệnh *</label>
                       <input type="text" className="form-input" required value={currentPrescription.hospital} onChange={e => setCurrentPrescription({...currentPrescription, hospital: e.target.value})} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Chẩn đoán y khoa / Thể bệnh Đông Y *</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        required 
+                        placeholder="Ví dụ: Thể bệnh Tâm Tỳ Lưỡng Hư, Suy Nhược Thần Kinh, Đau thần kinh tọa..." 
+                        value={currentPrescription.diagnosisNote || ''} 
+                        onChange={e => setCurrentPrescription({...currentPrescription, diagnosisNote: e.target.value})} 
+                      />
                     </div>
                   </div>
 
@@ -1137,6 +1150,7 @@ const AdminView = () => {
                       <tr>
                         <th>ID Đơn</th>
                         <th>Bệnh nhân</th>
+                        <th>Chẩn đoán y khoa</th>
                         <th>Ngày kê đơn</th>
                         <th>Thầy thuốc phụ trách</th>
                         <th>Đại lý/Nơi kê đơn</th>
@@ -1146,44 +1160,63 @@ const AdminView = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {prescriptions.map(p => (
-                        <tr key={p.id}>
-                          <td className="col-id">#{p.id}</td>
-                          <td><strong>{p.patientName}</strong></td>
-                          <td>{formatDate(p.prescriptionDate)}</td>
-                          <td>{p.doctorName}</td>
-                          <td>{p.hospital}</td>
-                          <td>
-                            <div className="prescription-medicines-cell">
-                              {p.items && p.items.map((item, idx) => (
-                                <span key={idx} className="prescription-med-tag">
-                                  🌿 {item.medicineName} (x{item.quantity})
+                      {prescriptions.map(p => {
+                        const matchingPatient = patients.find(pt => pt.id === (p.patientId || p.userId));
+                        const displayName = p.patientName || p.userName || matchingPatient?.name || `Bệnh nhân #${p.userId}`;
+                        const displayPhone = matchingPatient?.phone;
+                        return (
+                          <tr key={p.id}>
+                            <td className="col-id">#{p.id}</td>
+                            <td>
+                              <strong style={{ color: '#0f172a', display: 'block', fontWeight: '700' }}>
+                                {displayName}
+                              </strong>
+                              {displayPhone && (
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                  📞 {displayPhone}
                                 </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`prescription-status ${p.status?.toLowerCase()}`}>
-                              {p.status === 'Active' ? 'Hoạt động' : p.status === 'Filled' ? 'Đã bốc thuốc' : 'Đã hủy'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="pres-actions">
-                              {p.status === 'Active' && (
-                                <button className="btn-pres-action fill" onClick={() => handlePrescriptionStatus(p.id, 'Filled')} title="Bốc thuốc và cấp phát">
-                                  <Check size={12} /> Bốc thuốc
-                                </button>
                               )}
-                              {p.status === 'Active' && (
-                                <button className="btn-pres-action cancel" onClick={() => handlePrescriptionStatus(p.id, 'Cancelled')} title="Hủy đơn thuốc">
-                                  <X size={12} /> Hủy
-                                </button>
-                              )}
-                              {p.status !== 'Active' && <span className="completed-text">Đã xử lý</span>}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td>
+                              <span className="prescription-med-tag" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: '600', padding: '4px 8px' }}>
+                                🩺 {p.diagnosisNote || 'Thể bệnh Tâm Tỳ Lưỡng Hư'}
+                              </span>
+                            </td>
+                            <td>{formatDate(p.prescriptionDate)}</td>
+                            <td>{p.doctorName}</td>
+                            <td>{p.hospital}</td>
+                            <td>
+                              <div className="prescription-medicines-cell">
+                                {p.items && p.items.map((item, idx) => (
+                                  <span key={idx} className="prescription-med-tag">
+                                    🌿 {item.medicineName} (x{item.quantity})
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`prescription-status ${p.status?.toLowerCase()}`}>
+                                {p.status === 'Active' ? 'Hoạt động' : p.status === 'Filled' ? 'Đã bốc thuốc' : 'Đã hủy'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="pres-actions">
+                                {p.status === 'Active' && (
+                                  <button className="btn-pres-action fill" onClick={() => handlePrescriptionStatus(p.id, 'Filled')} title="Bốc thuốc và cấp phát">
+                                    <Check size={12} /> Bốc thuốc
+                                  </button>
+                                )}
+                                {p.status === 'Active' && (
+                                  <button className="btn-pres-action cancel" onClick={() => handlePrescriptionStatus(p.id, 'Cancelled')} title="Hủy đơn thuốc">
+                                    <X size={12} /> Hủy
+                                  </button>
+                                )}
+                                {p.status !== 'Active' && <span className="completed-text">Đã xử lý</span>}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
