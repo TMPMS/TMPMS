@@ -44,6 +44,7 @@ const AdminView = () => {
   const [currentPrescription, setCurrentPrescription] = useState({ patientId: '', doctorName: 'Bác sĩ Đông Y', hospital: 'Phòng khám Đông Y', items: [] });
   const [selectedMedicineId, setSelectedMedicineId] = useState('');
   const [selectedMedicineQty, setSelectedMedicineQty] = useState(1);
+  const [hideOutOfStock, setHideOutOfStock] = useState(true);
 
   // Form States - Product (Herbal Medicine)
   const [prodName, setProdName] = useState('');
@@ -333,8 +334,20 @@ const AdminView = () => {
 
       await api.createPrescription(payload);
       showSuccess('Kê đơn thuốc Đông Y thành công!');
+
+      // Cập nhật ngay tồn kho trong state FE để giao diện phản hồi tức thì
+      setMedicines(prev => prev.map(m => {
+        const item = currentPrescription.items.find(i => i.medicineId === m.id);
+        if (item) {
+          const oldStock = m.stock_quantity ?? m.stockQuantity ?? 0;
+          const newStock = Math.max(0, oldStock - item.quantity);
+          return { ...m, stock_quantity: newStock, stockQuantity: newStock };
+        }
+        return m;
+      }));
+
       setPrescriptionModal(null);
-      loadTabContent();
+      await loadTabContent();
     } catch (err) {
       setError(err.message || 'Không thể kê đơn thuốc. Vui lòng kiểm tra lại.');
     }
@@ -1033,21 +1046,36 @@ const AdminView = () => {
 
                   {/* Add Medicines / Herbs Section */}
                   <div className="med-prescribe-box">
-                    <h5>Thêm vị thuốc / Thảo dược vào thang đơn</h5>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                      <h5 style={{ margin: 0 }}>Thêm vị thuốc / Thảo dược vào thang đơn</h5>
+                      <label style={{ fontSize: '12px', color: '#0f766e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500', backgroundColor: '#f0fdf4', padding: '3px 8px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
+                        <input
+                          type="checkbox"
+                          checked={hideOutOfStock}
+                          onChange={e => setHideOutOfStock(e.target.checked)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span>Ẩn vị thuốc/thảo dược đã hết hàng (0g)</span>
+                      </label>
+                    </div>
+
                     <div className="prescribe-inputs">
                       <select className="form-select flex-1" value={selectedMedicineId} onChange={e => setSelectedMedicineId(e.target.value)}>
                         <option value="">-- Chọn thảo dược/thuốc Đông Y --</option>
-                        {medicines.map(m => {
-                          const stock = m.stock_quantity ?? m.stockQuantity ?? 0;
-                          const unit = m.unit || 'gram';
-                          const priceText = m.price != null ? `${m.price.toLocaleString('vi-VN')}đ/${unit}` : 'Liên hệ';
-                          const isOutOfStock = stock <= 0;
-                          return (
-                            <option key={m.id} value={m.id} disabled={isOutOfStock}>
-                              {m.name} ({priceText}) - {isOutOfStock ? '❌ Hết hàng (còn 0g)' : `Tồn kho: còn ${stock}${unit}`}
-                            </option>
-                          );
-                        })}
+                        {medicines
+                          .filter(m => !hideOutOfStock || (m.stock_quantity ?? m.stockQuantity ?? 0) > 0)
+                          .sort((a, b) => (b.stock_quantity ?? b.stockQuantity ?? 0) - (a.stock_quantity ?? a.stockQuantity ?? 0))
+                          .map(m => {
+                            const stock = m.stock_quantity ?? m.stockQuantity ?? 0;
+                            const unit = m.unit || 'gram';
+                            const priceText = m.price != null ? `${m.price.toLocaleString('vi-VN')}đ/${unit}` : 'Liên hệ';
+                            const isOutOfStock = stock <= 0;
+                            return (
+                              <option key={m.id} value={m.id} disabled={isOutOfStock}>
+                                {m.name} ({priceText}) - {isOutOfStock ? '❌ Hết hàng (còn 0g)' : `Tồn kho: còn ${stock}${unit}`}
+                              </option>
+                            );
+                          })}
                       </select>
                       <input type="number" className="form-input w-24" min="1" value={selectedMedicineQty} onChange={e => setSelectedMedicineQty(parseInt(e.target.value))} placeholder="SL" />
                       <button type="button" className="btn-add-item" onClick={addMedicineToPrescription}><Plus size={16} /> Thêm vị</button>
