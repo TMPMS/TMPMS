@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { 
   ShoppingCart, Star, Leaf, Eye, Calendar, Plus, Edit2, Trash2, 
-  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare
+  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare, Upload
 } from 'lucide-react';
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
 import './AdminView.css';
@@ -59,6 +59,15 @@ const AdminView = () => {
   const [prodImgUrl, setProdImgUrl] = useState('');
   const [prodDesc, setProdDesc] = useState('');
   const [prodReqPrescription, setProdReqPrescription] = useState(false);
+
+  // Excel Bulk Import State
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreviewData, setImportPreviewData] = useState(null);
+  const [importSessionId, setImportSessionId] = useState('');
+  const [importSelectedRows, setImportSelectedRows] = useState(new Set());
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Current logged in user profile (from localStorage)
   const [loggedInUser, setLoggedInUser] = useState(null);
@@ -452,6 +461,69 @@ const AdminView = () => {
     } catch (err) {
       setError('Lỗi khi xóa vị thuốc.');
     }
+  };
+
+  // ---- Excel Bulk Import Handlers ----
+  const handleImportPreview = async () => {
+    if (!importFile) { setError('Vui lòng chọn file Excel (.xlsx)'); return; }
+    setImportLoading(true);
+    setError('');
+    try {
+      const data = await api.previewImport(importFile);
+      setImportPreviewData(data);
+      setImportSessionId(data.importSessionId);
+      // Mặc định tick tất cả dòng không lỗi
+      const defaultSelected = new Set(
+        data.rows.filter(r => r.status !== 'Error').map(r => r.rowIndex)
+      );
+      setImportSelectedRows(defaultSelected);
+      setImportResult(null);
+    } catch (err) {
+      setError(err.message || 'Không thể đọc file Excel');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleImportConfirm = async () => {
+    if (!importSessionId || importSelectedRows.size === 0) {
+      setError('Vui lòng chọn ít nhất 1 dòng để nhập');
+      return;
+    }
+    setImportLoading(true);
+    setError('');
+    try {
+      const result = await api.confirmImport(importSessionId, Array.from(importSelectedRows));
+      setImportResult(result);
+      setImportPreviewData(null);
+      setImportSessionId('');
+      // Reload danh sách thuốc
+      const meds = await api.fetchMedicines();
+      setMedicines(meds);
+      showSuccess(`Đã nhập thành công ${result.successCount} sản phẩm!`);
+    } catch (err) {
+      setError(err.message || 'Không thể xác nhận nhập hàng loạt');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const toggleImportRow = (rowIndex) => {
+    setImportSelectedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) next.delete(rowIndex);
+      else next.add(rowIndex);
+      return next;
+    });
+  };
+
+  const handleCloseImportModal = () => {
+    setShowImportModal(false);
+    setImportFile(null);
+    setImportPreviewData(null);
+    setImportSessionId('');
+    setImportSelectedRows(new Set());
+    setImportResult(null);
   };
 
   // Add/Edit Product (Herbal Catalog)
@@ -1404,9 +1476,25 @@ const AdminView = () => {
             <div className="products-crud-layout">
               {/* LEFT: Add / Edit Form */}
               <div className="admin-card products-form-panel">
-                <h3 className="card-title">
-                  {editingMedicineId ? '✏️ Chỉnh sửa thông tin Dược phẩm' : '➕ Thêm Dược phẩm mới'}
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h3 className="card-title" style={{ margin: 0 }}>
+                    {editingMedicineId ? '✏️ Chỉnh sửa thông tin Dược phẩm' : '➕ Thêm Dược phẩm mới'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowImportModal(true)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'linear-gradient(135deg, #059669, #10b981)',
+                      color: '#fff', border: 'none', borderRadius: '8px',
+                      padding: '8px 16px', cursor: 'pointer', fontWeight: '600',
+                      fontSize: '13px', boxShadow: '0 2px 8px rgba(16,185,129,0.35)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Upload size={15} /> 📤 Import Excel hàng loạt
+                  </button>
+                </div>
                 {prodImgUrl && (
                   <div className="product-img-preview">
                     <img src={prodImgUrl} alt="preview" onError={(e) => e.target.style.display='none'} />
@@ -1769,6 +1857,268 @@ const AdminView = () => {
             <PharmacyChatDashboard loggedInUser={loggedInUser} />
           )}
 
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: Import Excel hàng loạt                                */}
+      {/* ============================================================ */}
+      {showImportModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '16px', backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '900px',
+            maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px', borderBottom: '1px solid #e5e7eb',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)'
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#065f46' }}>
+                  📤 Import Dược phẩm hàng loạt từ Excel
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6b7280' }}>
+                  Hỗ trợ file .xlsx có ảnh nhúng trực tiếp trong ô — không cần link URL
+                </p>
+              </div>
+              <button onClick={handleCloseImportModal} style={{
+                background: 'none', border: '1px solid #d1d5db', borderRadius: '8px',
+                padding: '6px 12px', cursor: 'pointer', color: '#6b7280', fontSize: '13px'
+              }}>✕ Đóng</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+
+              {/* Step 1: Download + Upload */}
+              {!importResult && (
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                  <a
+                    href={api.getImportTemplateUrl()}
+                    download="mau_nhap_duoc_pham.xlsx"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
+                      borderRadius: '8px', padding: '10px 16px', textDecoration: 'none',
+                      fontWeight: '600', fontSize: '13px'
+                    }}
+                  >
+                    ⬇️ Tải file mẫu (.xlsx)
+                  </a>
+
+                  <label style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    background: importFile ? '#f0fdf4' : '#f9fafb',
+                    color: importFile ? '#065f46' : '#374151',
+                    border: `1px solid ${importFile ? '#86efac' : '#d1d5db'}`,
+                    borderRadius: '8px', padding: '10px 16px', cursor: 'pointer',
+                    fontWeight: '600', fontSize: '13px', flex: 1, minWidth: '220px'
+                  }}>
+                    📂 {importFile ? importFile.name : 'Chọn file Excel (.xlsx)'}
+                    <input
+                      type="file" accept=".xlsx"
+                      style={{ display: 'none' }}
+                      onChange={e => {
+                        setImportFile(e.target.files[0] || null);
+                        setImportPreviewData(null);
+                        setImportResult(null);
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    onClick={handleImportPreview}
+                    disabled={!importFile || importLoading}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: (!importFile || importLoading) ? '#e5e7eb' : 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                      color: (!importFile || importLoading) ? '#9ca3af' : '#fff',
+                      border: 'none', borderRadius: '8px', padding: '10px 20px',
+                      cursor: (!importFile || importLoading) ? 'not-allowed' : 'pointer',
+                      fontWeight: '600', fontSize: '13px'
+                    }}
+                  >
+                    {importLoading ? '⏳ Đang xử lý...' : '🔍 Xem trước dữ liệu'}
+                  </button>
+                </div>
+              )}
+
+              {/* Preview Table */}
+              {importPreviewData && !importResult && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                    <p style={{ margin: 0, fontWeight: '600', color: '#374151' }}>
+                      Tổng <strong>{importPreviewData.totalRows}</strong> dòng — đang chọn <strong>{importSelectedRows.size}</strong> dòng để nhập
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => setImportSelectedRows(new Set(importPreviewData.rows.filter(r => r.status !== 'Error').map(r => r.rowIndex)))}
+                        style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', background: '#f9fafb' }}>
+                        ☑️ Chọn tất cả hợp lệ
+                      </button>
+                      <button onClick={() => setImportSelectedRows(new Set())}
+                        style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', background: '#f9fafb' }}>
+                        ☐ Bỏ chọn tất cả
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ background: '#f3f4f6' }}>
+                          <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', width: '40px' }}>✓</th>
+                          <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', width: '70px' }}>Ảnh</th>
+                          <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Tên sản phẩm</th>
+                          <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Danh mục</th>
+                          <th style={{ padding: '10px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>Giá bán</th>
+                          <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Trạng thái</th>
+                          <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Ghi chú lỗi / cảnh báo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importPreviewData.rows.map(row => {
+                          const isSelected = importSelectedRows.has(row.rowIndex);
+                          const statusColor = row.status === 'New' ? '#16a34a' : row.status === 'Update' ? '#ca8a04' : '#dc2626';
+                          const statusBg = row.status === 'New' ? '#f0fdf4' : row.status === 'Update' ? '#fefce8' : '#fef2f2';
+                          const statusLabel = row.status === 'New' ? '✨ Mới' : row.status === 'Update' ? '🔄 Cập nhật' : '❌ Lỗi';
+                          return (
+                            <tr key={row.rowIndex} style={{
+                              background: row.status === 'Error' ? '#fff5f5' : isSelected ? '#f0fdf4' : '#fff',
+                              borderBottom: '1px solid #f3f4f6',
+                              opacity: row.status === 'Error' ? 0.75 : 1
+                            }}>
+                              <td style={{ padding: '10px', textAlign: 'center' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  disabled={row.status === 'Error'}
+                                  onChange={() => toggleImportRow(row.rowIndex)}
+                                  style={{ cursor: row.status === 'Error' ? 'not-allowed' : 'pointer', width: '16px', height: '16px' }}
+                                />
+                              </td>
+                              <td style={{ padding: '8px', textAlign: 'center' }}>
+                                {row.imageThumbnailBase64 ? (
+                                  <img
+                                    src={row.imageThumbnailBase64}
+                                    alt={row.name}
+                                    style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e5e7eb' }}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    width: '52px', height: '52px', borderRadius: '6px',
+                                    background: '#f3f4f6', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', fontSize: '20px', margin: '0 auto'
+                                  }}>🌿</div>
+                                )}
+                              </td>
+                              <td style={{ padding: '10px', fontWeight: '600', color: '#1f2937', maxWidth: '180px' }}>
+                                {row.name || <em style={{ color: '#9ca3af' }}>Tên rỗng</em>}
+                              </td>
+                              <td style={{ padding: '10px', color: '#6b7280' }}>{row.categoryName}</td>
+                              <td style={{ padding: '10px', textAlign: 'right', fontWeight: '600', color: '#059669' }}>
+                                {row.price > 0
+                                  ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.price)
+                                  : <span style={{ color: '#9ca3af' }}>Liên hệ</span>}
+                              </td>
+                              <td style={{ padding: '10px', textAlign: 'center' }}>
+                                <span style={{
+                                  display: 'inline-block', padding: '3px 10px', borderRadius: '999px',
+                                  fontWeight: '700', fontSize: '11px',
+                                  background: statusBg, color: statusColor, border: `1px solid ${statusColor}40`
+                                }}>
+                                  {statusLabel}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px', fontSize: '12px' }}>
+                                {row.errorMessage && <div style={{ color: '#dc2626', fontWeight: '600' }}>⚠️ {row.errorMessage}</div>}
+                                {row.warnings?.map((w, i) => (
+                                  <div key={i} style={{ color: '#92400e' }}>💡 {w}</div>
+                                ))}
+                                {!row.errorMessage && (!row.warnings || row.warnings.length === 0) && (
+                                  <span style={{ color: '#9ca3af' }}>—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Kết quả sau confirm */}
+              {importResult && (
+                <div style={{
+                  textAlign: 'center', padding: '40px 20px',
+                  background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ fontSize: '60px', marginBottom: '16px' }}>🎉</div>
+                  <h3 style={{ margin: '0 0 8px', color: '#065f46', fontSize: '22px' }}>
+                    Nhập hàng loạt hoàn tất!
+                  </h3>
+                  <p style={{ margin: '0 0 4px', fontSize: '16px', color: '#374151' }}>
+                    ✅ Đã nhập thành công: <strong style={{ color: '#16a34a', fontSize: '20px' }}>{importResult.successCount}</strong> sản phẩm
+                  </p>
+                  {importResult.failedCount > 0 && (
+                    <p style={{ margin: '4px 0', color: '#dc2626', fontSize: '14px' }}>
+                      ❌ Thất bại: <strong>{importResult.failedCount}</strong> dòng
+                    </p>
+                  )}
+                  <button
+                    onClick={handleCloseImportModal}
+                    style={{
+                      marginTop: '20px', padding: '10px 28px',
+                      background: 'linear-gradient(135deg, #059669, #10b981)',
+                      color: '#fff', border: 'none', borderRadius: '8px',
+                      cursor: 'pointer', fontWeight: '700', fontSize: '14px'
+                    }}
+                  >
+                    Đóng & Xem danh sách mới
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer: Confirm button */}
+            {importPreviewData && !importResult && (
+              <div style={{
+                padding: '16px 24px', borderTop: '1px solid #e5e7eb',
+                display: 'flex', justifyContent: 'flex-end', gap: '10px',
+                background: '#f9fafb'
+              }}>
+                <button onClick={handleCloseImportModal} style={{
+                  padding: '10px 20px', border: '1px solid #d1d5db', borderRadius: '8px',
+                  cursor: 'pointer', background: '#fff', color: '#374151', fontWeight: '600'
+                }}>
+                  Hủy
+                </button>
+                <button
+                  onClick={handleImportConfirm}
+                  disabled={importSelectedRows.size === 0 || importLoading}
+                  style={{
+                    padding: '10px 24px', border: 'none', borderRadius: '8px',
+                    cursor: importSelectedRows.size === 0 ? 'not-allowed' : 'pointer',
+                    background: importSelectedRows.size === 0
+                      ? '#e5e7eb'
+                      : 'linear-gradient(135deg, #059669, #10b981)',
+                    color: importSelectedRows.size === 0 ? '#9ca3af' : '#fff',
+                    fontWeight: '700', fontSize: '14px'
+                  }}
+                >
+                  {importLoading ? '⏳ Đang nhập...' : `✅ Xác nhận nhập ${importSelectedRows.size} sản phẩm`}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -928,3 +928,39 @@ export async function fetchHealthReelsVideos() {
   if (!res.ok) throw new Error('Không thể tải bản tin video sức khỏe');
   return res.json();
 }
+
+// ============================================================
+// Excel Bulk Import APIs
+// ============================================================
+export function getImportTemplateUrl() {
+  return `${API_URL}/api/admin/products/import/template`;
+}
+
+export async function previewImport(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const token = getAuthToken();
+  const res = await fetch(`${API_URL}/api/admin/products/import/preview`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể đọc file Excel');
+  }
+  return res.json();
+}
+
+export async function confirmImport(importSessionId, confirmedRowIndexes) {
+  const res = await fetch(`${API_URL}/api/admin/products/import/confirm`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ importSessionId, confirmedRowIndexes })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể xác nhận nhập hàng loạt');
+  }
+  return res.json();
+}
