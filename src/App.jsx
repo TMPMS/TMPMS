@@ -30,7 +30,7 @@ import AIChatbot from './components/ui/AIChatbot';
 import ProfileView from './pages/ProfileView';
 import HealthVideoSection from './components/HealthVideoSection';
 
-import { fetchMedicines } from './services/api';
+import { fetchMedicines, verifyPayOSPayment } from './services/api';
 
 const mapProduct = (p) => ({
   id: p.id,
@@ -65,6 +65,34 @@ function App() {
   
   const [bestSellers, setBestSellers] = useState([]);
   const [supplements, setSupplements] = useState([]);
+  const [paymentNotice, setPaymentNotice] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentReturn = params.get('payment');
+    const orderCode = params.get('orderCode');
+    if (!paymentReturn || !orderCode) return;
+
+    const verifyPayment = async () => {
+      setPaymentNotice({ type: 'loading', message: 'Đang xác nhận kết quả thanh toán PayOS...' });
+      try {
+        const result = await verifyPayOSPayment(orderCode);
+        if (result.paymentStatus === 'Paid') {
+          setPaymentNotice({ type: 'success', message: `Thanh toán đơn hàng #${orderCode} thành công.` });
+        } else if (result.status === 'CANCELLED' || result.status === 'EXPIRED') {
+          setPaymentNotice({ type: 'error', message: `Thanh toán đơn hàng #${orderCode} đã bị hủy hoặc hết hạn.` });
+        } else {
+          setPaymentNotice({ type: 'loading', message: `Giao dịch đơn hàng #${orderCode} đang chờ thanh toán.` });
+        }
+      } catch (error) {
+        setPaymentNotice({ type: 'error', message: error.message });
+      } finally {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    verifyPayment();
+  }, []);
 
   const handleSelectProduct = (product) => {
     setSelectedProduct(product);
@@ -234,6 +262,17 @@ function App() {
         onSelectCategory={handleSelectCategory}
         onSelectProduct={handleSelectProduct}
       />
+
+      {paymentNotice && (
+        <div style={{
+          width: 'min(1120px, calc(100% - 32px))', margin: '18px auto 0', padding: '14px 18px',
+          borderRadius: 12, fontWeight: 700,
+          color: paymentNotice.type === 'success' ? '#166534' : paymentNotice.type === 'error' ? '#991b1b' : '#1e40af',
+          background: paymentNotice.type === 'success' ? '#dcfce7' : paymentNotice.type === 'error' ? '#fee2e2' : '#dbeafe'
+        }}>
+          {paymentNotice.message}
+        </div>
+      )}
 
       <main style={{ width: '1200px', maxWidth: '100%', margin: '0 auto', padding: '0 0 32px' }}>
         {renderContent()}
