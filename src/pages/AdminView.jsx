@@ -274,26 +274,31 @@ const AdminView = () => {
     const med = medicines.find(m => m.id === parseInt(selectedMedicineId));
     if (!med) return;
 
-    const stock = med.stock_quantity ?? med.stockQuantity ?? 0;
-    if (stock <= 0) {
-      setError(`Vị thuốc '${med.name}' hiện đã hết hàng trong kho!`);
+    const existingInDraft = currentPrescription.items.find(i => i.medicineId === med.id);
+    const addedQty = existingInDraft ? existingInDraft.quantity : 0;
+    const stockInDb = med.stock_quantity ?? med.stockQuantity ?? 0;
+    const availableStock = stockInDb - addedQty;
+
+    if (availableStock <= 0) {
+      setError(`Vị thuốc/dược phẩm '${med.name}' hiện đã hết hàng khả dụng trong kho!`);
       return;
     }
-    if (selectedMedicineQty > stock) {
-      setError(`Vị thuốc '${med.name}' chỉ còn ${stock}${med.unit || 'g'} trong kho, không đủ để kê ${selectedMedicineQty}${med.unit || 'g'}!`);
+    if (selectedMedicineQty > availableStock) {
+      setError(`Vị thuốc/dược phẩm '${med.name}' chỉ còn ${availableStock}${med.unit || 'g'} khả dụng trong kho, không đủ để kê ${selectedMedicineQty}${med.unit || 'g'}!`);
       return;
     }
 
-    // Check duplicate
-    if (currentPrescription.items.some(i => i.medicineId === med.id)) {
-      setError('Dược phẩm này đã được chọn trong đơn thuốc.');
-      return;
+    if (existingInDraft) {
+      setCurrentPrescription(prev => ({
+        ...prev,
+        items: prev.items.map(i => i.medicineId === med.id ? { ...i, quantity: i.quantity + selectedMedicineQty } : i)
+      }));
+    } else {
+      setCurrentPrescription(prev => ({
+        ...prev,
+        items: [...prev.items, { medicineId: med.id, medicineName: med.name, quantity: selectedMedicineQty }]
+      }));
     }
-
-    setCurrentPrescription(prev => ({
-      ...prev,
-      items: [...prev.items, { medicineId: med.id, medicineName: med.name, quantity: selectedMedicineQty }]
-    }));
     setSelectedMedicineId('');
     setSelectedMedicineQty(1);
     setError('');
@@ -1063,16 +1068,32 @@ const AdminView = () => {
                       <select className="form-select flex-1" value={selectedMedicineId} onChange={e => setSelectedMedicineId(e.target.value)}>
                         <option value="">-- Chọn thảo dược/thuốc Đông Y --</option>
                         {medicines
-                          .filter(m => !hideOutOfStock || (m.stock_quantity ?? m.stockQuantity ?? 0) > 0)
-                          .sort((a, b) => (b.stock_quantity ?? b.stockQuantity ?? 0) - (a.stock_quantity ?? a.stockQuantity ?? 0))
+                          .filter(m => {
+                            const existingInDraft = currentPrescription.items.find(i => i.medicineId === m.id);
+                            const addedQty = existingInDraft ? existingInDraft.quantity : 0;
+                            const stockInDb = m.stock_quantity ?? m.stockQuantity ?? 0;
+                            const availableStock = stockInDb - addedQty;
+                            if (hideOutOfStock && availableStock <= 0) return false;
+                            return true;
+                          })
+                          .sort((a, b) => {
+                            const addedA = (currentPrescription.items.find(i => i.medicineId === a.id)?.quantity) || 0;
+                            const availA = (a.stock_quantity ?? a.stockQuantity ?? 0) - addedA;
+                            const addedB = (currentPrescription.items.find(i => i.medicineId === b.id)?.quantity) || 0;
+                            const availB = (b.stock_quantity ?? b.stockQuantity ?? 0) - addedB;
+                            return availB - availA;
+                          })
                           .map(m => {
-                            const stock = m.stock_quantity ?? m.stockQuantity ?? 0;
+                            const existingInDraft = currentPrescription.items.find(i => i.medicineId === m.id);
+                            const addedQty = existingInDraft ? existingInDraft.quantity : 0;
+                            const stockInDb = m.stock_quantity ?? m.stockQuantity ?? 0;
+                            const availableStock = stockInDb - addedQty;
                             const unit = m.unit || 'gram';
                             const priceText = m.price != null ? `${m.price.toLocaleString('vi-VN')}đ/${unit}` : 'Liên hệ';
-                            const isOutOfStock = stock <= 0;
+                            const isOutOfStock = availableStock <= 0;
                             return (
                               <option key={m.id} value={m.id} disabled={isOutOfStock}>
-                                {m.name} ({priceText}) - {isOutOfStock ? '❌ Hết hàng (còn 0g)' : `Tồn kho: còn ${stock}${unit}`}
+                                {m.name} ({priceText}) - {isOutOfStock ? `❌ Hết hàng (còn 0${unit})` : `Tồn kho khả dụng: còn ${availableStock}${unit}`}
                               </option>
                             );
                           })}
