@@ -395,3 +395,17 @@
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+@media (max-width: 480px) {
+  .ai-chatbot-wrapper {
+    right: 12px;
+    bottom: 20px;
+  }
+  .ai-chat-window {
+    width: calc(100vw - 24px);
+    height: 75vh;
+    position: fixed;
+    right: 12px;
+    bottom: 80px;
+  }
+}

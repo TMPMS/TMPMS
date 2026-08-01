@@ -234,3 +234,13 @@
   background: #cbd5e1;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .pharmacy-chat-widget {
+    right: 8px;
+    left: 8px;
+    bottom: 80px;
+    width: auto;
+    height: 75vh;
+  }
+}
