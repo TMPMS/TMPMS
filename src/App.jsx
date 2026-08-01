@@ -29,6 +29,8 @@ import HealthReels from './pages/HealthReels';
 import AIChatbot from './components/ui/AIChatbot';
 import ProfileView from './pages/ProfileView';
 import FeaturedVideosCarousel from './components/ui/FeaturedVideosCarousel';
+import HealthQuizList from './pages/HealthQuizList';
+import HealthQuizPlayer from './pages/HealthQuizPlayer';
 
 import { fetchMedicines } from './services/api';
 
@@ -161,6 +163,8 @@ function App() {
     setSearchQuery('');
   };
 
+  const [selectedQuizCode, setSelectedQuizCode] = useState(null);
+
   const renderContent = () => {
     switch (currentPage) {
       case 'history':
@@ -177,6 +181,24 @@ function App() {
         return <HealthReels onBack={() => handleNavigate('home')} />;
       case 'diagnose':
         return <SelfDiagnosis onBack={() => handleNavigate('home')} />;
+      case 'health-quiz':
+        return (
+          <HealthQuizList 
+            onSelectQuiz={(code) => {
+              setSelectedQuizCode(code);
+              handleNavigate('health-quiz-player');
+            }} 
+            onBack={() => handleNavigate('home')} 
+          />
+        );
+      case 'health-quiz-player':
+        return (
+          <HealthQuizPlayer 
+            quizCode={selectedQuizCode || 'cardio-risk'} 
+            onBack={() => handleNavigate('health-quiz')}
+            onNavigateBooking={() => handleNavigate('patient-portal')}
+          />
+        );
       case 'patient-portal':
         return <PatientPortal onBack={() => handleNavigate('home')} />;
       case 'profile':
