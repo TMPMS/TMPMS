@@ -323,7 +323,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                             <img src={m.imageUrl} alt={m.name} className="suggest-item-thumb" />
                             <div className="suggest-item-info">
                               <span className="suggest-item-name">{m.name}</span>
-                              <span className="suggest-item-price">{m.price.toLocaleString('vi-VN')}đ</span>
+                              <span className="suggest-item-price">{m.price != null ? `${m.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>
                             </div>
                           </div>
                         ))}

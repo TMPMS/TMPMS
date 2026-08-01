@@ -29,6 +29,7 @@ const HistoryView = () => {
   }, [user]);
 
   const formatPrice = (price) => {
+    if (price == null) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
@@ -139,7 +140,7 @@ const HistoryView = () => {
                       </span>
                     </div>
                     <span className="order-item-subtotal">
-                      {formatPrice(item.price * item.quantity)}
+                      {item.price != null ? formatPrice(item.price * item.quantity) : 'Liên hệ'}
                     </span>
                   </div>
                 ))}
@@ -291,7 +292,7 @@ const HistoryView = () => {
                     <td style={{ padding: '10px' }}>{it.medicineName || it.MedicineName}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity || it.Quantity}</td>
                     <td style={{ padding: '10px', textAlign: 'right' }}>{formatPrice(it.price || it.Price)}</td>
-                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: '500' }}>{formatPrice((it.price || it.Price) * (it.quantity || it.Quantity))}</td>
+                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: '500' }}>{(it.price || it.Price) != null ? formatPrice((it.price || it.Price) * (it.quantity || it.Quantity)) : 'Liên hệ'}</td>
                   </tr>
                 ))}
               </tbody>

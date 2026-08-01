@@ -139,12 +139,12 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
           ) : (
             <>
               <span className="product-price">
-                {product.price.toLocaleString('vi-VN') + 'đ'}
+                {product.price?.toLocaleString('vi-VN') + 'đ'}
                 {!isFlashSale && <span className="pc-unit">/{product.unit || 'Hộp'}</span>}
               </span>
-              {product.oldPrice && (
+              {product.oldPrice != null && (
                 <span className="product-old-price">
-                  {product.oldPrice.toLocaleString('vi-VN')}đ
+                  {product.oldPrice?.toLocaleString('vi-VN')}đ
                 </span>
               )}
             </>

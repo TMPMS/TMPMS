@@ -128,10 +128,10 @@ const FlashSale = ({ onProductClick }) => {
 
                   {/* Price */}
                   <div className="fs-price-row">
-                    <span className="fs-price">{p.price.toLocaleString('vi-VN')}đ</span>
+                    <span className="fs-price">{p.price != null ? `${p.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>
                     <span className="fs-unit">/ {p.unit}</span>
                   </div>
-                  <div className="fs-old-price">{p.oldPrice.toLocaleString('vi-VN')}đ</div>
+                  {p.oldPrice != null && <div className="fs-old-price">{p.oldPrice.toLocaleString('vi-VN')}đ</div>}
 
                   {/* Hot deal pill */}
                   <div className="fs-hot-pill">🔥 Ưu đãi cực sốc</div>

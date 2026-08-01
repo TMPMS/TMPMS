@@ -483,6 +483,7 @@ const AdminView = () => {
 
   // Helper Formats
   const formatPrice = (price) => {
+    if (price == null) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
@@ -1158,7 +1159,7 @@ const AdminView = () => {
                       </div>
                       <div className="wh-body">
                         <div className="wh-stat">
-                          <span className="wh-stat-num">{w.total_quantity.toLocaleString()}</span>
+                          <span className="wh-stat-num">{(w.total_quantity ?? w.totalQuantity ?? 0).toLocaleString()}</span>
                           <span className="wh-stat-lbl">Tổng vị thuốc lưu kho</span>
                         </div>
                         <div className="wh-info">

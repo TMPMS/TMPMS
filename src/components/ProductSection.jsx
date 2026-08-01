@@ -50,10 +50,10 @@ const ProductCard = ({ product, onProductClick }) => {
 
       {/* Price */}
       <div className="pc-price-row">
-        <span className="pc-price">{current.price.toLocaleString('vi-VN')}đ</span>
+        <span className="pc-price">{current.price != null ? `${current.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>
         <span className="pc-unit-label">/{units.length > 1 ? units[selectedUnit].label : product.unit}</span>
       </div>
-      {current.oldPrice && (
+      {current.oldPrice != null && (
         <div className="pc-old-price">{current.oldPrice.toLocaleString('vi-VN')}đ</div>
       )}
 

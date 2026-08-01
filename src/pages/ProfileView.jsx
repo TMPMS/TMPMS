@@ -80,7 +80,7 @@ export default function ProfileView({ onNavigate }) {
   };
 
   const formatPrice = (p) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p || 0);
+    p == null ? 'Liên hệ' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
 
   const displayName = profile?.fullName || profile?.username || user?.username || 'Người dùng';
   const avatarLetter = (displayName || 'U')[0].toUpperCase();

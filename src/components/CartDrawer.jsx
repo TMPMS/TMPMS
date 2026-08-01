@@ -88,6 +88,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   const finalAmount = Math.max(0, totalAmount + shippingFee - discountAmount);
 
   const formatPrice = (price) => {
+    if (price == null) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 

@@ -147,7 +147,7 @@ const AIChatbot = () => {
                         <img src={msg.product.image} alt={msg.product.name} />
                         <div className="msg-prod-details">
                           <h5>{msg.product.name}</h5>
-                          <span className="price">{msg.product.price?.toLocaleString('vi-VN')}đ</span>
+                          <span className="price">{msg.product.price != null ? `${msg.product.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>
                           <button onClick={() => handleAddToCart(msg.product)}>
                             <ShoppingCart size={12} />
                             <span>Thêm vào giỏ</span>
