@@ -43,7 +43,15 @@ const AIChatbot = () => {
     setIsTyping(true);
 
     try {
-      const data = await askAiChatbot(currentInput);
+      // Build conversation history (last 8 messages, user+bot only, exclude system)
+      const historySnapshot = [...messages, userMsg]
+        .filter(m => m.sender === 'user' || m.sender === 'bot')
+        .slice(-8)
+        .map(m => ({ role: m.sender === 'user' ? 'user' : 'model', text: m.text }));
+      // Remove the last entry (current user message — already in `text` field)
+      const history = historySnapshot.slice(0, -1);
+
+      const data = await askAiChatbot(currentInput, history);
       setIsTyping(false);
       setMessages(prev => [...prev, {
         id: Date.now() + 1,

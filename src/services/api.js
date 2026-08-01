@@ -815,15 +815,16 @@ export async function updateMyProfile(data) {
   return res.json();
 }
 
-export async function askAiChatbot(messageText) {
+export async function askAiChatbot(messageText, history = []) {
   const res = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: messageText }),
+    body: JSON.stringify({ text: messageText, history }),
   });
   if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
 }
+
 
 // Customer-facing Patient APIs
 export async function fetchUserAppointments() {
