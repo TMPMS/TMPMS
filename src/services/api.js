@@ -434,33 +434,38 @@ export async function updateMedicine(medicineId, medicineData) {
     name: medicineData.name,
     description: medicineData.description,
     price: parseFloat(medicineData.price),
-    stock_quantity: parseInt(medicineData.stock_quantity || medicineData.stockQuantity),
+    oldPrice: medicineData.old_price !== undefined ? parseFloat(medicineData.old_price) : (medicineData.oldPrice !== undefined ? parseFloat(medicineData.oldPrice) : null),
+    stockQuantity: parseInt(medicineData.stock_quantity !== undefined ? medicineData.stock_quantity : medicineData.stockQuantity),
     unit: medicineData.unit,
     origin: medicineData.origin,
     packaging: medicineData.packaging,
-    image_url: medicineData.image_url || medicineData.imageUrl,
-    requires_prescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
-    category_id: medicineData.category_id || medicineData.categoryId,
-    supplier_id: medicineData.supplier_id || medicineData.supplierId
+    imageUrl: medicineData.image_url || medicineData.imageUrl,
+    requiresPrescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
+    categoryId: parseInt(medicineData.category_id || medicineData.categoryId),
+    supplierId: parseInt(medicineData.supplier_id || medicineData.supplierId)
   };
 
-  const res = await fetch(`${API_URL}/medicines?id=eq.${medicineId}`, {
-    method: 'PATCH',
+  const res = await fetch(`${API_URL}/medicines/${medicineId}`, {
+    method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(mappedData),
   });
-  if (!res.ok) throw new Error('Không thể cập nhật thông tin thuốc');
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể cập nhật thông tin thuốc');
+  }
   return res.json();
 }
 
 export async function deleteMedicine(medicineId) {
-  const res = await fetch(`${API_URL}/medicines?id=eq.${medicineId}`, {
+  const res = await fetch(`${API_URL}/medicines/${medicineId}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể xóa thuốc');
   return res.json();
 }
+
 
 
 export async function fetchSuppliers() {
