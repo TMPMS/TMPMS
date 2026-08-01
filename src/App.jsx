@@ -232,7 +232,7 @@ function App() {
             <FeaturedVideosCarousel onNavigate={handleNavigate} />
             <Brands />
             <HealthNews />
-            <StorePromoBar />
+            <StorePromoBar onNavigate={handleNavigate} />
           </>
         );
     }
