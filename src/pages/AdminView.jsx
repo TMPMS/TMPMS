@@ -317,7 +317,8 @@ const AdminView = () => {
       setError('Chỉ nhân viên nhà thuốc có quyền kê đơn thuốc.');
       return;
     }
-    if (!currentPrescription.patientId) {
+    const patientIdInt = parseInt(currentPrescription.patientId) || patients[0]?.id || 1;
+    if (!patientIdInt) {
       setError('Vui lòng chọn bệnh nhân!');
       return;
     }
@@ -328,12 +329,13 @@ const AdminView = () => {
 
     try {
       const payload = {
-        patientId: parseInt(currentPrescription.patientId),
-        doctorName: currentPrescription.doctorName,
-        hospital: currentPrescription.hospital,
+        userId: patientIdInt,
+        patientId: patientIdInt,
+        doctorName: currentPrescription.doctorName || 'Bác sĩ Đông Y',
+        hospital: currentPrescription.hospital || 'Phòng khám Đông Y TMPMS',
         items: currentPrescription.items.map(i => ({
-          medicineId: i.medicineId,
-          quantity: i.quantity
+          medicineId: parseInt(i.medicineId),
+          quantity: parseInt(i.quantity)
         }))
       };
 
