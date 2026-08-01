@@ -474,7 +474,7 @@ const AdminView = () => {
       setImportSessionId(data.importSessionId);
       // Mặc định tick tất cả dòng không lỗi
       const defaultSelected = new Set(
-        data.rows.filter(r => r.status !== 'Error').map(r => r.rowIndex)
+        data.rows.filter(r => r.status !== 'Error' && r.status !== 'Delete').map(r => r.rowIndex)
       );
       setImportSelectedRows(defaultSelected);
       setImportResult(null);
@@ -500,7 +500,10 @@ const AdminView = () => {
       // Reload danh sách thuốc
       const meds = await api.fetchMedicines();
       setMedicines(meds);
-      showSuccess(`Đã nhập thành công ${result.successCount} sản phẩm!`);
+      const msgs = [];
+      if (result.successCount > 0) msgs.push(`Thêm/Cập nhật ${result.successCount} SP`);
+      if (result.deletedCount > 0) msgs.push(`Xóa ${result.deletedCount} SP`);
+      showSuccess(`Đồng bộ thành công! ${msgs.join(' — ')}`);
     } catch (err) {
       setError(err.message || 'Không thể xác nhận nhập hàng loạt');
     } finally {
@@ -1882,10 +1885,10 @@ const AdminView = () => {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#065f46' }}>
-                  📤 Import Dược phẩm hàng loạt từ Excel
+                  📤 Quản lý Dược phẩm 2 chiều qua Excel
                 </h2>
                 <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6b7280' }}>
-                  Hỗ trợ file .xlsx có ảnh nhúng trực tiếp trong ô — không cần link URL
+                  Xuất toàn bộ danh mục → chỉnh sửa → nhập lại để đồng bộ (Thêm / Sửa / Xóa). Hỗ trợ ảnh nhúng và link URL.
                 </p>
               </div>
               <button onClick={handleCloseImportModal} style={{
@@ -1907,10 +1910,28 @@ const AdminView = () => {
                       display: 'flex', alignItems: 'center', gap: '6px',
                       background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
                       borderRadius: '8px', padding: '10px 16px', textDecoration: 'none',
-                      fontWeight: '600', fontSize: '13px'
+                      fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap'
                     }}
                   >
-                    ⬇️ Tải file mẫu (.xlsx)
+                    ⬇️ Tải file mẫu rỗng
+                  </a>
+
+                  {/* NÚT XUẤT TOÀN BỘ DANH MỤC */}
+                  <a
+                    href={`${api.getExportUrl()}?t=${Date.now()}`}
+                    download={`danh_muc_duoc_pham.xlsx`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                      color: '#fff', border: 'none',
+                      borderRadius: '8px', padding: '10px 16px', textDecoration: 'none',
+                      fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 8px rgba(14,165,233,0.35)'
+                    }}
+                  >
+                    📥 Xuất toàn bộ danh mục ra Excel
                   </a>
 
                   <label style={{
@@ -1958,9 +1979,13 @@ const AdminView = () => {
                       Tổng <strong>{importPreviewData.totalRows}</strong> dòng — đang chọn <strong>{importSelectedRows.size}</strong> dòng để nhập
                     </p>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => setImportSelectedRows(new Set(importPreviewData.rows.filter(r => r.status !== 'Error').map(r => r.rowIndex)))}
+                      <button onClick={() => setImportSelectedRows(new Set(
+                        importPreviewData.rows
+                          .filter(r => r.status !== 'Error' && r.status !== 'Delete')
+                          .map(r => r.rowIndex)
+                      ))}
                         style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', background: '#f9fafb' }}>
-                        ☑️ Chọn tất cả hợp lệ
+                        ☑️ Chọn tất cả (không tính Xóa)
                       </button>
                       <button onClick={() => setImportSelectedRows(new Set())}
                         style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', background: '#f9fafb' }}>
@@ -1985,23 +2010,38 @@ const AdminView = () => {
                       <tbody>
                         {importPreviewData.rows.map(row => {
                           const isSelected = importSelectedRows.has(row.rowIndex);
-                          const statusColor = row.status === 'New' ? '#16a34a' : row.status === 'Update' ? '#ca8a04' : '#dc2626';
-                          const statusBg = row.status === 'New' ? '#f0fdf4' : row.status === 'Update' ? '#fefce8' : '#fef2f2';
-                          const statusLabel = row.status === 'New' ? '✨ Mới' : row.status === 'Update' ? '🔄 Cập nhật' : '❌ Lỗi';
+                          const isDelete = row.status === 'Delete';
+                          const isError = row.status === 'Error';
+                          const statusColor = isDelete ? '#7f1d1d' : row.status === 'New' ? '#16a34a' : row.status === 'Update' ? '#ca8a04' : '#dc2626';
+                          const statusBg = isDelete ? '#fef2f2' : row.status === 'New' ? '#f0fdf4' : row.status === 'Update' ? '#fefce8' : '#fff5f5';
+                          const statusLabel = isDelete ? '⚠️ SẼ XÓA VĨNH VIỄN' : row.status === 'New' ? '✨ Mới' : row.status === 'Update' ? '🔄 Cập nhật' : '❌ Lỗi';
                           return (
                             <tr key={row.rowIndex} style={{
-                              background: row.status === 'Error' ? '#fff5f5' : isSelected ? '#f0fdf4' : '#fff',
+                              background: isDelete ? '#fef2f2' : isError ? '#fff5f5' : isSelected ? '#f0fdf4' : '#fff',
                               borderBottom: '1px solid #f3f4f6',
-                              opacity: row.status === 'Error' ? 0.75 : 1
+                              opacity: isError ? 0.75 : 1,
+                              outline: isDelete && isSelected ? '2px solid #dc2626' : 'none'
                             }}>
                               <td style={{ padding: '10px', textAlign: 'center' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  disabled={row.status === 'Error'}
-                                  onChange={() => toggleImportRow(row.rowIndex)}
-                                  style={{ cursor: row.status === 'Error' ? 'not-allowed' : 'pointer', width: '16px', height: '16px' }}
-                                />
+                                {isDelete ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => toggleImportRow(row.rowIndex)}
+                                      style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#dc2626' }}
+                                    />
+                                    {!isSelected && <span style={{ fontSize: '9px', color: '#dc2626', fontWeight: '700' }}>tick để xóa</span>}
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    disabled={isError}
+                                    onChange={() => toggleImportRow(row.rowIndex)}
+                                    style={{ cursor: isError ? 'not-allowed' : 'pointer', width: '16px', height: '16px' }}
+                                  />
+                                )}
                               </td>
                               <td style={{ padding: '8px', textAlign: 'center' }}>
                                 {row.imageThumbnailBase64 ? (
@@ -2063,11 +2103,18 @@ const AdminView = () => {
                 }}>
                   <div style={{ fontSize: '60px', marginBottom: '16px' }}>🎉</div>
                   <h3 style={{ margin: '0 0 8px', color: '#065f46', fontSize: '22px' }}>
-                    Nhập hàng loạt hoàn tất!
+                    Đồng bộ hoàn tất!
                   </h3>
-                  <p style={{ margin: '0 0 4px', fontSize: '16px', color: '#374151' }}>
-                    ✅ Đã nhập thành công: <strong style={{ color: '#16a34a', fontSize: '20px' }}>{importResult.successCount}</strong> sản phẩm
-                  </p>
+                  {importResult.successCount > 0 && (
+                    <p style={{ margin: '0 0 4px', fontSize: '16px', color: '#374151' }}>
+                      ✅ Thêm/Cập nhật: <strong style={{ color: '#16a34a', fontSize: '20px' }}>{importResult.successCount}</strong> sản phẩm
+                    </p>
+                  )}
+                  {importResult.deletedCount > 0 && (
+                    <p style={{ margin: '4px 0', fontSize: '15px', color: '#7f1d1d' }}>
+                      🗑️ Đã xóa: <strong>{importResult.deletedCount}</strong> sản phẩm
+                    </p>
+                  )}
                   {importResult.failedCount > 0 && (
                     <p style={{ margin: '4px 0', color: '#dc2626', fontSize: '14px' }}>
                       ❌ Thất bại: <strong>{importResult.failedCount}</strong> dòng
@@ -2095,6 +2142,20 @@ const AdminView = () => {
                 display: 'flex', justifyContent: 'flex-end', gap: '10px',
                 background: '#f9fafb'
               }}>
+                {/* Cảnh báo nếu có dòng Xóa được tick */}
+                {importPreviewData && (() => {
+                  const deleteCount = importPreviewData.rows.filter(
+                    r => r.status === 'Delete' && importSelectedRows.has(r.rowIndex)
+                  ).length;
+                  return deleteCount > 0 ? (
+                    <div style={{
+                      padding: '8px 14px', background: '#fef2f2', borderRadius: '8px',
+                      border: '1px solid #fca5a5', color: '#7f1d1d', fontSize: '13px', fontWeight: '600'
+                    }}>
+                      ⚠️ Xác nhận sẽ XÓA {deleteCount} sản phẩm. Không thể hoàn tác!
+                    </div>
+                  ) : null;
+                })()}
                 <button onClick={handleCloseImportModal} style={{
                   padding: '10px 20px', border: '1px solid #d1d5db', borderRadius: '8px',
                   cursor: 'pointer', background: '#fff', color: '#374151', fontWeight: '600'
@@ -2114,7 +2175,7 @@ const AdminView = () => {
                     fontWeight: '700', fontSize: '14px'
                   }}
                 >
-                  {importLoading ? '⏳ Đang nhập...' : `✅ Xác nhận nhập ${importSelectedRows.size} sản phẩm`}
+                  {importLoading ? '⏳ Đang xử lý...' : `✅ Xác nhận ${importSelectedRows.size} dòng`}
                 </button>
               </div>
             )}

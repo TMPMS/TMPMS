@@ -936,6 +936,10 @@ export function getImportTemplateUrl() {
   return `${API_URL}/api/admin/products/import/template`;
 }
 
+export function getExportUrl() {
+  return `${API_URL}/api/admin/products/export`;
+}
+
 export async function previewImport(file) {
   const formData = new FormData();
   formData.append('file', file);
