@@ -1,10 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw, AlertCircle } from 'lucide-react';
+import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw, AlertCircle, XCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toLocalWallClockIso } from '../utils/dateTime';
 import './SelfDiagnosis.css';
+
+const pad = n => String(n).padStart(2, '0');
+
+function toDateInput(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function buildTimeSlots() {
+  const slots = [];
+  for (let h = 8; h <= 17; h++) {
+    slots.push(`${pad(h)}:00`, `${pad(h)}:30`);
+  }
+  return slots;
+}
+
+function slotToDate(dateStr, slot) {
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const [hh, mm] = slot.split(':').map(Number);
+  return new Date(y, mo - 1, d, hh, mm, 0, 0);
+}
+
+function isSlotPassed(dateStr, slot) {
+  return slotToDate(dateStr, slot) <= new Date();
+}
+
+function formatDateTime(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const APPT_STATUS_LABELS = {
+  Pending: 'Chờ xác nhận',
+  Scheduled: 'Chờ xác nhận',
+  Confirmed: 'Đã xác nhận',
+  Completed: 'Hoàn thành',
+  Cancelled: 'Đã hủy',
+  Expired: 'Quá hạn'
+};
 
 const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const { user } = useAuth();
@@ -18,9 +59,15 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const [result, setResult] = useState(null);
 
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [timeSlot, setTimeSlot] = useState('09:00');
+  const [bookingDate, setBookingDate] = useState(() => toDateInput(new Date()));
+  const [timeSlot, setTimeSlot] = useState(() => buildTimeSlots().find(s => !isSlotPassed(toDateInput(new Date()), s)) || buildTimeSlots()[buildTimeSlots().length - 1]);
+  const [blockingAppt, setBlockingAppt] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [lastBooked, setLastBooked] = useState(null);
 
-  const TIME_SLOTS = ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'];
+  const todayStr = toDateInput(new Date());
+  const maxDateStr = toDateInput(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
+  const TIME_SLOTS = buildTimeSlots();
 
   useEffect(() => {
     loadQuestions();
@@ -74,6 +121,15 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
     }
   };
 
+  const handleDateChange = (dateStr) => {
+    setBookingDate(dateStr);
+    setBlockingAppt(null);
+    if (isSlotPassed(dateStr, timeSlot)) {
+      const next = TIME_SLOTS.find(s => !isSlotPassed(dateStr, s));
+      setTimeSlot(next || TIME_SLOTS[TIME_SLOTS.length - 1]);
+    }
+  };
+
   const handleBookAppointment = async () => {
     if (!user) {
       alert('Vui lòng đăng nhập tài khoản để đăng ký lịch hẹn khám!');
@@ -86,22 +142,42 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
       const syndromeName = result?.primarySyndrome?.name || 'Đông Y';
       const reasonText = `Tự chẩn đoán: Thể bệnh ${syndromeName}`;
 
-      const baseDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const [hh, mm] = (timeSlot || '09:00').split(':').map(Number);
-      baseDate.setHours(hh, mm, 0, 0);
+      const apptDate = slotToDate(bookingDate, timeSlot);
 
       await api.createAppointment({
-        appointmentDate: toLocalWallClockIso(baseDate),
+        appointmentDate: toLocalWallClockIso(apptDate),
         reason: reasonText,
         status: 'Scheduled',
         notes: `Phân tích thể bệnh: ${syndromeName}. Lời khuyên: ${result?.recommendationText}.`
       });
 
+      setLastBooked({ date: apptDate, slot: timeSlot });
       setBookingSuccess(true);
+      setBlockingAppt(null);
       if (onAppointmentBooked) onAppointmentBooked();
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Đã xảy ra lỗi khi đăng ký lịch hẹn.');
+      if (err.isBlocked && err.blockingAppointment) {
+        setBlockingAppt(err.blockingAppointment);
+      } else {
+        alert(err.message || 'Đã xảy ra lỗi khi đăng ký lịch hẹn.');
+      }
+    }
+  };
+
+  const handleCancelBlocking = async () => {
+    if (!blockingAppt) return;
+    setCancelling(true);
+    try {
+      await api.cancelAppointment(blockingAppt.id);
+      setBlockingAppt(null);
+      alert('Đã hủy lịch hẹn cũ. Bạn có thể đặt lịch mới!');
+      if (onAppointmentBooked) onAppointmentBooked();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Không thể hủy lịch hẹn. Vui lòng thử lại.');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -110,6 +186,8 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
     setAnswers({});
     setCurrentIndex(0);
     setBookingSuccess(false);
+    setBlockingAppt(null);
+    setLastBooked(null);
   };
 
   if (loadingQuestions) {
@@ -229,23 +307,59 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
               {bookingSuccess ? (
                 <div className="booking-success-msg">
                   <Check size={18} />
-                  <span>Đã đặt lịch hẹn thành công! Lý do khám được ghi nhận: "Tự chẩn đoán: Thể bệnh {result.primarySyndrome?.name}". Y bác sĩ sẽ gọi xác nhận trong 15 phút.</span>
+                  <span>Đã đặt lịch hẹn thành công! Khung giờ khám {lastBooked ? formatDateTime(lastBooked.date) : ''}. Lịch sẽ tự động được xác nhận trong 5 phút nếu không có thao tác nào khác.</span>
+                </div>
+              ) : blockingAppt ? (
+                <div className="blocking-appt-box">
+                  <div className="blocking-title">
+                    <AlertCircle size={18} />
+                    <strong>Bạn đang có một lịch hẹn chưa hoàn tất</strong>
+                  </div>
+                  <div className="blocking-detail">
+                    <span>Thời gian: <strong>{formatDateTime(blockingAppt.appointmentDate)}</strong></span>
+                    <span>Trạng thái: <strong>{APPT_STATUS_LABELS[blockingAppt.status] || blockingAppt.status}</strong></span>
+                    {blockingAppt.reason && <span>Lý do: {blockingAppt.reason}</span>}
+                  </div>
+                  <p className="blocking-note">Bạn có thể hủy lịch hẹn này để đặt lịch mới, hoặc chờ lịch được xác nhận / quá hạn.</p>
+                  <button className="cancel-blocking-btn" onClick={handleCancelBlocking} disabled={cancelling}>
+                    <XCircle size={16} /> {cancelling ? 'Đang hủy...' : 'Hủy lịch hẹn này'}
+                  </button>
                 </div>
               ) : (
                 <div className="booking-inputs">
                   <p className="booking-notice">Lý do hẹn sẽ tự động điền: <strong>"Tự chẩn đoán: Thể bệnh {result.primarySyndrome?.name}"</strong></p>
                   <div className="inputs-row">
-                    <select
+                    <input
+                      type="date"
                       className="booking-input"
-                      value={timeSlot}
-                      onChange={e => setTimeSlot(e.target.value)}
-                    >
-                      {TIME_SLOTS.map(slot => (
-                        <option key={slot} value={slot}>Khung giờ {slot}</option>
-                      ))}
-                    </select>
-                    <button className="confirm-booking-btn" onClick={handleBookAppointment}>
-                      <Calendar size={16} /> Đặt lịch khám
+                      value={bookingDate}
+                      min={todayStr}
+                      max={maxDateStr}
+                      onChange={e => handleDateChange(e.target.value)}
+                    />
+                  </div>
+                  <div className="slot-grid">
+                    {TIME_SLOTS.map(slot => {
+                      const disabled = isSlotPassed(bookingDate, slot);
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          className={`slot-btn ${timeSlot === slot ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+                          disabled={disabled}
+                          onClick={() => setTimeSlot(slot)}
+                        >
+                          {slot}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {bookingDate === todayStr && TIME_SLOTS.every(s => isSlotPassed(todayStr, s)) && (
+                    <p className="slot-warning">Đã hết khung giờ khả dụng hôm nay, vui lòng chọn ngày khác.</p>
+                  )}
+                  <div className="inputs-row">
+                    <button className="confirm-booking-btn" onClick={handleBookAppointment} disabled={isSlotPassed(bookingDate, timeSlot)}>
+                      <Calendar size={16} /> {isSlotPassed(bookingDate, timeSlot) ? 'Vui lòng chọn ngày/giờ khác' : `Đặt lịch khám - ${timeSlot}`}
                     </button>
                   </div>
                 </div>

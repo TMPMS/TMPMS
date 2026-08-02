@@ -57,7 +57,7 @@ const StoreFinderView = ({ onBack }) => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/Stores');
+        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/Stores`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {

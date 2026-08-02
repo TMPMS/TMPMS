@@ -418,6 +418,13 @@
   transform: translateY(-1px);
 }
 
+.confirm-booking-btn:disabled {
+  background-color: #cbd5e1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .booking-success-msg {
   display: flex;
   align-items: center;
@@ -430,6 +437,113 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.5;
+}
+
+/* Time slot grid */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.slot-btn {
+  border: 1.5px solid #cbd5e1;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.slot-btn:hover:not(.disabled) {
+  border-color: #0d9488;
+  background-color: #f0fdf4;
+}
+
+.slot-btn.selected {
+  background-color: #0d9488;
+  border-color: #0d9488;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
+}
+
+.slot-btn.disabled {
+  background-color: #f1f5f9;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.slot-warning {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #b45309;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 0 12px;
+}
+
+/* Blocking appointment banner */
+.blocking-appt-box {
+  border: 1.5px solid #fca5a5;
+  background-color: #fef2f2;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.blocking-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b91c1c;
+  font-size: 13.5px;
+  margin-bottom: 10px;
+}
+
+.blocking-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #7f1d1d;
+  margin-bottom: 10px;
+}
+
+.blocking-note {
+  font-size: 12.5px;
+  color: #991b1b;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.cancel-blocking-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.cancel-blocking-btn:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.cancel-blocking-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .reset-diag-btn {

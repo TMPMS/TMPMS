@@ -274,7 +274,7 @@ const PatientPortal = ({ onBack }) => {
                       </div>
                       <div className="status-badge-wrap">
                         <span className={`status-badge-portal ${a.status.toLowerCase()}`}>
-                          {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : 'Đã hủy'}
+                          {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
                         </span>
                       </div>
                     </div>

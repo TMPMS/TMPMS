@@ -11,7 +11,7 @@ const HealthQuizList = ({ onSelectQuiz, onBack }) => {
     const fetchQuizzes = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/HealthQuiz/list');
+        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/HealthQuiz/list`);
         if (!res.ok) throw new Error('Không thể tải danh sách bài kiểm tra.');
         const data = await res.json();
         setQuizzes(data);

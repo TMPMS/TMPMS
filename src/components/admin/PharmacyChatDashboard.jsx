@@ -44,7 +44,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
     }
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5000/hubs/pharmacy-chat', {
+      .withUrl(`${import.meta.env.VITE_API_URL ?? ''}/hubs/pharmacy-chat`, {
         accessTokenFactory: () => api.getAuthToken()
       })
       .withAutomaticReconnect()

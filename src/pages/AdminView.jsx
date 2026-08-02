@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { 
   ShoppingCart, Star, Leaf, Eye, Calendar, Plus, Edit2, Trash2, 
-  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare, Upload
+  User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare, Upload, CheckCircle2, CheckCheck
 } from 'lucide-react';
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
 import {
@@ -376,6 +376,36 @@ const AdminView = () => {
       showSuccess('Xóa lịch hẹn thành công!');
     } catch (err) {
       setError('Lỗi khi xóa lịch hẹn.');
+    }
+  };
+
+  const handleApproveAppointment = async (id) => {
+    if (!hasAccess([1, 3])) {
+      setError('Bạn không có quyền xác nhận lịch hẹn.');
+      return;
+    }
+    if (!window.confirm('Xác nhận duyệt lịch hẹn này?')) return;
+    try {
+      await api.approveAppointment(id);
+      showSuccess('Đã xác nhận lịch hẹn!');
+      await loadTabContent();
+    } catch (err) {
+      setError(err.message || 'Lỗi khi xác nhận lịch hẹn.');
+    }
+  };
+
+  const handleCompleteAppointment = async (id) => {
+    if (!hasAccess([1, 3])) {
+      setError('Bạn không có quyền hoàn thành lịch hẹn.');
+      return;
+    }
+    if (!window.confirm('Xác nhận bệnh nhân đã khám xong? Lịch hẹn sẽ được đánh dấu hoàn thành.')) return;
+    try {
+      await api.completeAppointment(id);
+      showSuccess('Đã đánh dấu hoàn thành lịch hẹn!');
+      await loadTabContent();
+    } catch (err) {
+      setError(err.message || 'Lỗi khi hoàn thành lịch hẹn.');
     }
   };
 
@@ -1200,12 +1230,18 @@ const AdminView = () => {
                           <td>{a.reason}</td>
                           <td>
                             <span className={`appointment-status ${a.status.toLowerCase()}`}>
-                              {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : 'Đã hủy'}
+                              {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
                             </span>
                           </td>
                           <td><div className="med-history-text">{a.notes || 'Không'}</div></td>
                           <td>
                             <div className="table-actions-row">
+                              {(a.status === 'Scheduled' || a.status === 'Pending') && (
+                                <button className="action-icon-btn approve" onClick={() => handleApproveAppointment(a.id)} title="Xác nhận lịch hẹn"><CheckCircle2 size={14} /></button>
+                              )}
+                              {a.status === 'Confirmed' && (
+                                <button className="action-icon-btn complete" onClick={() => handleCompleteAppointment(a.id)} title="Đánh dấu đã khám xong"><CheckCheck size={14} /></button>
+                              )}
                               <button className="action-icon-btn edit" onClick={() => { setCurrentAppointment(a); setAppointmentModal('edit'); }} title="Sửa lịch"><Edit2 size={14} /></button>
                               <button className="action-icon-btn delete" onClick={() => handleDeleteAppointment(a.id)} title="Xóa lịch"><Trash2 size={14} /></button>
                             </div>

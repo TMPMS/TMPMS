@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 export const FALLBACK_MED_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="12" fill="#f1f5f9"/><circle cx="100" cy="82" r="34" fill="#0f766e" opacity="0.15"/><path d="M100 74v28M86 88h28" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/><rect x="62" y="120" width="76" height="14" rx="7" fill="#0f766e" opacity="0.25"/><rect x="78" y="142" width="44" height="10" rx="5" fill="#0f766e" opacity="0.18"/></svg>'
@@ -816,7 +816,48 @@ export async function createAppointment(appointmentData) {
   });
   if (!res.ok) {
     const errBody = await res.json().catch(() => null);
-    throw new Error(errBody?.message || errBody?.Message || 'Không thể tạo lịch hẹn');
+    const err = new Error(errBody?.message || errBody?.Message || 'Không thể tạo lịch hẹn');
+    if (errBody?.blockingAppointment) {
+      err.blockingAppointment = errBody.blockingAppointment;
+      err.isBlocked = true;
+    }
+    throw err;
+  }
+  return res.json();
+}
+
+export async function cancelAppointment(appointmentId) {
+  const res = await requestWithAuth(`${API_URL}/api/Appointment/cancel/${appointmentId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.Message || errBody?.message || 'Không thể hủy lịch hẹn');
+  }
+  return res.json();
+}
+
+export async function approveAppointment(appointmentId) {
+  const res = await requestWithAuth(`${API_URL}/api/Appointment/approve/${appointmentId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.Message || errBody?.message || 'Không thể xác nhận lịch hẹn');
+  }
+  return res.json();
+}
+
+export async function completeAppointment(appointmentId) {
+  const res = await requestWithAuth(`${API_URL}/api/Appointment/complete/${appointmentId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.Message || errBody?.message || 'Không thể hoàn thành lịch hẹn');
   }
   return res.json();
 }
