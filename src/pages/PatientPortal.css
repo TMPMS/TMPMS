@@ -347,8 +347,10 @@
 .status-badge-portal.completed { background-color: #ecfdf5; color: #047857; }
 .status-badge-portal.cancelled { background-color: #fef2f2; color: #b91c1c; }
 
-.status-badge-portal.active { background-color: #fff7ed; color: #c2410c; }
-.status-badge-portal.filled { background-color: #ecfdf5; color: #047857; }
+.status-badge-portal.pending { background-color: #eff6ff; color: #1d4ed8; }
+.status-badge-portal.approved { background-color: #fff7ed; color: #c2410c; }
+.status-badge-portal.fulfilled { background-color: #ecfdf5; color: #047857; }
+.status-badge-portal.rejected { background-color: #fef2f2; color: #b91c1c; }
 
 /* Prescriptions list cards */
 .prescriptions-grid-portal {
@@ -427,6 +429,43 @@
 
 .item-row-detail:last-child {
   border-bottom: none;
+}
+
+.presc-add-cart-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #0f766e;
+  background-color: #ccfbf1;
+  color: #115e59;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.presc-add-cart-btn:hover:not(:disabled) {
+  background-color: #0f766e;
+  color: #fff;
+}
+
+.presc-add-cart-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #94a3b8;
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+.presc-cart-notice {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
 }
 
 /* Loader */

@@ -5,15 +5,40 @@ import SelfDiagnosis from './SelfDiagnosis';
 import { 
   Heart, Calendar, FileText, Activity, ShieldAlert, Sparkles, Check, Clock, User
 } from 'lucide-react';
+import { getPrescriptionStatusClass, getPrescriptionStatusLabel } from '../utils/prescriptionStatus';
+import { useCart } from '../context/CartContext';
 import './PatientPortal.css';
 
 const PatientPortal = ({ onBack }) => {
   const { user } = useAuth();
+  const { refreshCart } = useCart();
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | diagnose | appointments | prescriptions
   const [myAppointments, setMyAppointments] = useState([]);
   const [myPrescriptions, setMyPrescriptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [patientRecord, setPatientRecord] = useState(null);
+  const [cartAddedMap, setCartAddedMap] = useState({});
+  const [cartNotice, setCartNotice] = useState('');
+
+  const handleAddPrescriptionToCart = async (p, item) => {
+    if (!user) return;
+    const cartId = user.cart_id || user.cartId;
+    if (!cartId) {
+      setCartNotice('Không tìm thấy giỏ hàng của bạn. Vui lòng đăng nhập lại!');
+      setTimeout(() => setCartNotice(''), 3000);
+      return;
+    }
+    try {
+      await api.addCartItem(cartId, item.medicineId, item.quantity);
+      await refreshCart();
+      setCartAddedMap(prev => ({ ...prev, [`${p.id}-${item.medicineId}`]: true }));
+      setCartNotice(`Đã thêm "${item.medicineName}" (x${item.quantity}) vào giỏ hàng!`);
+      setTimeout(() => setCartNotice(''), 3000);
+    } catch (err) {
+      setCartNotice(err.message || 'Không thể thêm vào giỏ hàng.');
+      setTimeout(() => setCartNotice(''), 3000);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +89,20 @@ const PatientPortal = ({ onBack }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshAppointments = async () => {
+    try {
+      const myAppts = await api.fetchUserAppointments();
+      setMyAppointments(myAppts);
+    } catch (e) {
+      console.warn('Could not refresh appointments:', e);
+    }
+  };
+
+  const handleAppointmentBooked = async () => {
+    await refreshAppointments();
+    setActiveTab('appointments');
   };
 
   const formatDate = (dateStr) => {
@@ -186,10 +225,10 @@ const PatientPortal = ({ onBack }) => {
                     <h4>Lịch hẹn khám sắp tới</h4>
                   </div>
                   <div className="card-body">
-                    {myAppointments.filter(a => a.status === 'Scheduled').length === 0 ? (
+                    {myAppointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length === 0 ? (
                       <p className="empty-text">Bạn chưa có lịch hẹn khám nào sắp diễn ra.</p>
                     ) : (
-                      myAppointments.filter(a => a.status === 'Scheduled').slice(0, 1).map(a => (
+                      myAppointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').slice(0, 1).map(a => (
                         <div key={a.id} className="appt-alert-box">
                           <div className="time">📅 {formatDate(a.appointmentDate)}</div>
                           <div className="doctor">Thầy thuốc phụ trách: <strong>{a.doctorName || 'Chưa phân công'}</strong></div>
@@ -206,7 +245,7 @@ const PatientPortal = ({ onBack }) => {
 
           {/* TAB: DIAGNOSE (Symptom analysis helper) */}
           {activeTab === 'diagnose' && (
-            <SelfDiagnosis onBack={() => setActiveTab('dashboard')} />
+            <SelfDiagnosis onBack={() => setActiveTab('dashboard')} onAppointmentBooked={handleAppointmentBooked} />
           )}
 
           {/* TAB: MY APPOINTMENTS */}
@@ -235,7 +274,7 @@ const PatientPortal = ({ onBack }) => {
                       </div>
                       <div className="status-badge-wrap">
                         <span className={`status-badge-portal ${a.status.toLowerCase()}`}>
-                          {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Completed' ? 'Đã khám xong' : 'Đã hủy'}
+                          {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : 'Đã hủy'}
                         </span>
                       </div>
                     </div>
@@ -260,8 +299,8 @@ const PatientPortal = ({ onBack }) => {
                           <h5>Đơn thuốc #{p.id}</h5>
                           <span className="date">Kê ngày: {formatDate(p.prescriptionDate)}</span>
                         </div>
-                        <span className={`status-badge-portal ${p.status?.toLowerCase()}`}>
-                          {p.status === 'Active' ? 'Chờ bốc thuốc' : p.status === 'Filled' ? 'Đã nhận thuốc' : 'Đã hủy'}
+                        <span className={`status-badge-portal ${getPrescriptionStatusClass(p.status)}`}>
+                          {getPrescriptionStatusLabel(p.status, 'patient')}
                         </span>
                       </div>
                       <div className="pres-card-body">
@@ -272,17 +311,32 @@ const PatientPortal = ({ onBack }) => {
 
                         <div className="items-list-portal">
                           <h6>Danh sách các vị thuốc chỉ định:</h6>
-                          {p.items && p.items.map((item, idx) => (
-                            <div key={idx} className="item-row-detail">
-                              <span>🌿 {item.medicineName}</span>
-                              <strong>x{item.quantity}</strong>
-                            </div>
-                          ))}
+                          {p.items && p.items.map((item, idx) => {
+                            const alreadyAdded = !!cartAddedMap[`${p.id}-${item.medicineId}`];
+                            return (
+                              <div key={idx} className="item-row-detail">
+                                <span>🌿 {item.medicineName}</span>
+                                <strong>x{item.quantity}</strong>
+                                {(p.status === 'Approved' || p.status === 'Fulfilled') && (
+                                  <button
+                                    className="presc-add-cart-btn"
+                                    disabled={alreadyAdded}
+                                    onClick={() => handleAddPrescriptionToCart(p, item)}
+                                  >
+                                    {alreadyAdded ? 'Đã thêm' : 'Thêm vào giỏ'}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              )}
+              {cartNotice && (
+                <div className="presc-cart-notice">{cartNotice}</div>
               )}
             </div>
           )}

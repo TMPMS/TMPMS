@@ -386,7 +386,8 @@ export async function fetchUserOrders(userId) {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải lịch sử đơn hàng');
-  return res.json();
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(normalizeOrder);
 }
 
 export async function fetchAdminOrders() {
@@ -394,7 +395,31 @@ export async function fetchAdminOrders() {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách đơn hàng admin');
-  return res.json();
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(normalizeOrder);
+}
+
+function normalizeOrder(o) {
+  return {
+    id: o.id || o.Id,
+    userId: o.userId || o.UserId,
+    username: o.username || o.Username || "",
+    email: o.email || o.Email || "",
+    total_amount: o.total_amount !== undefined ? o.total_amount : (o.totalAmount !== undefined ? o.totalAmount : o.TotalAmount),
+    totalAmount: o.total_amount !== undefined ? o.total_amount : (o.totalAmount !== undefined ? o.totalAmount : o.TotalAmount),
+    status: o.status || o.Status || "Pending",
+    payment_status: o.payment_status || o.paymentStatus || o.PaymentStatus || "Unpaid",
+    paymentStatus: o.payment_status || o.paymentStatus || o.PaymentStatus || "Unpaid",
+    paymentId: o.paymentId !== undefined ? o.paymentId : (o.PaymentId !== undefined ? o.PaymentId : null),
+    paymentMethod: o.paymentMethod || o.PaymentMethod || "",
+    paymentStatusDetail: o.paymentStatusDetail || o.PaymentStatusDetail || "",
+    shippingAddress: o.shippingAddress || o.ShippingAddress || "",
+    deliveryMethod: o.deliveryMethod || o.DeliveryMethod || "",
+    shippingFee: o.shippingFee !== undefined ? o.shippingFee : o.ShippingFee,
+    created_at: o.created_at || o.createdAt || o.CreatedAt,
+    createdAt: o.created_at || o.createdAt || o.CreatedAt,
+    items: o.items || o.Items || []
+  };
 }
 
 export async function updateOrderStatus(orderId, statusData) {
@@ -409,6 +434,19 @@ export async function updateOrderStatus(orderId, statusData) {
     body: JSON.stringify(mappedData),
   });
   if (!res.ok) throw new Error('Không thể cập nhật trạng thái đơn hàng');
+  return res.json();
+}
+
+export async function updatePaymentStatus(paymentId, status, transactionCode = '') {
+  const res = await fetch(`${API_URL}/api/Payment/${paymentId}/status`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status, transactionCode }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || 'Không thể cập nhật trạng thái thanh toán');
+  }
   return res.json();
 }
 
@@ -659,7 +697,10 @@ export async function createAppointment(appointmentData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Không thể tạo lịch hẹn');
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.message || errBody?.Message || 'Không thể tạo lịch hẹn');
+  }
   return res.json();
 }
 
@@ -693,7 +734,19 @@ export async function fetchPrescriptions() {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách đơn thuốc');
-  return res.json();
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).map(p => ({
+    id: p.id || p.Id,
+    userId: p.userId || p.UserId,
+    userName: p.userName || p.UserName || "",
+    patientId: p.patientId || p.PatientId || p.userId || p.UserId,
+    doctorName: p.doctorName || p.DoctorName || "Thầy thuốc Đông Y",
+    hospital: p.hospital || p.Hospital || "Phòng khám Đông Y",
+    prescriptionDate: p.prescriptionDate || p.PrescriptionDate,
+    status: p.status || p.Status || "Pending",
+    appointmentId: p.appointmentId !== undefined ? p.appointmentId : (p.AppointmentId !== undefined ? p.AppointmentId : null),
+    items: p.items || p.Items || []
+  }));
 }
 
 export async function createPrescription(prescriptionData) {
@@ -897,7 +950,8 @@ export async function fetchUserPrescriptions(userId) {
     doctorName: p.doctorName || p.DoctorName || "Thầy thuốc Đông Y",
     hospital: p.hospital || p.Hospital || "Phòng khám Đông Y",
     prescriptionDate: p.prescriptionDate || p.PrescriptionDate,
-    status: p.status || p.Status || "Active",
+    status: p.status || p.Status || "Pending",
+    appointmentId: p.appointmentId !== undefined ? p.appointmentId : (p.AppointmentId !== undefined ? p.AppointmentId : null),
     items: p.items || p.Items || []
   }));
 }

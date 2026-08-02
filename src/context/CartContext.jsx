@@ -14,57 +14,63 @@ export const CartProvider = ({ children }) => {
   // Keep a ref of cart items to avoid dependency cycle in useEffect
   const guestCartRef = useRef([]);
 
+  const loadCart = useCallback(async (authUser) => {
+    const currentUser = authUser || user;
+    if (currentUser) {
+      try {
+        // Always fetch active cart from DB using user.id to avoid stale cached IDs
+        const carts = await api.fetchCarts(currentUser.id);
+        let cartId;
+        if (carts && carts.length > 0) {
+          cartId = carts[0].id;
+        } else {
+          // Create a new cart
+          const newCart = await api.createCart(currentUser.id);
+          cartId = newCart.id;
+        }
+
+        // Update user object to persist resolved cartId
+        currentUser.cart_id = cartId;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+
+        // If we had guest items, sync them to database first
+        const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+        if (guestItems.length > 0) {
+          await api.syncCart(currentUser.id, guestItems);
+          localStorage.removeItem('guest_cart');
+        }
+
+        // Fetch items from DB
+        const dbItems = await api.fetchCartItems(cartId);
+        // Map DB items to standard format (id, name, price, quantity, etc.)
+        const mappedItems = dbItems.map(item => ({
+          db_item_id: item.id, // Keep reference to cart_items.id for updates/deletes
+          id: item.medicine.id,
+          name: item.medicine.name,
+          price: item.medicine.price,
+          imageUrl: item.medicine.image_url || item.medicine.imageUrl,
+          quantity: item.quantity,
+        }));
+        setCartItems(mappedItems);
+      } catch (e) {
+        console.error('Không thể tải giỏ hàng từ cơ sở dữ liệu', e);
+      }
+    } else {
+      // Load guest cart
+      const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      setCartItems(guestItems);
+    }
+  }, [user]);
+
   // Load cart from DB when user logs in, or from localStorage when guest
   useEffect(() => {
-    const loadCart = async () => {
-      if (user) {
-        try {
-          // Always fetch active cart from DB using user.id to avoid stale cached IDs
-          const carts = await api.fetchCarts(user.id);
-          let cartId;
-          if (carts && carts.length > 0) {
-            cartId = carts[0].id;
-          } else {
-            // Create a new cart
-            const newCart = await api.createCart(user.id);
-            cartId = newCart.id;
-          }
+    loadCart(user);
+  }, [user, loadCart]);
 
-          // Update user object to persist resolved cartId
-          user.cart_id = cartId;
-          localStorage.setItem('user', JSON.stringify(user));
-
-          // If we had guest items, sync them to database first
-          const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
-          if (guestItems.length > 0) {
-            await api.syncCart(user.id, guestItems);
-            localStorage.removeItem('guest_cart');
-          }
-
-          // Fetch items from DB
-          const dbItems = await api.fetchCartItems(cartId);
-          // Map DB items to standard format (id, name, price, quantity, etc.)
-          const mappedItems = dbItems.map(item => ({
-            db_item_id: item.id, // Keep reference to cart_items.id for updates/deletes
-            id: item.medicine.id,
-            name: item.medicine.name,
-            price: item.medicine.price,
-            imageUrl: item.medicine.image_url || item.medicine.imageUrl,
-            quantity: item.quantity,
-          }));
-          setCartItems(mappedItems);
-        } catch (e) {
-          console.error('Không thể tải giỏ hàng từ cơ sở dữ liệu', e);
-        }
-      } else {
-        // Load guest cart
-        const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
-        setCartItems(guestItems);
-      }
-    };
-
-    loadCart();
-  }, [user]);
+  // Refresh cart data from DB (used after adding prescription items)
+  const refreshCart = useCallback(async () => {
+    await loadCart(user);
+  }, [loadCart, user]);
 
   // Keep track of guest cart items in localStorage
   useEffect(() => {
@@ -79,11 +85,8 @@ export const CartProvider = ({ children }) => {
     
     if (user && cartId) {
       try {
-        const existing = cartItems.find(item => item.id === product.id);
-        const newQty = existing ? existing.quantity + 1 : 1;
-        
-        // Add or update item in DB
-        await api.addCartItem(cartId, product.id, newQty);
+        // BE cộng dồn số lượng cho dòng đã tồn tại (cart_id + medicine_id), nên chỉ cần gửi 1 đơn vị
+        await api.addCartItem(cartId, product.id, 1);
         
         // Re-fetch cart items to get updated state and database item IDs
         const dbItems = await api.fetchCartItems(cartId);
@@ -115,7 +118,7 @@ export const CartProvider = ({ children }) => {
     setTimeout(() => {
       setToast({ visible: false, message: '' });
     }, 3000);
-  }, [user, cartItems]);
+  }, [user]);
 
   const updateQuantity = useCallback(async (productId, quantity) => {
     if (quantity <= 0) {
@@ -167,7 +170,7 @@ export const CartProvider = ({ children }) => {
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, cartCount }}>
+    <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, refreshCart, cartCount }}>
       {children}
       {toast.visible && (
         <div className="toast-notification fade-in">

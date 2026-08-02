@@ -5,6 +5,12 @@ import {
   User, Users, Activity, FileText, Package, BarChart2, Shield, Check, X, Info, Tag, MessageSquare, Upload
 } from 'lucide-react';
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
+import {
+  getPrescriptionStatusClass,
+  getPrescriptionStatusLabel,
+  PRESCRIPTION_ACTION,
+} from '../utils/prescriptionStatus';
+import { toLocalWallClockIso } from '../utils/dateTime';
 import './AdminView.css';
 
 const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
@@ -180,16 +186,28 @@ const AdminView = () => {
     }
   };
 
-  const handlePaymentStatusToggle = async (order, currentPaymentStatus) => {
-    if (!hasAccess([3])) {
-      setError('Chỉ nhân viên nhà thuốc có quyền cập nhật trạng thái thanh toán.');
+  // Payment reconcile - only Admin/Accountant (Pharmacy chỉ xem)
+  const handlePaymentReconcile = async (order, newPaymentStatus) => {
+    if (!hasAccess([1, 6])) {
+      setError('Chỉ Quản trị viên hoặc Kế toán mới được đối soát thanh toán.');
       return;
     }
-    const newPaymentStatus = currentPaymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+    if (!order.paymentId) {
+      setError('Đơn hàng chưa có bản ghi thanh toán để cập nhật.');
+      return;
+    }
+    const statusMap = {
+      Paid: 'Success',
+      Success: 'Success',
+      Unpaid: 'Pending',
+      Pending: 'Pending',
+      Failed: 'Failed',
+      Refunded: 'Refunded',
+    };
     try {
-      await api.updateOrderStatus(order.id, { payment_status: newPaymentStatus });
-      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, payment_status: newPaymentStatus } : o));
+      await api.updatePaymentStatus(order.paymentId, statusMap[newPaymentStatus] || newPaymentStatus);
       showSuccess('Cập nhật trạng thái thanh toán thành công!');
+      await loadTabContent();
     } catch (err) {
       setError('Lỗi khi cập nhật thanh toán.');
     }
@@ -244,7 +262,7 @@ const AdminView = () => {
       const payload = {
         patientId: parseInt(currentAppointment.patientId),
         doctorId: currentAppointment.doctorId ? parseInt(currentAppointment.doctorId) : null,
-        appointmentDate: new Date(currentAppointment.appointmentDate),
+        appointmentDate: toLocalWallClockIso(currentAppointment.appointmentDate),
         reason: currentAppointment.reason,
         status: currentAppointment.status,
         notes: currentAppointment.notes
@@ -342,6 +360,7 @@ const AdminView = () => {
       const payload = {
         userId: patientIdInt,
         patientId: patientIdInt,
+        appointmentId: currentPrescription.appointmentId ? parseInt(currentPrescription.appointmentId) : null,
         doctorName: currentPrescription.doctorName || 'Bác sĩ Đông Y',
         hospital: currentPrescription.hospital || 'Phòng khám Đông Y TMPMS',
         diagnosisNote: currentPrescription.diagnosisNote || 'Thể bệnh Tâm Tỳ Lưỡng Hư',
@@ -374,7 +393,7 @@ const AdminView = () => {
 
   const handlePrescriptionStatus = async (id, status) => {
     if (!hasAccess([3])) {
-      setError('Chỉ nhân viên nhà thuốc có quyền cập nhật bốc thuốc/cấp phát thuốc.');
+      setError('Chỉ nhân viên nhà thuốc có quyền duyệt/từ chối đơn thuốc.');
       return;
     }
     try {
@@ -638,7 +657,7 @@ const AdminView = () => {
         patientsCount: reportData.totalCustomers !== undefined ? reportData.totalCustomers : (reportData.TotalCustomers || patients.length),
         appointmentsCount: appointments.length,
         pendingOrders: orders.filter(o => o.status === 'Pending').length,
-        activeAppointments: appointments.filter(a => a.status === 'Scheduled').length,
+        activeAppointments: appointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length,
         lowStockCount: reportData.lowStockCount !== undefined ? reportData.lowStockCount : (reportData.LowStockCount || 0),
         medicinesCount: reportData.totalMedicines !== undefined ? reportData.totalMedicines : (reportData.TotalMedicines || medicines.length)
       };
@@ -772,7 +791,14 @@ const AdminView = () => {
                     </thead>
                     <tbody>
                       {orders.map((o) => {
-                        const paymentStatus = o.payment_status || o.paymentStatus || 'Unpaid';
+                        const detail = o.paymentStatusDetail || '';
+                        const paymentStatus = detail === 'Success'
+                          ? 'Paid'
+                          : detail === 'Refunded'
+                            ? 'Refunded'
+                            : detail === 'Failed'
+                              ? 'Failed'
+                              : (o.payment_status || o.paymentStatus || 'Unpaid');
                         return (
                           <tr key={o.id}>
                             <td className="col-id">#{o.id}</td>
@@ -803,12 +829,22 @@ const AdminView = () => {
                               </select>
                             </td>
                             <td>
-                              <button
-                                className={`payment-toggle-btn ${paymentStatus.toLowerCase()}`}
-                                onClick={() => handlePaymentStatusToggle(o, paymentStatus)}
-                              >
+                              <span className={`payment-toggle-btn ${paymentStatus.toLowerCase()}`}>
                                 {paymentStatus === 'Paid' ? 'Đã thu tiền' : 'Chưa thu tiền'}
-                              </button>
+                              </span>
+                              {hasAccess([1, 6]) && (
+                                <select
+                                  className="payment-reconcile-select"
+                                  value={paymentStatus}
+                                  onChange={(e) => handlePaymentReconcile(o, e.target.value)}
+                                  title="Đối soát thanh toán (Admin/Kế toán)"
+                                >
+                                  <option value="Paid">Đã thu (Success)</option>
+                                  <option value="Unpaid">Chưa thu</option>
+                                  <option value="Failed">Thất bại</option>
+                                  <option value="Refunded">Hoàn tiền</option>
+                                </select>
+                              )}
                             </td>
                           </tr>
                         );
@@ -954,6 +990,7 @@ const AdminView = () => {
                       <label className="form-label">Trạng thái cuộc hẹn</label>
                       <select className="form-select" value={currentAppointment.status} onChange={e => setCurrentAppointment({...currentAppointment, status: e.target.value})}>
                         <option value="Scheduled">Đã lên lịch</option>
+                        <option value="Confirmed">Đã xác nhận</option>
                         <option value="Completed">Đã hoàn thành</option>
                         <option value="Cancelled">Đã hủy</option>
                       </select>
@@ -1003,7 +1040,7 @@ const AdminView = () => {
                           <td>{a.reason}</td>
                           <td>
                             <span className={`appointment-status ${a.status.toLowerCase()}`}>
-                              {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Completed' ? 'Hoàn thành' : 'Đã hủy'}
+                              {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : 'Đã hủy'}
                             </span>
                           </td>
                           <td><div className="med-history-text">{a.notes || 'Không'}</div></td>
@@ -1038,7 +1075,7 @@ const AdminView = () => {
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#0f766e', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Danh sách bệnh nhân chờ kê đơn (Lịch hẹn khám chưa có đơn thuốc)
                 </h4>
-                {appointments.filter(appt => !prescriptions.some(presc => (presc.patientId || presc.userId) === (appt.patientId || appt.userId)) && appt.status !== 'Cancelled').length === 0 ? (
+                {appointments.filter(appt => (appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).length === 0 ? (
                   <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Hàng chờ trống. Không có lịch hẹn khám nào cần kê đơn thuốc.</p>
                 ) : (
                   <div className="table-wrapper" style={{ border: '1px solid #d1fae5' }}>
@@ -1054,7 +1091,7 @@ const AdminView = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.filter(appt => !prescriptions.some(presc => (presc.patientId || presc.userId) === (appt.patientId || appt.userId)) && appt.status !== 'Cancelled').map(appt => (
+                        {appointments.filter(appt => (appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).map(appt => (
                           <tr key={appt.id}>
                             <td><strong>{appt.patientName}</strong></td>
                             <td>{appt.patientPhone}</td>
@@ -1086,6 +1123,7 @@ const AdminView = () => {
 
                                   setCurrentPrescription({
                                     patientId: appt.patientId || appt.userId,
+                                    appointmentId: appt.id,
                                     doctorName: nameForDoctor,
                                     hospital: 'Phòng khám Đông Y',
                                     diagnosisNote: appt.reason || 'Thể bệnh Tâm Tỳ Lưỡng Hư',
@@ -1308,23 +1346,23 @@ const AdminView = () => {
                               </div>
                             </td>
                             <td>
-                              <span className={`prescription-status ${p.status?.toLowerCase()}`}>
-                                {p.status === 'Active' ? 'Hoạt động' : p.status === 'Filled' ? 'Đã bốc thuốc' : 'Đã hủy'}
+                              <span className={`prescription-status ${getPrescriptionStatusClass(p.status)}`}>
+                                {getPrescriptionStatusLabel(p.status, 'admin')}
                               </span>
                             </td>
                             <td>
                               <div className="pres-actions">
-                                {p.status === 'Active' && (
-                                  <button className="btn-pres-action fill" onClick={() => handlePrescriptionStatus(p.id, 'Filled')} title="Bốc thuốc và cấp phát">
-                                    <Check size={12} /> Bốc thuốc
+                                {p.status === 'Pending' && (
+                                  <button className="btn-pres-action fill" onClick={() => handlePrescriptionStatus(p.id, PRESCRIPTION_ACTION.APPROVE)} title="Duyệt đơn thuốc, mở khóa cho bệnh nhân thêm vào giỏ hàng">
+                                    <Check size={12} /> Duyệt đơn
                                   </button>
                                 )}
-                                {p.status === 'Active' && (
-                                  <button className="btn-pres-action cancel" onClick={() => handlePrescriptionStatus(p.id, 'Cancelled')} title="Hủy đơn thuốc">
-                                    <X size={12} /> Hủy
+                                {(p.status === 'Pending' || p.status === 'Approved') && (
+                                  <button className="btn-pres-action cancel" onClick={() => handlePrescriptionStatus(p.id, PRESCRIPTION_ACTION.REJECT)} title="Từ chối đơn thuốc">
+                                    <X size={12} /> Từ chối
                                   </button>
                                 )}
-                                {p.status !== 'Active' && <span className="completed-text">Đã xử lý</span>}
+                                {p.status !== 'Pending' && p.status !== 'Approved' && <span className="completed-text">Đã xử lý</span>}
                               </div>
                             </td>
                           </tr>

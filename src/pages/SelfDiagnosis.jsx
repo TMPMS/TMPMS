@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw, AlertCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { toLocalWallClockIso } from '../utils/dateTime';
 import './SelfDiagnosis.css';
 
-const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
+const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
 
@@ -17,8 +18,9 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
   const [result, setResult] = useState(null);
 
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [name, setName] = useState(user?.username || '');
+  const [timeSlot, setTimeSlot] = useState('09:00');
+
+  const TIME_SLOTS = ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'];
 
   useEffect(() => {
     loadQuestions();
@@ -80,27 +82,26 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
       return;
     }
 
-    if (!name || !phone) {
-      alert('Vui lòng nhập tên và số điện thoại liên hệ!');
-      return;
-    }
-
     try {
       const syndromeName = result?.primarySyndrome?.name || 'Đông Y';
       const reasonText = `Tự chẩn đoán: Thể bệnh ${syndromeName}`;
 
+      const baseDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const [hh, mm] = (timeSlot || '09:00').split(':').map(Number);
+      baseDate.setHours(hh, mm, 0, 0);
+
       await api.createAppointment({
-        doctorId: 10,
-        appointmentDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        appointmentDate: toLocalWallClockIso(baseDate),
         reason: reasonText,
         status: 'Scheduled',
-        notes: `Phân tích thể bệnh: ${syndromeName}. Lời khuyên: ${result?.recommendationText}. SĐT: ${phone}. Tên: ${name}`
+        notes: `Phân tích thể bệnh: ${syndromeName}. Lời khuyên: ${result?.recommendationText}.`
       });
 
       setBookingSuccess(true);
+      if (onAppointmentBooked) onAppointmentBooked();
     } catch (err) {
       console.error(err);
-      alert('Đã xảy ra lỗi khi đăng ký lịch hẹn.');
+      alert(err.message || 'Đã xảy ra lỗi khi đăng ký lịch hẹn.');
     }
   };
 
@@ -224,7 +225,7 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
 
             {/* Direct Clinical Appointment Booking */}
             <div className="appointment-booking-box">
-              <h5>📅 Đăng ký lịch hẹn khám & bốc thuốc chi tiết:</h5>
+              <h5>📅 Đăng ký lịch hẹn khám chi tiết:</h5>
               {bookingSuccess ? (
                 <div className="booking-success-msg">
                   <Check size={18} />
@@ -234,20 +235,15 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
                 <div className="booking-inputs">
                   <p className="booking-notice">Lý do hẹn sẽ tự động điền: <strong>"Tự chẩn đoán: Thể bệnh {result.primarySyndrome?.name}"</strong></p>
                   <div className="inputs-row">
-                    <input 
-                      type="text" 
-                      className="booking-input" 
-                      placeholder="Họ tên bệnh nhân" 
-                      value={name} 
-                      onChange={e => setName(e.target.value)} 
-                    />
-                    <input 
-                      type="tel" 
-                      className="booking-input" 
-                      placeholder="Số điện thoại liên hệ" 
-                      value={phone} 
-                      onChange={e => setPhone(e.target.value)} 
-                    />
+                    <select
+                      className="booking-input"
+                      value={timeSlot}
+                      onChange={e => setTimeSlot(e.target.value)}
+                    >
+                      {TIME_SLOTS.map(slot => (
+                        <option key={slot} value={slot}>Khung giờ {slot}</option>
+                      ))}
+                    </select>
                     <button className="confirm-booking-btn" onClick={handleBookAppointment}>
                       <Calendar size={16} /> Đặt lịch khám
                     </button>

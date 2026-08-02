@@ -245,6 +245,18 @@
 .payment-toggle-btn.unpaid { background-color: #fee2e2; color: #dc2626; }
 .payment-toggle-btn.paid { background-color: #d1fae5; color: #059669; }
 
+.payment-reconcile-select {
+  display: block;
+  margin-top: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  color: #334155;
+  background-color: #fff;
+  cursor: pointer;
+}
+
 /* Status Badges */
 .appointment-status {
   padding: 4px 10px;
@@ -254,6 +266,7 @@
 }
 
 .appointment-status.scheduled { background-color: #eff6ff; color: #1d4ed8; }
+.appointment-status.confirmed { background-color: #fef3c7; color: #b45309; }
 .appointment-status.completed { background-color: #ecfdf5; color: #047857; }
 .appointment-status.cancelled { background-color: #fef2f2; color: #b91c1c; }
 
@@ -264,9 +277,10 @@
   font-weight: 700;
 }
 
-.prescription-status.active { background-color: #fef3c7; color: #b45309; }
-.prescription-status.filled { background-color: #ecfdf5; color: #047857; }
-.prescription-status.cancelled { background-color: #fef2f2; color: #b91c1c; }
+.prescription-status.pending { background-color: #eff6ff; color: #1d4ed8; }
+.prescription-status.approved { background-color: #fef3c7; color: #b45309; }
+.prescription-status.fulfilled { background-color: #ecfdf5; color: #047857; }
+.prescription-status.rejected { background-color: #fef2f2; color: #b91c1c; }
 
 /* Actions Column */
 .table-actions-row {
