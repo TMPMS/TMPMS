@@ -20,6 +20,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const onAuthExpired = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth:expired', onAuthExpired);
+    return () => window.removeEventListener('auth:expired', onAuthExpired);
+  }, []);
+
   const login = async (username, password) => {
     const data = await api.loginUser(username, password);
     setUser(data);

@@ -130,7 +130,7 @@ const AdminView = () => {
         setPrescriptions(data);
         const patientsData = await api.fetchPatients();
         setPatients(patientsData);
-        const medData = await api.fetchMedicines();
+        const medData = await api.fetchMedicines(null, '', null, null, true);
         setMedicines(medData);
         const apptsData = await api.fetchAppointments();
         setAppointments(apptsData);
@@ -147,7 +147,7 @@ const AdminView = () => {
           api.fetchAdminOrders().catch(() => []),
           api.fetchPatients().catch(() => []),
           api.fetchAppointments().catch(() => []),
-          api.fetchMedicines().catch(() => []),
+          api.fetchMedicines(null, '', null, null, true).catch(() => []),
           api.fetchReportDashboard().catch(err => { console.warn(err); return null; })
         ]);
         setOrders(ordersData);
@@ -156,7 +156,7 @@ const AdminView = () => {
         setMedicines(medData);
         setReportData(repData);
       } else if (activeTab === 'products') {
-        const medData = await api.fetchMedicines();
+        const medData = await api.fetchMedicines(null, '', null, null, true);
         setMedicines(medData);
       } else if (activeTab === 'vouchers') {
         const data = await api.fetchAdminVouchers();
@@ -192,7 +192,7 @@ const AdminView = () => {
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       showSuccess('Cập nhật trạng thái đơn hàng thành công!');
     } catch (err) {
-      setError('Lỗi khi cập nhật trạng thái đơn hàng.');
+      setError(err.message || 'Lỗi khi cập nhật trạng thái đơn hàng.');
     }
   };
 
@@ -207,6 +207,26 @@ const AdminView = () => {
       showSuccess('Đã xác nhận đơn hàng giao thành công!');
     } catch (err) {
       setError('Lỗi khi xác nhận đã giao đơn hàng.');
+    }
+  };
+
+  // COD: xác nhận đã thu tiền mặt khi giao hàng (chỉ đơn đã giao, chưa thu, thanh toán COD)
+  const handleConfirmCashCollected = async (order) => {
+    if (!hasAccess([1, 3, 6])) {
+      setError('Bạn không có quyền xác nhận thu tiền.');
+      return;
+    }
+    if (!order.paymentId) {
+      setError('Đơn hàng chưa có bản ghi thanh toán để cập nhật.');
+      return;
+    }
+    if (!window.confirm(`Xác nhận đã thu tiền mặt ${formatPrice(order.total_amount || order.totalAmount)} của đơn #${order.id}?`)) return;
+    try {
+      await api.updatePaymentStatus(order.paymentId, 'Success');
+      showSuccess(`Đã xác nhận thu tiền đơn #${order.id}!`);
+      await loadTabContent();
+    } catch (err) {
+      setError('Lỗi khi xác nhận thu tiền đơn hàng.');
     }
   };
 
@@ -581,7 +601,7 @@ const AdminView = () => {
       setImportPreviewData(null);
       setImportSessionId('');
       // Reload danh sách thuốc
-      const meds = await api.fetchMedicines();
+      const meds = await api.fetchMedicines(null, '', null, null, true);
       setMedicines(meds);
       const msgs = [];
       if (result.successCount > 0) msgs.push(`Thêm/Cập nhật ${result.successCount} SP`);
@@ -943,6 +963,15 @@ const AdminView = () => {
                                     title="Xác nhận đã giao hàng cho khách"
                                   >
                                     ✓ Xác nhận đã giao
+                                  </button>
+                                )}
+                                {o.status === 'Delivered' && o.paymentMethod === 'COD' && o.paymentId && paymentStatus !== 'Paid' && paymentStatus !== 'Refunded' && hasAccess([1, 3, 6]) && (
+                                  <button
+                                    className="collect-cash-btn"
+                                    onClick={() => handleConfirmCashCollected(o)}
+                                    title="Xác nhận đã thu tiền mặt khi giao hàng (COD)"
+                                  >
+                                    ✓ Xác nhận đã thu tiền
                                   </button>
                                 )}
                                 {o.status !== 'Cancelled' && o.status !== 'Returned' && o.status !== 'ReturnRequested' && (

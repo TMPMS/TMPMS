@@ -29,9 +29,12 @@ export const CartProvider = ({ children }) => {
           cartId = newCart.id;
         }
 
-        // Update user object to persist resolved cartId
-        currentUser.cart_id = cartId;
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        // Update user object to persist resolved cartId.
+        // Merge into the LATEST stored user (do not clobber a just-refreshed token).
+        const storedRaw = localStorage.getItem('user');
+        const stored = storedRaw ? JSON.parse(storedRaw) : currentUser;
+        stored.cart_id = cartId;
+        localStorage.setItem('user', JSON.stringify(stored));
 
         // If we had guest items, sync them to database first
         const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
@@ -50,6 +53,8 @@ export const CartProvider = ({ children }) => {
           price: item.medicine.price,
           imageUrl: item.medicine.image_url || item.medicine.imageUrl,
           quantity: item.quantity,
+          requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
+          allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,
         }));
         setCartItems(mappedItems);
       } catch (e) {
@@ -97,11 +102,13 @@ export const CartProvider = ({ children }) => {
           price: item.medicine.price,
           imageUrl: item.medicine.image_url || item.medicine.imageUrl,
           quantity: item.quantity,
+          requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
+          allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,
         }));
         setCartItems(mappedItems);
       } catch (e) {
         console.error(e);
-        showToastMessage = 'Có lỗi xảy ra khi thêm vào giỏ hàng';
+        showToastMessage = e.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng';
       }
     } else {
       // Guest behavior
@@ -136,6 +143,10 @@ export const CartProvider = ({ children }) => {
         }
       } catch (e) {
         console.error(e);
+        // Dòng giỏ hàng đã bị xóa ở server (đơn hàng vừa được tạo/đã checkout) → loại bỏ khỏi state
+        if (e.responseStatus === 404) {
+          setCartItems(prev => prev.filter(x => x.id !== productId));
+        }
       }
     } else {
       setCartItems(prev => prev.map(x => x.id === productId ? { ...x, quantity } : x));
@@ -150,10 +161,13 @@ export const CartProvider = ({ children }) => {
         const item = cartItems.find(x => x.id === productId);
         if (item && item.db_item_id) {
           await api.deleteCartItem(item.db_item_id);
-          setCartItems(prev => prev.filter(x => x.id !== productId));
         }
+        setCartItems(prev => prev.filter(x => x.id !== productId));
       } catch (e) {
         console.error(e);
+        // 404 = dòng đã không còn tồn tại trên server (đã bị xóa khi tạo đơn) → vẫn bỏ khỏi giỏ
+        if (e.responseStatus !== 404) return;
+        setCartItems(prev => prev.filter(x => x.id !== productId));
       }
     } else {
       setCartItems(prev => prev.filter(x => x.id !== productId));

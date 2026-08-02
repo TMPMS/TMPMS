@@ -86,6 +86,9 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
 
   if (!isOpen) return null;
 
+  const rxItems = cartItems.filter(item => item.requiresPrescription);
+  const otcItems = cartItems.filter(item => !item.requiresPrescription);
+
   const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   
   // Calculate voucher discount
@@ -428,7 +431,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
             /* Cart List */
             <div className="cart-items-list">
               {error && <div className="checkout-error">{error}</div>}
-              {cartItems.map((item) => (
+              {otcItems.map((item) => (
                 <div key={item.id} className="cart-item-card">
                   <img src={api.formatImageUrl(item.imageUrl)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                   <div className="cart-item-info">
@@ -451,6 +454,46 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                   </div>
                 </div>
               ))}
+
+              {rxItems.length > 0 && (
+                <div className="cart-rx-group">
+                  <div className="cart-rx-group-header">
+                    <span className="cart-rx-badge">💊 Thuốc kê đơn</span>
+                    <span className="cart-rx-note">Số lượng giới hạn theo đơn thuốc đã duyệt</span>
+                  </div>
+                  {rxItems.map((item) => {
+                    const atLimit = item.allowedQuantity != null && item.quantity >= item.allowedQuantity;
+                    return (
+                      <div key={item.id} className="cart-item-card">
+                        <img src={api.formatImageUrl(item.imageUrl)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
+                        <div className="cart-item-info">
+                          <span className="cart-item-name">{item.name}</span>
+                          <span className="cart-item-price">{formatPrice(item.price)}</span>
+                          <div className="cart-item-actions">
+                            <div className="quantity-controls">
+                              <button className="qty-btn" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                                <Minus size={12} />
+                              </button>
+                              <span className="qty-val">{item.quantity}</span>
+                              <button
+                                className="qty-btn"
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                disabled={atLimit}
+                                title={atLimit ? 'Đã đạt liều lượng tối đa trong đơn thuốc' : 'Tăng số lượng'}
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                            <button className="item-delete-btn" onClick={() => removeFromCart(item.id)} title="Xóa khỏi giỏ hàng">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
