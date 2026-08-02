@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag, MapPin, Truck, Ticket, CreditCard } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -38,9 +38,11 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Chờ đăng nhập xong để tự động tiếp tục thanh toán (null | 'checkout' | 'submit')
+  const [loginRedirectAction, setLoginRedirectAction] = useState(null);
+
   const [shippingFee, setShippingFee] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [shippingMessage, setShippingMessage] = useState('');
 
   useEffect(() => {
     if (!checkoutMode) return;
@@ -51,13 +53,11 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
         if (deliveryMode === 'shipping' && !addressDetail.trim()) {
           setShippingFee(0);
           setDistance(0);
-          setShippingMessage('');
           return;
         }
         const data = await api.calculateShipping(addr, deliveryMode);
         setShippingFee(data.shippingFee);
         setDistance(data.distance);
-        setShippingMessage(data.message);
       } catch (err) {
         console.error("Error calculating shipping:", err);
       }
@@ -69,6 +69,20 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
 
     return () => clearTimeout(delayDebounce);
   }, [addressDetail, pickupStore, deliveryMode, checkoutMode]);
+
+  // Sau khi đăng nhập thành công (từ modal login), tự động tiếp tục thanh toán
+  useEffect(() => {
+    if (!loginRedirectAction || !user) return;
+    const action = loginRedirectAction;
+    setTimeout(() => {
+      setLoginRedirectAction(null);
+      setRecipientName(user.username || '');
+      setRecipientPhone(user.phone || '');
+      if (action === 'checkout') {
+        setCheckoutMode(true);
+      }
+    }, 0);
+  }, [loginRedirectAction, user]);
 
   if (!isOpen) return null;
 
@@ -92,13 +106,23 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
+  // Bắt buộc đăng nhập trước khi thanh toán: mở modal login, sau khi đăng nhập
+  // thành công tự động mở form thanh toán để tiếp tục.
+  const requireLogin = () => {
+    setLoginRedirectAction('checkout');
+    if (onOpenAuth) onOpenAuth();
+    else window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
+  };
+
   const handleCheckoutClick = () => {
     setError('');
-    // Pre-populate user details if logged in
-    if (user) {
-      setRecipientName(user.username || '');
-      setRecipientPhone(user.phone || '');
+    if (!user) {
+      requireLogin();
+      return;
     }
+    // Pre-populate user details if logged in
+    setRecipientName(user.username || '');
+    setRecipientPhone(user.phone || '');
     setCheckoutMode(true);
   };
 
@@ -126,6 +150,11 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   };
 
   const triggerOrderCreation = async () => {
+    if (!user) {
+      requireLogin();
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -139,7 +168,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
       }
 
       const orderPayload = {
-        userId: user ? user.id : 3,
+        userId: user.id,
         totalAmount: finalAmount,
         shippingAddress: compositeAddress,
         paymentMethod: paymentMethod,
