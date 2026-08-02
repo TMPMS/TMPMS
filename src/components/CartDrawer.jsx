@@ -430,7 +430,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
               {error && <div className="checkout-error">{error}</div>}
               {cartItems.map((item) => (
                 <div key={item.id} className="cart-item-card">
-                  <img src={item.imageUrl || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop'} alt={item.name} className="cart-item-img" />
+                  <img src={api.formatImageUrl(item.imageUrl)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                   <div className="cart-item-info">
                     <span className="cart-item-name">{item.name}</span>
                     <span className="cart-item-price">{formatPrice(item.price)}</span>

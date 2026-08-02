@@ -93,7 +93,7 @@ const OrderTrackingView = ({ order, onClose }) => {
 
   // Setup SignalR Connection
   useEffect(() => {
-    const hubUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5107'}/trackingHub`;
+    const hubUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/trackingHub`;
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl)
       .withAutomaticReconnect()

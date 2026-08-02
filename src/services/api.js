@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+export const FALLBACK_MED_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="12" fill="#f1f5f9"/><circle cx="100" cy="82" r="34" fill="#0f766e" opacity="0.15"/><path d="M100 74v28M86 88h28" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/><rect x="62" y="120" width="76" height="14" rx="7" fill="#0f766e" opacity="0.25"/><rect x="78" y="142" width="44" height="10" rx="5" fill="#0f766e" opacity="0.18"/></svg>'
+);
+
 export function getAuthToken() {
   try {
     const storedUser = localStorage.getItem('user');
@@ -400,6 +404,17 @@ export async function fetchAdminOrders() {
 }
 
 function normalizeOrder(o) {
+  const items = (o.items || o.Items || []).map(it => ({
+    id: it.id || it.Id,
+    orderId: it.orderId || it.OrderId,
+    medicineId: it.medicineId || it.MedicineId,
+    quantity: it.quantity || it.Quantity,
+    price: it.price !== undefined ? it.price : (it.Price !== undefined ? it.Price : null),
+    medicine_name: it.medicineName || it.MedicineName,
+    medicineName: it.medicineName || it.MedicineName,
+    image_url: formatImageUrl(it.imageUrl || it.ImageUrl),
+    imageUrl: formatImageUrl(it.imageUrl || it.ImageUrl)
+  }));
   return {
     id: o.id || o.Id,
     userId: o.userId || o.UserId,
@@ -418,7 +433,8 @@ function normalizeOrder(o) {
     shippingFee: o.shippingFee !== undefined ? o.shippingFee : o.ShippingFee,
     created_at: o.created_at || o.createdAt || o.CreatedAt,
     createdAt: o.created_at || o.createdAt || o.CreatedAt,
-    items: o.items || o.Items || []
+    returnReason: o.returnReason || o.ReturnReason || "",
+    items: items
   };
 }
 
@@ -434,6 +450,31 @@ export async function updateOrderStatus(orderId, statusData) {
     body: JSON.stringify(mappedData),
   });
   if (!res.ok) throw new Error('Không thể cập nhật trạng thái đơn hàng');
+  return res.json();
+}
+
+export async function cancelOrder(orderId) {
+  const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Không thể hủy đơn hàng');
+  }
+  return res.json();
+}
+
+export async function requestOrderReturn(orderId, reason) {
+  const res = await fetch(`${API_URL}/orders/${orderId}/return-request`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Không thể gửi yêu cầu trả hàng');
+  }
   return res.json();
 }
 

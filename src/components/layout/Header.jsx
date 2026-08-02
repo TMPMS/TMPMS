@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
 import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
-import { fetchMedicines } from '../../services/api';
+import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG } from '../../services/api';
 import './Header.css';
 
 const USERNAME_PATTERN = /^[A-Za-z]+$/;
@@ -320,7 +320,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                               }
                             }}
                           >
-                            <img src={m.imageUrl} alt={m.name} className="suggest-item-thumb" />
+                            <img src={formatImageUrl(m.imageUrl)} alt={m.name} className="suggest-item-thumb" onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_MED_IMG; }} />
                             <div className="suggest-item-info">
                               <span className="suggest-item-name">{m.name}</span>
                               <span className="suggest-item-price">{m.price != null ? `${m.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>

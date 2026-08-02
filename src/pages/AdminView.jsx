@@ -15,6 +15,15 @@ import './AdminView.css';
 
 const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
 
+const ORDER_FILTERS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'Pending', label: 'Đang xử lý' },
+  { key: 'Shipping', label: 'Đang giao' },
+  { key: 'Delivered', label: 'Đã giao' },
+  { key: 'Cancelled', label: 'Đã hủy' },
+  { key: 'Returned', label: 'Trả hàng' }
+];
+
 const AdminView = () => {
   const [activeTab, setActiveTab] = useState('orders'); // orders | patients | appointments | prescriptions | inventory | users | stats | products
   const [loading, setLoading] = useState(false);
@@ -23,6 +32,7 @@ const AdminView = () => {
 
   // Data States
   const [orders, setOrders] = useState([]);
+  const [orderFilter, setOrderFilter] = useState('all');
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
@@ -185,6 +195,58 @@ const AdminView = () => {
       setError('Lỗi khi cập nhật trạng thái đơn hàng.');
     }
   };
+
+  const handleConfirmDelivered = async (orderId) => {
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền xác nhận đã giao.');
+      return;
+    }
+    try {
+      await api.updateOrderStatus(orderId, { status: 'Delivered' });
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Delivered' } : o));
+      showSuccess('Đã xác nhận đơn hàng giao thành công!');
+    } catch (err) {
+      setError('Lỗi khi xác nhận đã giao đơn hàng.');
+    }
+  };
+
+  const handleApproveReturn = async (order) => {
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền duyệt trả hàng.');
+      return;
+    }
+    if (!window.confirm(`Duyệt trả hàng cho đơn #${order.id}?\nSố tiền ${formatPrice(order.total_amount || order.totalAmount)} sẽ được hoàn lại cho khách hàng.`)) return;
+    try {
+      await api.updateOrderStatus(order.id, { status: 'Returned', paymentStatus: 'Refunded' });
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Returned', paymentStatus: 'Refunded', payment_status: 'Refunded' } : o));
+      showSuccess('Đã duyệt trả hàng và hoàn tiền cho khách hàng!');
+    } catch (err) {
+      setError('Lỗi khi duyệt trả hàng.');
+    }
+  };
+
+  const handleRejectReturn = async (order) => {
+    if (!hasAccess([3])) {
+      setError('Chỉ nhân viên nhà thuốc có quyền từ chối trả hàng.');
+      return;
+    }
+    if (!window.confirm(`Từ chối yêu cầu trả hàng của đơn #${order.id}?`)) return;
+    try {
+      await api.updateOrderStatus(order.id, { status: 'Delivered' });
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Delivered', returnReason: '' } : o));
+      showSuccess('Đã từ chối yêu cầu trả hàng.');
+    } catch (err) {
+      setError('Lỗi khi từ chối trả hàng.');
+    }
+  };
+
+  const filteredOrders = orders.filter(o => {
+    if (orderFilter === 'all') return true;
+    if (orderFilter === 'Returned') return o.status === 'Returned' || o.status === 'ReturnRequested';
+    return o.status === orderFilter;
+  });
+
+  const returnRequests = orders.filter(o => o.status === 'ReturnRequested');
 
   // Payment reconcile - only Admin/Accountant (Pharmacy chỉ xem)
   const handlePaymentReconcile = async (order, newPaymentStatus) => {
@@ -773,8 +835,51 @@ const AdminView = () => {
           {activeTab === 'orders' && (
             <div className="admin-card">
               <h3 className="card-title">Quản lý Đơn đặt hàng & Thu tiền</h3>
-              {orders.length === 0 ? (
-                <div className="admin-empty">Không có đơn đặt hàng nào.</div>
+
+              {/* Return approval area */}
+              {returnRequests.length > 0 && (
+                <div className="return-approval-box">
+                  <h4 className="return-approval-title">🔄 Yêu cầu trả hàng chờ duyệt ({returnRequests.length})</h4>
+                  {returnRequests.map(r => (
+                    <div key={r.id} className="return-approval-row">
+                      <div className="return-approval-info">
+                        <div className="return-approval-head">
+                          <strong>Đơn #{r.id}</strong>
+                          <span>— {r.username} ({r.email || 'không có email'})</span>
+                        </div>
+                        <div className="return-approval-reason">Lý do: {r.returnReason || 'Không có lý do'}</div>
+                      </div>
+                      <div className="return-approval-actions">
+                        <button className="btn-approve" onClick={() => handleApproveReturn(r)}>Duyệt trả & hoàn tiền</button>
+                        <button className="btn-reject" onClick={() => handleRejectReturn(r)}>Từ chối</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Status filter tabs */}
+              <div className="admin-orders-tabs">
+                {ORDER_FILTERS.map(f => {
+                  const count = f.key === 'all'
+                    ? orders.length
+                    : f.key === 'Returned'
+                      ? orders.filter(o => o.status === 'Returned' || o.status === 'ReturnRequested').length
+                      : orders.filter(o => o.status === f.key).length;
+                  return (
+                    <button
+                      key={f.key}
+                      className={`admin-orders-tab ${orderFilter === f.key ? 'active' : ''}`}
+                      onClick={() => setOrderFilter(f.key)}
+                    >
+                      {f.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {filteredOrders.length === 0 ? (
+                <div className="admin-empty">Không có đơn đặt hàng nào ở trạng thái này.</div>
               ) : (
                 <div className="table-wrapper">
                   <table className="admin-table">
@@ -790,7 +895,7 @@ const AdminView = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o) => {
+                      {filteredOrders.map((o) => {
                         const detail = o.paymentStatusDetail || '';
                         const paymentStatus = detail === 'Success'
                           ? 'Paid'
@@ -799,6 +904,7 @@ const AdminView = () => {
                             : detail === 'Failed'
                               ? 'Failed'
                               : (o.payment_status || o.paymentStatus || 'Unpaid');
+                        const statusCls = (o.status || '').toLowerCase() === 'returnrequested' ? 'return-requested' : (o.status || '').toLowerCase();
                         return (
                           <tr key={o.id}>
                             <td className="col-id">#{o.id}</td>
@@ -814,23 +920,48 @@ const AdminView = () => {
                                     • {item.medicine_name || item.medicineName} (x{item.quantity})
                                   </div>
                                 ))}
+                                {o.returnReason && (
+                                  <div className="return-reason-cell">🔄 Lý do trả: {o.returnReason}</div>
+                                )}
                               </div>
                             </td>
                             <td className="col-total">{formatPrice(o.total_amount || o.totalAmount)}</td>
                             <td>
-                              <select 
-                                className={`status-select ${o.status.toLowerCase()}`}
-                                value={o.status}
-                                onChange={(e) => handleStatusChange(o.id, e.target.value)}
-                              >
-                                <option value="Pending">Chờ duyệt</option>
-                                <option value="Shipping">Đang giao</option>
-                                <option value="Delivered">Đã giao</option>
-                              </select>
+                              <div className="order-status-cell">
+                                <span className={`status-text ${statusCls}`}>
+                                  {o.status === 'ReturnRequested' ? 'Chờ duyệt trả hàng'
+                                    : o.status === 'Returned' ? 'Đã trả hàng'
+                                      : o.status === 'Pending' ? 'Chờ duyệt'
+                                        : o.status === 'Shipping' ? 'Đang giao'
+                                          : o.status === 'Delivered' ? 'Đã giao'
+                                            : o.status === 'Cancelled' ? 'Đã hủy' : o.status}
+                                </span>
+                                {o.status !== 'Delivered' && o.status !== 'Cancelled' && o.status !== 'Returned' && o.status !== 'ReturnRequested' && (
+                                  <button
+                                    className="confirm-delivered-btn"
+                                    onClick={() => handleConfirmDelivered(o.id)}
+                                    title="Xác nhận đã giao hàng cho khách"
+                                  >
+                                    ✓ Xác nhận đã giao
+                                  </button>
+                                )}
+                                {o.status !== 'Cancelled' && o.status !== 'Returned' && o.status !== 'ReturnRequested' && (
+                                  <select
+                                    className={`status-select ${statusCls}`}
+                                    value={o.status}
+                                    onChange={(e) => handleStatusChange(o.id, e.target.value)}
+                                  >
+                                    <option value="Pending">Chờ duyệt</option>
+                                    <option value="Shipping">Đang giao</option>
+                                    <option value="Delivered">Đã giao</option>
+                                    <option value="Cancelled">Đã hủy</option>
+                                  </select>
+                                )}
+                              </div>
                             </td>
                             <td>
                               <span className={`payment-toggle-btn ${paymentStatus.toLowerCase()}`}>
-                                {paymentStatus === 'Paid' ? 'Đã thu tiền' : 'Chưa thu tiền'}
+                                {paymentStatus === 'Paid' ? 'Đã thu tiền' : paymentStatus === 'Refunded' ? 'Đã hoàn tiền' : 'Chưa thu tiền'}
                               </span>
                               {hasAccess([1, 6]) && (
                                 <select

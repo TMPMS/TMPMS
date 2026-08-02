@@ -1,32 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import * as api from '../services/api';
 import OrderTrackingView from '../components/OrderTrackingView';
 import './HistoryView.css';
 
+const STATUS_TABS = [
+  { key: 'all', label: 'Tất cả', icon: '📋' },
+  { key: 'pending', label: 'Đang xử lý', icon: '🕓' },
+  { key: 'shipping', label: 'Đang giao', icon: '🚚' },
+  { key: 'delivered', label: 'Đã giao', icon: '✅' },
+  { key: 'cancelled', label: 'Đã hủy', icon: '🗑️' },
+  { key: 'returned', label: 'Trả hàng', icon: '🔄' }
+];
+
+const STATUS_LABELS = {
+  Pending: 'Chờ duyệt',
+  Shipping: 'Đang giao',
+  Delivered: 'Đã giao',
+  Cancelled: 'Đã hủy',
+  ReturnRequested: 'Chờ duyệt trả hàng',
+  Returned: 'Đã trả hàng'
+};
+
 const HistoryView = () => {
   const { user } = useAuth();
+  const { refreshCart } = useCart();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
   const [activeTrackingOrder, setActiveTrackingOrder] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [returnOrder, setReturnOrder] = useState(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [invoiceModalData, setInvoiceModalData] = useState(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+
+  const loadOrders = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setError('');
+      const data = await api.fetchUserOrders(user.id);
+      setOrders(data);
+    } catch (err) {
+      console.error(err);
+      setError('Không thể tải lịch sử mua hàng.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const getHistory = async () => {
-      if (!user) return;
-      try {
-        setLoading(true);
-        const data = await api.fetchUserOrders(user.id);
-        setOrders(data);
-      } catch (err) {
-        console.error(err);
-        setError('Không thể tải lịch sử mua hàng.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    getHistory();
-  }, [user]);
+    loadOrders();
+  }, [loadOrders]);
+
+  const filteredOrders = useMemo(() => {
+    if (activeTab === 'all') return orders;
+    if (activeTab === 'pending') return orders.filter(o => o.status === 'Pending');
+    if (activeTab === 'shipping') return orders.filter(o => o.status === 'Shipping');
+    if (activeTab === 'delivered') return orders.filter(o => o.status === 'Delivered');
+    if (activeTab === 'cancelled') return orders.filter(o => o.status === 'Cancelled');
+    if (activeTab === 'returned') return orders.filter(o => o.status === 'Returned' || o.status === 'ReturnRequested');
+    return orders;
+  }, [orders, activeTab]);
+
+  const tabCounts = useMemo(() => ({
+    all: orders.length,
+    pending: orders.filter(o => o.status === 'Pending').length,
+    shipping: orders.filter(o => o.status === 'Shipping').length,
+    delivered: orders.filter(o => o.status === 'Delivered').length,
+    cancelled: orders.filter(o => o.status === 'Cancelled').length,
+    returned: orders.filter(o => o.status === 'Returned' || o.status === 'ReturnRequested').length
+  }), [orders]);
 
   const formatPrice = (price) => {
     if (price == null) return 'Liên hệ';
@@ -34,6 +81,7 @@ const HistoryView = () => {
   };
 
   const formatDate = (dateStr) => {
+    if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
@@ -44,16 +92,8 @@ const HistoryView = () => {
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Pending':
-        return <span className="status-badge pending">Chờ duyệt</span>;
-      case 'Shipping':
-        return <span className="status-badge shipping">Đang giao</span>;
-      case 'Delivered':
-        return <span className="status-badge delivered">Đã giao</span>;
-      default:
-        return <span className="status-badge">{status}</span>;
-    }
+    const cls = (status || '').toLowerCase() === 'returnrequested' ? 'return-requested' : (status || '').toLowerCase();
+    return <span className={`status-badge ${cls}`}>{STATUS_LABELS[status] || status}</span>;
   };
 
   const getPaymentStatusBadge = (status) => {
@@ -61,14 +101,14 @@ const HistoryView = () => {
       case 'Unpaid':
         return <span className="payment-badge unpaid">Chưa thanh toán</span>;
       case 'Paid':
+      case 'Success':
         return <span className="payment-badge paid">Đã thanh toán</span>;
+      case 'Refunded':
+        return <span className="payment-badge refunded">Đã hoàn tiền</span>;
       default:
         return <span className="payment-badge">{status}</span>;
     }
   };
-
-  const [invoiceModalData, setInvoiceModalData] = useState(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
 
   const handleViewInvoice = async (orderId) => {
     try {
@@ -80,6 +120,70 @@ const HistoryView = () => {
       alert('Chưa thể lấy hóa đơn cho đơn hàng này: ' + (err.message || 'Lỗi server'));
     } finally {
       setInvoiceLoading(false);
+    }
+  };
+
+  const handleBuyAgain = async (order) => {
+    if (!user) {
+      alert('Vui lòng đăng nhập để mua lại.');
+      return;
+    }
+    const items = (order.items || []).map(it => ({ medicineId: it.medicineId, quantity: it.quantity }));
+    if (items.length === 0) {
+      alert('Đơn hàng này không có sản phẩm nào để mua lại.');
+      return;
+    }
+    setActionLoading({ id: order.id, type: 'buy' });
+    try {
+      await api.syncCart(user.id, items);
+      await refreshCart();
+      alert('Đã thêm các sản phẩm vào giỏ hàng. Kiểm tra giỏ hàng để đặt lại.');
+    } catch (err) {
+      console.error(err);
+      alert('Không thể mua lại: ' + (err.message || 'Một số sản phẩm có thể đã ngừng bán hoặc hết hàng.'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancelOrder = async (order) => {
+    if (!window.confirm(`Hủy đơn hàng #${order.id}?\nHành động này không thể hoàn tác.`)) return;
+    setActionLoading({ id: order.id, type: 'cancel' });
+    try {
+      await api.cancelOrder(order.id);
+      await loadOrders();
+      alert('Đơn hàng đã được hủy.');
+    } catch (err) {
+      console.error(err);
+      alert('Không thể hủy đơn hàng: ' + (err.message || 'Lỗi server'));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const openReturnModal = (order) => {
+    setReturnOrder(order);
+    setReturnReason('');
+  };
+
+  const handleRequestReturn = async () => {
+    if (!returnOrder) return;
+    if (!returnReason.trim()) {
+      alert('Vui lòng nhập lý do trả hàng.');
+      return;
+    }
+    setActionLoading({ id: returnOrder.id, type: 'return' });
+    try {
+      await api.requestOrderReturn(returnOrder.id, returnReason.trim());
+      setReturnOrder(null);
+      setReturnReason('');
+      await loadOrders();
+      alert('Yêu cầu trả hàng đã được gửi. Nhà thuốc sẽ liên hệ xác nhận.');
+    } catch (err) {
+      console.error(err);
+      alert('Không thể gửi yêu cầu trả hàng: ' + (err.message || 'Lỗi server'));
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -95,46 +199,60 @@ const HistoryView = () => {
     <div className="history-container">
       <div className="history-header">
         <h2 className="history-title">Lịch Sử Mua Hàng</h2>
-        <p className="history-subtitle">Danh sách các đơn đặt hàng của bạn trên hệ thống</p>
+        <p className="history-subtitle">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="history-tabs">
+        {STATUS_TABS.map(tab => (
+          <button
+            key={tab.key}
+            className={`history-tab ${activeTab === tab.key ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            <span className="tab-icon">{tab.icon}</span>
+            <span className="tab-label">{tab.label}</span>
+            <span className="tab-count">{tabCounts[tab.key]}</span>
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <div className="history-loading">Đang tải lịch sử mua hàng của bạn...</div>
       ) : error ? (
         <div className="history-error-msg">{error}</div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <div className="history-empty">
           <div className="empty-box-icon">📦</div>
-          <h3>Bạn chưa có đơn đặt hàng nào</h3>
-          <p>Hãy chọn sản phẩm từ trang chủ và đặt đơn hàng đầu tiên của bạn.</p>
+          <h3>Không có đơn hàng nào</h3>
+          <p>Chưa có đơn hàng nào ở mục này. Hãy ghé thăm cửa hàng và đặt đơn đầu tiên của bạn.</p>
         </div>
       ) : (
         <div className="orders-list">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div key={order.id} className="order-history-card">
-              {/* Order Info Bar */}
               <div className="order-card-header">
                 <div className="order-meta-info">
                   <span className="order-id-tag">Mã đơn: #{order.id}</span>
-                  <span className="order-date">{formatDate(order.created_at || order.createdAt)}</span>
+                  <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
                 <div className="order-badges">
                   {getStatusBadge(order.status)}
-                  {getPaymentStatusBadge(order.payment_status || order.paymentStatus)}
+                  {getPaymentStatusBadge(order.paymentStatusDetail || order.paymentStatus)}
                 </div>
               </div>
 
-              {/* Order Items */}
               <div className="order-card-body">
                 {order.items && order.items.map((item) => (
                   <div key={item.id} className="order-item-row">
-                    <img 
-                      src={item.image_url || item.imageUrl || 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&h=100&fit=crop'} 
-                      alt={item.medicine_name || item.medicineName} 
-                      className="order-item-pic" 
+                    <img
+                      src={item.imageUrl}
+                      alt={item.medicineName}
+                      className="order-item-pic"
+                      onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }}
                     />
                     <div className="order-item-details">
-                      <span className="order-item-name">{item.medicine_name || item.medicineName}</span>
+                      <span className="order-item-name">{item.medicineName}</span>
                       <span className="order-item-qty-price">
                         Số lượng: <strong>{item.quantity}</strong> × {formatPrice(item.price)}
                       </span>
@@ -144,64 +262,68 @@ const HistoryView = () => {
                     </span>
                   </div>
                 ))}
+
+                {(order.status === 'ReturnRequested' || order.status === 'Returned') && order.returnReason && (
+                  <div className="return-reason-note">
+                    <strong>Lý do trả hàng:</strong> {order.returnReason}
+                  </div>
+                )}
               </div>
 
-              {/* Order Summary & Footer */}
               <div className="order-card-footer">
                 <div className="order-shipping-address">
-                  <strong>Địa chỉ giao hàng:</strong> {order.shipping_address || order.shippingAddress}
+                  <strong>Địa chỉ giao hàng:</strong> {order.shippingAddress}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <button 
-                    className="track-shipper-btn"
-                    onClick={() => setActiveTrackingOrder(order)}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#0f766e',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0d9488'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0f766e'}
-                  >
-                    🏍️ Theo dõi Shipper
-                  </button>
+                <div className="order-card-actions">
+                  {(order.status === 'Pending' || order.status === 'Shipping' || order.status === 'Delivered') && (
+                    <button
+                      className="action-btn track-btn"
+                      onClick={() => setActiveTrackingOrder(order)}
+                    >
+                      🏍️ Theo dõi
+                    </button>
+                  )}
 
-                  <button 
-                    className="view-invoice-btn"
+                  {(order.status === 'Delivered' || order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequested') && (
+                    <button
+                      className="action-btn buy-again-btn"
+                      onClick={() => handleBuyAgain(order)}
+                      disabled={actionLoading && actionLoading.id === order.id && actionLoading.type === 'buy'}
+                    >
+                      🔁 Mua lại
+                    </button>
+                  )}
+
+                  {order.status === 'Delivered' && (
+                    <button
+                      className="action-btn return-btn"
+                      onClick={() => openReturnModal(order)}
+                    >
+                      🔄 Trả hàng
+                    </button>
+                  )}
+
+                  {order.status === 'Pending' && (
+                    <button
+                      className="action-btn cancel-btn"
+                      onClick={() => handleCancelOrder(order)}
+                      disabled={actionLoading && actionLoading.id === order.id && actionLoading.type === 'cancel'}
+                    >
+                      Hủy đơn
+                    </button>
+                  )}
+
+                  <button
+                    className="action-btn invoice-btn"
                     onClick={() => handleViewInvoice(order.id)}
                     disabled={invoiceLoading}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#1e293b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#334155'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
                   >
-                    📄 Xem Hóa Đơn GTGT
+                    📄 Hóa đơn GTGT
                   </button>
 
                   <div className="order-total-block">
-                    <span className="total-label">Tổng tiền đơn hàng:</span>
-                    <span className="total-val">{formatPrice(order.total_amount || order.totalAmount)}</span>
+                    <span className="total-label">Tổng tiền:</span>
+                    <span className="total-val">{formatPrice(order.totalAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -209,115 +331,89 @@ const HistoryView = () => {
           ))}
         </div>
       )}
-      
+
       {activeTrackingOrder && (
-        <OrderTrackingView 
-          order={activeTrackingOrder} 
-          onClose={() => setActiveTrackingOrder(null)} 
+        <OrderTrackingView
+          order={activeTrackingOrder}
+          onClose={() => setActiveTrackingOrder(null)}
         />
+      )}
+
+      {/* Return Modal */}
+      {returnOrder && (
+        <div className="history-modal-backdrop">
+          <div className="history-modal-card">
+            <div className="history-modal-header">
+              <h3>Yêu cầu trả hàng đơn #{returnOrder.id}</h3>
+              <button className="history-modal-close" onClick={() => setReturnOrder(null)}>✕</button>
+            </div>
+            <p className="history-modal-sub">
+              Vui lòng cho chúng tôi biết lý do bạn muốn trả hàng để nhà thuốc xử lý nhanh nhất.
+            </p>
+            <textarea
+              className="return-reason-input"
+              rows="4"
+              placeholder="Nhập lý do trả hàng (bắt buộc)..."
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+            />
+            <div className="history-modal-actions">
+              <button className="action-btn cancel-btn" onClick={() => setReturnOrder(null)}>
+                Đóng
+              </button>
+              <button
+                className="action-btn return-btn solid"
+                onClick={handleRequestReturn}
+                disabled={actionLoading && actionLoading.type === 'return'}
+              >
+                {actionLoading && actionLoading.type === 'return' ? 'Đang gửi...' : 'Gửi yêu cầu'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Invoice Modal */}
       {invoiceModalData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            maxWidth: '650px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '28px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            color: '#1e293b',
-            fontFamily: 'sans-serif'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', pb: '16px', marginBottom: '20px' }}>
-              <div>
-                <h2 style={{ margin: 0, color: '#0f766e', fontSize: '22px', fontWeight: 'bold' }}>🧾 HÓA ĐƠN GIÁ TRỊ GIA TĂNG (GTGT)</h2>
-                <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '13px' }}>Hệ Thống Nhà Thuốc & Dược Liệu Đông Y TMPMS</p>
-              </div>
-              <button 
-                onClick={() => setInvoiceModalData(null)}
-                style={{
-                  background: '#f1f5f9',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '16px',
-                  color: '#64748b'
-                }}
-              >
-                ✕
-              </button>
+        <div className="history-modal-backdrop">
+          <div className="history-invoice-card">
+            <div className="history-modal-header">
+              <h3>🧾 HÓA ĐƠN GIÁ TRỊ GIA TĂNG (GTGT)</h3>
+              <button className="history-modal-close" onClick={() => setInvoiceModalData(null)}>✕</button>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', marginBottom: '20px', backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px' }}>
-              <div><strong>Số hóa đơn:</strong> <span style={{ color: '#0d9488', fontWeight: 'bold' }}>{invoiceModalData.invoiceCode || invoiceModalData.InvoiceCode}</span></div>
+            <div className="invoice-meta">
+              <div><strong>Số hóa đơn:</strong> <span>{invoiceModalData.invoiceCode || invoiceModalData.InvoiceCode}</span></div>
               <div><strong>Ngày xuất:</strong> {formatDate(invoiceModalData.issuedAt || invoiceModalData.IssuedAt)}</div>
               <div><strong>Mã đơn hàng:</strong> #{invoiceModalData.orderId || invoiceModalData.OrderId}</div>
               <div><strong>Khách hàng:</strong> {invoiceModalData.customerName || invoiceModalData.CustomerName || user.username}</div>
-              <div style={{ gridColumn: 'span 2' }}><strong>Địa chỉ nhận hàng:</strong> {invoiceModalData.shippingAddress || invoiceModalData.ShippingAddress}</div>
+              <div className="invoice-address"><strong>Địa chỉ nhận hàng:</strong> {invoiceModalData.shippingAddress || invoiceModalData.ShippingAddress}</div>
             </div>
-
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#334155' }}>Chi tiết danh mục thuốc & dược liệu:</h4>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
+            <table className="invoice-table">
               <thead>
-                <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
-                  <th style={{ padding: '10px', borderBottom: '1px solid #cbd5e1' }}>Sản phẩm</th>
-                  <th style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', textAlign: 'center' }}>SL</th>
-                  <th style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', textAlign: 'right' }}>Đơn giá</th>
-                  <th style={{ padding: '10px', borderBottom: '1px solid #cbd5e1', textAlign: 'right' }}>Thành tiền</th>
+                <tr>
+                  <th>Sản phẩm</th>
+                  <th className="center">SL</th>
+                  <th className="right">Đơn giá</th>
+                  <th className="right">Thành tiền</th>
                 </tr>
               </thead>
               <tbody>
                 {(invoiceModalData.items || invoiceModalData.Items || []).map((it, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '10px' }}>{it.medicineName || it.MedicineName}</td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity || it.Quantity}</td>
-                    <td style={{ padding: '10px', textAlign: 'right' }}>{formatPrice(it.price || it.Price)}</td>
-                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: '500' }}>{(it.price || it.Price) != null ? formatPrice((it.price || it.Price) * (it.quantity || it.Quantity)) : 'Liên hệ'}</td>
+                  <tr key={idx}>
+                    <td>{it.medicineName || it.MedicineName}</td>
+                    <td className="center">{it.quantity || it.Quantity}</td>
+                    <td className="right">{formatPrice(it.price || it.Price)}</td>
+                    <td className="right">{formatPrice((it.price || it.Price) * (it.quantity || it.Quantity))}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '16px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>Tổng thanh toán (Đã gồm thuế GTGT):</span>
-              <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f766e' }}>
-                {formatPrice(invoiceModalData.totalAmount || invoiceModalData.TotalAmount)}
-              </span>
+            <div className="invoice-total">
+              <span>Tổng thanh toán (Đã gồm thuế GTGT):</span>
+              <strong>{formatPrice(invoiceModalData.totalAmount || invoiceModalData.TotalAmount)}</strong>
             </div>
-
-            <div style={{ marginTop: '24px', textAlign: 'right' }}>
-              <button 
-                onClick={() => setInvoiceModalData(null)}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#0f766e',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
+            <div className="history-modal-actions">
+              <button className="action-btn return-btn solid" onClick={() => setInvoiceModalData(null)}>
                 Đóng Hóa Đơn
               </button>
             </div>

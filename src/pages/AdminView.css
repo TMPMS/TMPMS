@@ -231,6 +231,9 @@
 .status-select.pending { border-color: #f97316; color: #ea580c; background-color: #fff7ed; }
 .status-select.shipping { border-color: #3b82f6; color: #2563eb; background-color: #eff6ff; }
 .status-select.delivered { border-color: #10b981; color: #059669; background-color: #ecfdf5; }
+.status-select.cancelled { border-color: #94a3b8; color: #64748b; background-color: #f1f5f9; }
+.status-select.returned { border-color: #a78bfa; color: #7c3aed; background-color: #f5f3ff; }
+.status-select.return-requested { border-color: #fbbf24; color: #d97706; background-color: #fffbeb; }
 
 .payment-toggle-btn {
   border: none;
@@ -923,3 +926,176 @@
     position: static;
   }
 }
+
+/* ============ ADMIN ORDERS FILTER & RETURN APPROVAL ============ */
+.admin-orders-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.admin-orders-tab {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.admin-orders-tab:hover {
+  background-color: #f1f5f9;
+}
+
+.admin-orders-tab.active {
+  background-color: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.return-approval-box {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.return-approval-title {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.return-approval-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background-color: #fff;
+  border: 1px solid #fef3c7;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.return-approval-row:last-child {
+  margin-bottom: 0;
+}
+
+.return-approval-info {
+  flex: 1;
+  min-width: 240px;
+}
+
+.return-approval-head {
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.return-approval-head span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.return-approval-reason {
+  font-size: 13px;
+  color: #92400e;
+  margin-top: 4px;
+}
+
+.return-approval-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-approve {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #10b981;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-approve:hover {
+  background-color: #059669;
+}
+
+.btn-reject {
+  padding: 8px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-reject:hover {
+  background-color: #fef2f2;
+}
+
+.order-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.status-text {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.status-text.pending { background-color: #ffedd5; color: #ea580c; }
+.status-text.shipping { background-color: #dbeafe; color: #2563eb; }
+.status-text.delivered { background-color: #d1fae5; color: #059669; }
+.status-text.cancelled { background-color: #f1f5f9; color: #64748b; }
+.status-text.returned { background-color: #ede9fe; color: #7c3aed; }
+.status-text.return-requested { background-color: #fef3c7; color: #d97706; }
+
+.confirm-delivered-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #059669;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.confirm-delivered-btn:hover {
+  background-color: #047857;
+}
+
+.return-reason-cell {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #92400e;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: inline-block;
+}
+
+.payment-toggle-btn.refunded { background-color: #ede9fe; color: #7c3aed; }
