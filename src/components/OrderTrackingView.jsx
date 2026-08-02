@@ -266,6 +266,9 @@ const OrderTrackingView = ({ order, onClose }) => {
               <p>Có thể gửi request đổi trạng thái trực tiếp bằng Postman để test Webhook đối tác:</p>
               <pre className="dev-code">
 POST /api/shipping/webhook
+Header:
+  X-Signature: {"&lt;"}hex(HMAC-SHA256(webhookSecret, rawBody)){">"}
+  Content-Type: application/json
 Body:
 &#123;
   "orderId": {orderId},
@@ -278,6 +281,7 @@ Body:
   &#125;
 &#125;
               </pre>
+              <p className="dev-note">Webhook chỉ chấp nhận request có chữ ký hợp lệ (HMAC-SHA256 của raw body, viết thường hex). Thiếu/sai chữ ký sẽ bị từ chối (401).</p>
             </div>
 
           </div>
