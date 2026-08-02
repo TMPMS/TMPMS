@@ -328,7 +328,7 @@ export async function syncCart(userId, items) {
 
   const res = await fetch(`${API_URL}/rpc/sync_cart_items`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({
       p_user_id: userId,
       p_items: payload,
@@ -338,7 +338,7 @@ export async function syncCart(userId, items) {
 }
 
 export async function fetchCarts(userId) {
-  const res = await fetch(`${API_URL}/carts?user_id=eq.${userId}`);
+  const res = await fetch(`${API_URL}/carts?user_id=eq.${userId}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Không thể tải danh sách giỏ hàng');
   return res.json();
 }
@@ -346,7 +346,7 @@ export async function fetchCarts(userId) {
 export async function createCart(userId) {
   const res = await fetch(`${API_URL}/carts`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({ userId }),
   });
   if (!res.ok) throw new Error('Không thể tạo giỏ hàng mới');
@@ -354,7 +354,7 @@ export async function createCart(userId) {
 }
 
 export async function fetchCartItems(cartId) {
-  const res = await fetch(`${API_URL}/cart_items?cart_id=eq.${cartId}`);
+  const res = await fetch(`${API_URL}/cart_items?cart_id=eq.${cartId}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Không thể tải vật phẩm giỏ hàng');
   return res.json();
 }
@@ -362,7 +362,7 @@ export async function fetchCartItems(cartId) {
 export async function addCartItem(cartId, medicineId, quantity) {
   const res = await fetch(`${API_URL}/cart_items`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({
       cart_id: cartId,
       medicine_id: medicineId,
@@ -381,7 +381,7 @@ export async function addCartItem(cartId, medicineId, quantity) {
 export async function updateCartItem(itemId, quantity) {
   const res = await fetch(`${API_URL}/cart_items?id=eq.${itemId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({ quantity }),
   });
   if (!res.ok) {
@@ -395,6 +395,7 @@ export async function updateCartItem(itemId, quantity) {
 export async function deleteCartItem(itemId) {
   const res = await fetch(`${API_URL}/cart_items?id=eq.${itemId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = new Error('Không thể xóa vật phẩm');
@@ -893,7 +894,7 @@ export async function fetchProductReviews(productId) {
 }
 
 export async function checkReviewEligibility(productId, userId) {
-  const res = await fetch(`${API_URL}/api/reviews/check-eligibility?medicineId=${productId}&userId=${userId}`);
+  const res = await requestWithAuth(`${API_URL}/api/reviews/check-eligibility?medicineId=${productId}&userId=${userId}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Không thể kiểm tra điều kiện đánh giá');
   const data = await res.json();
   return data.eligible;
@@ -974,19 +975,7 @@ export async function validateVoucher(code, orderTotal) {
 // ============ PROFILE APIs ============
 
 function getUserIdHeader() {
-  try {
-    const u = localStorage.getItem('user');
-    if (u) {
-      const parsed = JSON.parse(u);
-      const headers = getAuthHeaders();
-      // Wait, let's see: in user object in localStorage, it could have id or userId
-      const uId = parsed.id || parsed.userId;
-      if (uId) headers['X-User-Id'] = uId;
-      return headers;
-    }
-  } catch {
-    return getAuthHeaders();
-  }
+  // Identity comes from the JWT (ClaimTypes.NameIdentifier); no client-supplied header is trusted.
   return getAuthHeaders();
 }
 
