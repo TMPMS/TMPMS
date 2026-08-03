@@ -55,7 +55,7 @@ const AdminView = () => {
 
   // Form States - Appointment
   const [appointmentModal, setAppointmentModal] = useState(null); // 'add' | 'edit' | null
-  const [currentAppointment, setCurrentAppointment] = useState({ patientId: '', doctorId: '', appointmentDate: '', reason: '', status: 'Scheduled', notes: '' });
+  const [currentAppointment, setCurrentAppointment] = useState({ patientId: '', doctorId: '', appointmentDate: '', reason: '', status: 'PendingConfirmation', notes: '' });
 
   // Form States - Prescription
   const [prescriptionModal, setPrescriptionModal] = useState(null); // 'add' | null
@@ -352,7 +352,7 @@ const AdminView = () => {
 
       if (appointmentModal === 'add') {
         await api.createAppointment(payload);
-        showSuccess('Tạo lịch hẹn thành công!');
+        showSuccess('Tạo lịch hẹn thành công! Đang chờ xác nhận.');
       } else {
         await api.updateAppointment(currentAppointment.id, payload);
         showSuccess('Cập nhật lịch hẹn thành công!');
@@ -391,6 +391,22 @@ const AdminView = () => {
       await loadTabContent();
     } catch (err) {
       setError(err.message || 'Lỗi khi xác nhận lịch hẹn.');
+    }
+  };
+
+  const handleRejectAppointment = async (id) => {
+    if (!hasAccess([1, 3])) {
+      setError('Bạn không có quyền từ chối lịch hẹn.');
+      return;
+    }
+    const reason = window.prompt('Nhập lý do từ chối lịch hẹn:', '');
+    if (reason === null) return;
+    try {
+      await api.rejectAppointment(id, reason);
+      showSuccess('Đã từ chối lịch hẹn!');
+      await loadTabContent();
+    } catch (err) {
+      setError(err.message || 'Lỗi khi từ chối lịch hẹn.');
     }
   };
 
@@ -769,7 +785,7 @@ const AdminView = () => {
         patientsCount: reportData.totalCustomers !== undefined ? reportData.totalCustomers : (reportData.TotalCustomers || patients.length),
         appointmentsCount: appointments.length,
         pendingOrders: orders.filter(o => o.status === 'Pending').length,
-        activeAppointments: appointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length,
+        activeAppointments: appointments.filter(a => a.status === 'PendingConfirmation' || a.status === 'Scheduled' || a.status === 'Confirmed').length,
         lowStockCount: reportData.lowStockCount !== undefined ? reportData.lowStockCount : (reportData.LowStockCount || 0),
         medicinesCount: reportData.totalMedicines !== undefined ? reportData.totalMedicines : (reportData.TotalMedicines || medicines.length)
       };
@@ -783,7 +799,7 @@ const AdminView = () => {
       patientsCount: patients.length,
       appointmentsCount: appointments.length,
       pendingOrders: orders.filter(o => o.status === 'Pending').length,
-      activeAppointments: appointments.filter(a => a.status === 'Scheduled').length,
+      activeAppointments: appointments.filter(a => a.status === 'PendingConfirmation' || a.status === 'Scheduled' || a.status === 'Confirmed').length,
       lowStockCount: lowStock.length,
       medicinesCount: medicines.length
     };
@@ -1145,7 +1161,7 @@ const AdminView = () => {
               <div className="card-header-actions">
                 <h3 className="card-title">Quản lý Lịch hẹn khám bệnh</h3>
                 <button className="btn-add-action" onClick={() => {
-                  setCurrentAppointment({ patientId: patients[0]?.id || '', doctorId: users[0]?.id || '', appointmentDate: '', reason: '', status: 'Scheduled', notes: '' });
+                  setCurrentAppointment({ patientId: patients[0]?.id || '', doctorId: users[0]?.id || '', appointmentDate: '', reason: '', status: 'PendingConfirmation', notes: '' });
                   setAppointmentModal('add');
                 }}><Plus size={16} /> Đặt lịch hẹn mới</button>
               </div>
@@ -1175,15 +1191,6 @@ const AdminView = () => {
                     <div className="form-group">
                       <label className="form-label">Thời gian khám *</label>
                       <input type="datetime-local" className="form-input" required value={currentAppointment.appointmentDate ? currentAppointment.appointmentDate.substring(0, 16) : ''} onChange={e => setCurrentAppointment({...currentAppointment, appointmentDate: e.target.value})} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Trạng thái cuộc hẹn</label>
-                      <select className="form-select" value={currentAppointment.status} onChange={e => setCurrentAppointment({...currentAppointment, status: e.target.value})}>
-                        <option value="Scheduled">Đã lên lịch</option>
-                        <option value="Confirmed">Đã xác nhận</option>
-                        <option value="Completed">Đã hoàn thành</option>
-                        <option value="Cancelled">Đã hủy</option>
-                      </select>
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label className="form-label">Lý do khám bệnh</label>
@@ -1230,14 +1237,17 @@ const AdminView = () => {
                           <td>{a.reason}</td>
                           <td>
                             <span className={`appointment-status ${a.status.toLowerCase()}`}>
-                              {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
+                              {a.status === 'PendingConfirmation' || a.status === 'Pending' || a.status === 'Scheduled' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : a.status === 'Rejected' ? 'Đã từ chối' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
                             </span>
                           </td>
                           <td><div className="med-history-text">{a.notes || 'Không'}</div></td>
                           <td>
                             <div className="table-actions-row">
-                              {(a.status === 'Scheduled' || a.status === 'Pending') && (
-                                <button className="action-icon-btn approve" onClick={() => handleApproveAppointment(a.id)} title="Xác nhận lịch hẹn"><CheckCircle2 size={14} /></button>
+                              {a.status === 'PendingConfirmation' && (
+                                <>
+                                  <button className="action-icon-btn approve" onClick={() => handleApproveAppointment(a.id)} title="Xác nhận lịch hẹn"><CheckCircle2 size={14} /></button>
+                                  <button className="action-icon-btn reject" onClick={() => handleRejectAppointment(a.id)} title="Từ chối lịch hẹn"><X size={14} /></button>
+                                </>
                               )}
                               {a.status === 'Confirmed' && (
                                 <button className="action-icon-btn complete" onClick={() => handleCompleteAppointment(a.id)} title="Đánh dấu đã khám xong"><CheckCheck size={14} /></button>
@@ -1271,7 +1281,7 @@ const AdminView = () => {
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#0f766e', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   📋 Danh sách bệnh nhân chờ kê đơn (Lịch hẹn khám chưa có đơn thuốc)
                 </h4>
-                {appointments.filter(appt => (appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).length === 0 ? (
+                {appointments.filter(appt => (appt.status === 'PendingConfirmation' || appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).length === 0 ? (
                   <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Hàng chờ trống. Không có lịch hẹn khám nào cần kê đơn thuốc.</p>
                 ) : (
                   <div className="table-wrapper" style={{ border: '1px solid #d1fae5' }}>
@@ -1287,7 +1297,7 @@ const AdminView = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.filter(appt => (appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).map(appt => (
+                        {appointments.filter(appt => (appt.status === 'PendingConfirmation' || appt.status === 'Scheduled' || appt.status === 'Confirmed') && !prescriptions.some(presc => presc.appointmentId === appt.id)).map(appt => (
                           <tr key={appt.id}>
                             <td><strong>{appt.patientName}</strong></td>
                             <td>{appt.patientPhone}</td>
