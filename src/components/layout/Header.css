@@ -468,6 +468,45 @@
   box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
 }
 
+.auth-google-section {
+  margin-top: 14px;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+.auth-google-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+.auth-google-btn-wrap > div {
+  max-width: 100%;
+}
+.auth-google-loading {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
 .auth-switch-text {
   font-size: 13.5px;
   text-align: center;

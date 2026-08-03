@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
+    "@react-oauth/google": "^0.13.5",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "firebase": "^12.16.0",

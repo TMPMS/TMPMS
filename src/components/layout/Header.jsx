@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight, FileText } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
@@ -25,7 +26,7 @@ const categories = [
 
 const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
-  const { user, login, register, logout } = useAuth();
+  const { user, login, register, logout, loginWithGoogle } = useAuth();
   
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -39,6 +40,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [authError, setAuthError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Voice & Image Search states
   const [isVoiceSearchOpen, setIsVoiceSearchOpen] = useState(false);
@@ -229,6 +231,22 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
       }
     } catch (err) {
       setAuthError(err.message || 'Có lỗi xảy ra');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setGoogleLoading(true);
+    setAuthError('');
+    try {
+      const loggedInUser = await loginWithGoogle(credentialResponse.credential);
+      setIsAuthModalOpen(false);
+      if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
+        onNavigate('admin');
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Không thể đăng nhập bằng Google.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -558,6 +576,31 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
               </button>
             </form>
+
+            {authMode === 'login' && (
+              <div className="auth-google-section">
+                <div className="auth-divider"><span>hoặc</span></div>
+                {googleLoading ? (
+                  <button type="button" className="auth-google-loading" disabled>
+                    Đang kết nối Google…
+                  </button>
+                ) : (
+                  <div className="auth-google-btn-wrap">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setAuthError('Không thể đăng nhập bằng Google. Vui lòng thử lại.')}
+                      useOneTap={false}
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      text="continue_with"
+                      locale="vi"
+                      width="350"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             <p className="auth-switch-text">
               {authMode === 'login' ? (
