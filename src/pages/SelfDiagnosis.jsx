@@ -40,10 +40,12 @@ function formatDateTime(value) {
 
 const APPT_STATUS_LABELS = {
   Pending: 'Chờ xác nhận',
+  PendingConfirmation: 'Chờ xác nhận',
   Scheduled: 'Chờ xác nhận',
   Confirmed: 'Đã xác nhận',
   Completed: 'Hoàn thành',
   Cancelled: 'Đã hủy',
+  Rejected: 'Đã từ chối',
   Expired: 'Quá hạn'
 };
 
@@ -307,7 +309,7 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
               {bookingSuccess ? (
                 <div className="booking-success-msg">
                   <Check size={18} />
-                  <span>Đã đặt lịch hẹn thành công! Khung giờ khám {lastBooked ? formatDateTime(lastBooked.date) : ''}. Lịch sẽ tự động được xác nhận trong 5 phút nếu không có thao tác nào khác.</span>
+                  <span>Đã gửi yêu cầu hẹn khám thành công! Khung giờ khám {lastBooked ? formatDateTime(lastBooked.date) : ''}. Vui lòng chờ nhà thuốc xác nhận (tối đa 24 giờ); lịch hẹn sẽ hết hiệu lực nếu không được xác nhận đúng hạn.</span>
                 </div>
               ) : blockingAppt ? (
                 <div className="blocking-appt-box">

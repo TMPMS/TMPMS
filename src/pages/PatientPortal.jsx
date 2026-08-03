@@ -225,10 +225,10 @@ const PatientPortal = ({ onBack }) => {
                     <h4>Lịch hẹn khám sắp tới</h4>
                   </div>
                   <div className="card-body">
-                    {myAppointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length === 0 ? (
+                    {myAppointments.filter(a => a.status === 'PendingConfirmation' || a.status === 'Scheduled' || a.status === 'Confirmed').length === 0 ? (
                       <p className="empty-text">Bạn chưa có lịch hẹn khám nào sắp diễn ra.</p>
                     ) : (
-                      myAppointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').slice(0, 1).map(a => (
+                      myAppointments.filter(a => a.status === 'PendingConfirmation' || a.status === 'Scheduled' || a.status === 'Confirmed').slice(0, 1).map(a => (
                         <div key={a.id} className="appt-alert-box">
                           <div className="time">📅 {formatDate(a.appointmentDate)}</div>
                           <div className="doctor">Thầy thuốc phụ trách: <strong>{a.doctorName || 'Chưa phân công'}</strong></div>
@@ -271,10 +271,11 @@ const PatientPortal = ({ onBack }) => {
                       <div className="reason-info">
                         <strong>Lý do:</strong> {a.reason}
                         {a.notes && <p className="notes-para">⚠️ <strong>Ghi chú:</strong> {a.notes}</p>}
+                        {a.status === 'Rejected' && a.rejectionReason && <p className="notes-para">⛔ <strong>Lý do từ chối:</strong> {a.rejectionReason}</p>}
                       </div>
                       <div className="status-badge-wrap">
                         <span className={`status-badge-portal ${a.status.toLowerCase()}`}>
-                          {a.status === 'Scheduled' ? 'Chờ khám' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
+                          {a.status === 'PendingConfirmation' || a.status === 'Pending' || a.status === 'Scheduled' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : a.status === 'Rejected' ? 'Đã từ chối' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
                         </span>
                       </div>
                     </div>

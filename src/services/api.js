@@ -794,7 +794,10 @@ export async function fetchAppointments() {
     reason: a.reason || a.Reason || "",
     status: a.status || a.Status || "Scheduled",
     notes: a.notes || a.Notes || a.note || a.Note || "",
-    created_at: a.createdAt || a.CreatedAt
+    created_at: a.createdAt || a.CreatedAt,
+    confirmationDeadline: a.confirmationDeadline || a.ConfirmationDeadline,
+    confirmedAt: a.confirmedAt || a.ConfirmedAt,
+    rejectionReason: a.rejectionReason || a.RejectionReason
   }));
 }
 
@@ -846,6 +849,19 @@ export async function approveAppointment(appointmentId) {
   if (!res.ok) {
     const errBody = await res.json().catch(() => null);
     throw new Error(errBody?.Message || errBody?.message || 'Không thể xác nhận lịch hẹn');
+  }
+  return res.json();
+}
+
+export async function rejectAppointment(appointmentId, reason) {
+  const res = await requestWithAuth(`${API_URL}/api/Appointment/reject/${appointmentId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.Message || errBody?.message || 'Không thể từ chối lịch hẹn');
   }
   return res.json();
 }
@@ -1078,7 +1094,10 @@ export async function fetchUserAppointments() {
     appointmentDate: a.appointmentDate || a.AppointmentDate,
     reason: a.reason || a.Reason || "",
     status: a.status || a.Status || "Scheduled",
-    notes: a.note || a.Note || ""
+    notes: a.note || a.Note || "",
+    confirmationDeadline: a.confirmationDeadline || a.ConfirmationDeadline,
+    confirmedAt: a.confirmedAt || a.ConfirmedAt,
+    rejectionReason: a.rejectionReason || a.RejectionReason
   }));
 }
 
