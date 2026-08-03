@@ -9,7 +9,7 @@ export const useCart = () => useContext(CartContext);
 export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
-  const [toast, setToast] = useState({ visible: false, message: '' });
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   
   // Keep a ref of cart items to avoid dependency cycle in useEffect
   const guestCartRef = useRef([]);
@@ -86,6 +86,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = useCallback(async (product) => {
     let showToastMessage = `Đã thêm ${product.name} vào giỏ hàng`;
+    let toastType = 'success';
     const cartId = user ? (user.cart_id || user.cartId) : null;
     
     if (user && cartId) {
@@ -109,6 +110,7 @@ export const CartProvider = ({ children }) => {
       } catch (e) {
         console.error(e);
         showToastMessage = e.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng';
+        toastType = 'error';
       }
     } else {
       // Guest behavior
@@ -121,7 +123,7 @@ export const CartProvider = ({ children }) => {
       });
     }
 
-    setToast({ visible: true, message: showToastMessage });
+    setToast({ visible: true, message: showToastMessage, type: toastType });
     setTimeout(() => {
       setToast({ visible: false, message: '' });
     }, 3000);
@@ -187,7 +189,7 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, refreshCart, cartCount }}>
       {children}
       {toast.visible && (
-        <div className="toast-notification fade-in">
+        <div className={`toast-notification ${toast.type === 'error' ? 'toast-error' : ''} fade-in`}>
           {toast.message}
         </div>
       )}

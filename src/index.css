@@ -71,3 +71,11 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   font-weight: 700;
   flex-shrink: 0;
 }
+.toast-notification.toast-error {
+  background: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+.toast-notification.toast-error::before {
+  content: '✗';
+  background: #ef4444;
+}
