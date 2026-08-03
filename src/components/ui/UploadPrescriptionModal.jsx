@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, CheckCircle2, ShieldAlert, FileText } from 'lucide-react';
 import { createPrescription } from '../../services/api';
+import { toLocalWallClockIso } from '../../utils/dateTime';
 import './UploadPrescriptionModal.css';
 
 const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
@@ -48,7 +49,7 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
         doctorId: null,
         doctorName: doctorName || 'Bác sĩ chưa rõ',
         hospital: hospital || 'Bệnh viện chưa rõ',
-        prescriptionDate: new Date().toISOString(),
+        prescriptionDate: toLocalWallClockIso(new Date()),
         imageUrl: previewUrl,
         items: []
       };

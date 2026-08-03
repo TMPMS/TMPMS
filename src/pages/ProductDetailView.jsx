@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchProductReviews, checkReviewEligibility, submitProductReview } from '../services/api';
+import { formatDateVN } from '../utils/dateUtils';
 import './ProductDetailView.css';
 
 const ProductDetailView = ({ product, onBack }) => {
@@ -314,7 +315,7 @@ const ProductDetailView = ({ product, onBack }) => {
               <div key={r.id} className="review-item">
                 <div className="review-header">
                   <span className="reviewer-name">{r.username}</span>
-                  <span className="review-date">{new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                  <span className="review-date">{formatDateVN(r.createdAt)}</span>
                 </div>
                 <div className="review-rating">
                   {Array.from({ length: 5 }).map((_, i) => (

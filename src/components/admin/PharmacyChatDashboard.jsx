@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import * as api from '../../services/api';
+import { formatTimeVN } from '../../utils/dateUtils';
 import './PharmacyChatDashboard.css';
 
 const PharmacyChatDashboard = ({ loggedInUser }) => {
@@ -224,7 +225,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
                 </div>
                 <div className="session-card-msg">{s.lastMessage || 'Chưa có tin nhắn'}</div>
                 <div className="session-card-meta">
-                  <span>{s.lastMessageAt ? new Date(s.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                  <span>{s.lastMessageAt ? formatTimeVN(s.lastMessageAt) : ''}</span>
                   {s.userPhone && <span className="user-phone">📞 {s.userPhone}</span>}
                 </div>
               </div>
@@ -276,7 +277,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
                     <div className="dash-msg-bubble">
                       <p>{m.content}</p>
                       <span className="dash-msg-time">
-                        {m.sentAt ? new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {m.sentAt ? formatTimeVN(m.sentAt) : ''}
                       </span>
                     </div>
                   </div>

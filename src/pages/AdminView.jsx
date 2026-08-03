@@ -11,6 +11,7 @@ import {
   PRESCRIPTION_ACTION,
 } from '../utils/prescriptionStatus';
 import { toLocalWallClockIso } from '../utils/dateTime';
+import { formatDateTimeVN, formatDateVN } from '../utils/dateUtils';
 import './AdminView.css';
 
 const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
@@ -768,13 +769,7 @@ const AdminView = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      year: 'numeric', month: 'numeric', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-  };
+  const formatDate = (dateStr) => formatDateTimeVN(dateStr);
 
   // Stats Logic
   const getStats = () => {
@@ -1136,7 +1131,7 @@ const AdminView = () => {
                           <td className="col-id">#{p.id}</td>
                           <td><strong>{p.name}</strong></td>
                           <td>{p.gender}</td>
-                          <td>{p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</td>
+                          <td>{p.dateOfBirth ? formatDateVN(p.dateOfBirth) : 'Chưa cập nhật'}</td>
                           <td>{p.phone}</td>
                           <td>{p.address || 'Chưa có'}</td>
                           <td><div className="med-history-text">{p.medicalHistory || 'Không có'}</div></td>
@@ -1409,7 +1404,7 @@ const AdminView = () => {
                         </h5>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
                           <div>• Giới tính: <strong>{selPatient.gender || 'Chưa rõ'}</strong></div>
-                          <div>• Ngày sinh: <strong>{selPatient.dateOfBirth ? new Date(selPatient.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa có'}</strong></div>
+                          <div>• Ngày sinh: <strong>{selPatient.dateOfBirth ? formatDateVN(selPatient.dateOfBirth) : 'Chưa có'}</strong></div>
                           <div>• Điện thoại: <strong>{selPatient.phone || 'Chưa có'}</strong></div>
                           <div style={{ gridColumn: 'span 2' }}>• Địa chỉ: <strong>{selPatient.address || 'Chưa cập nhật'}</strong></div>
                           <div style={{ gridColumn: 'span 2', marginTop: '6px', backgroundColor: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #dbeafe' }}>

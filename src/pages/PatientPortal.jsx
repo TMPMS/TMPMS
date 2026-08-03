@@ -6,6 +6,7 @@ import {
   Heart, Calendar, FileText, Activity, ShieldAlert, Sparkles, Check, Clock, User
 } from 'lucide-react';
 import { getPrescriptionStatusClass, getPrescriptionStatusLabel } from '../utils/prescriptionStatus';
+import { formatDateTimeVN, formatDateVN } from '../utils/dateUtils';
 import { useCart } from '../context/CartContext';
 import './PatientPortal.css';
 
@@ -19,24 +20,34 @@ const PatientPortal = ({ onBack }) => {
   const [patientRecord, setPatientRecord] = useState(null);
   const [cartAddedMap, setCartAddedMap] = useState({});
   const [cartNotice, setCartNotice] = useState('');
+  const [cartNoticeIsError, setCartNoticeIsError] = useState(false);
+  const [addingCartKey, setAddingCartKey] = useState(null);
 
   const handleAddPrescriptionToCart = async (p, item) => {
     if (!user) return;
     const cartId = user.cart_id || user.cartId;
+    const key = `${p.id}-${item.medicineId}`;
+    setCartNotice('');
     if (!cartId) {
+      setCartNoticeIsError(true);
       setCartNotice('Không tìm thấy giỏ hàng của bạn. Vui lòng đăng nhập lại!');
       setTimeout(() => setCartNotice(''), 3000);
       return;
     }
+    setAddingCartKey(key);
     try {
       await api.addCartItem(cartId, item.medicineId, item.quantity);
       await refreshCart();
-      setCartAddedMap(prev => ({ ...prev, [`${p.id}-${item.medicineId}`]: true }));
+      setCartAddedMap(prev => ({ ...prev, [key]: true }));
+      setCartNoticeIsError(false);
       setCartNotice(`Đã thêm "${item.medicineName}" (x${item.quantity}) vào giỏ hàng!`);
       setTimeout(() => setCartNotice(''), 3000);
     } catch (err) {
+      setCartNoticeIsError(true);
       setCartNotice(err.message || 'Không thể thêm vào giỏ hàng.');
-      setTimeout(() => setCartNotice(''), 3000);
+      setTimeout(() => setCartNotice(''), 6000);
+    } finally {
+      setAddingCartKey(null);
     }
   };
 
@@ -105,13 +116,7 @@ const PatientPortal = ({ onBack }) => {
     setActiveTab('appointments');
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      year: 'numeric', month: 'numeric', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-  };
+  const formatDate = (dateStr) => formatDateTimeVN(dateStr);
 
   if (!user) {
     return (
@@ -183,7 +188,7 @@ const PatientPortal = ({ onBack }) => {
                       </div>
                       <div className="detail-row">
                         <span>Ngày sinh:</span>
-                        <strong>{patientRecord.dateOfBirth ? new Date(patientRecord.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa có'}</strong>
+                        <strong>{patientRecord.dateOfBirth ? formatDateVN(patientRecord.dateOfBirth) : 'Chưa có'}</strong>
                       </div>
                       <div className="detail-row">
                         <span>Địa chỉ khám:</span>
@@ -314,6 +319,7 @@ const PatientPortal = ({ onBack }) => {
                           <h6>Danh sách các vị thuốc chỉ định:</h6>
                           {p.items && p.items.map((item, idx) => {
                             const alreadyAdded = !!cartAddedMap[`${p.id}-${item.medicineId}`];
+                            const isAdding = addingCartKey === `${p.id}-${item.medicineId}`;
                             return (
                               <div key={idx} className="item-row-detail">
                                 <span>🌿 {item.medicineName}</span>
@@ -321,10 +327,10 @@ const PatientPortal = ({ onBack }) => {
                                 {(p.status === 'Approved' || p.status === 'Fulfilled') && (
                                   <button
                                     className="presc-add-cart-btn"
-                                    disabled={alreadyAdded}
+                                    disabled={alreadyAdded || isAdding}
                                     onClick={() => handleAddPrescriptionToCart(p, item)}
                                   >
-                                    {alreadyAdded ? 'Đã thêm' : 'Thêm vào giỏ'}
+                                    {isAdding ? 'Đang thêm…' : (alreadyAdded ? '✓ Đã thêm' : 'Thêm vào giỏ')}
                                   </button>
                                 )}
                               </div>
@@ -337,7 +343,7 @@ const PatientPortal = ({ onBack }) => {
                 </div>
               )}
               {cartNotice && (
-                <div className="presc-cart-notice">{cartNotice}</div>
+                <div className={`presc-cart-notice${cartNoticeIsError ? ' presc-cart-notice-error' : ''}`}>{cartNotice}</div>
               )}
             </div>
           )}

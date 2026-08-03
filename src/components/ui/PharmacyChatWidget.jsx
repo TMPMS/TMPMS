@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import * as api from '../../services/api';
+import { formatTimeVN } from '../../utils/dateUtils';
 import './PharmacyChatWidget.css';
 
 const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
@@ -162,7 +163,7 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
               <div className="pharmacy-msg-bubble">
                 <p>{m.content}</p>
                 <span className="msg-time">
-                  {m.sentAt ? new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  {m.sentAt ? formatTimeVN(m.sentAt) : ''}
                 </span>
               </div>
             </div>

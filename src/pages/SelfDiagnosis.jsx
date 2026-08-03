@@ -4,6 +4,7 @@ import * as api from '../services/api';
 import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw, AlertCircle, XCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toLocalWallClockIso } from '../utils/dateTime';
+import { formatDateTimeVN } from '../utils/dateUtils';
 import './SelfDiagnosis.css';
 
 const pad = n => String(n).padStart(2, '0');
@@ -31,12 +32,7 @@ function isSlotPassed(dateStr, slot) {
   return slotToDate(dateStr, slot) <= new Date();
 }
 
-function formatDateTime(value) {
-  if (!value) return '';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+const formatDateTime = (value) => formatDateTimeVN(value);
 
 const APPT_STATUS_LABELS = {
   Pending: 'Chờ xác nhận',

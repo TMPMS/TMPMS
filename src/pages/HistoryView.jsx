@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import * as api from '../services/api';
+import { formatDateTimeVN } from '../utils/dateUtils';
 import OrderTrackingView from '../components/OrderTrackingView';
 import './HistoryView.css';
 
@@ -80,16 +81,7 @@ const HistoryView = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (dateStr) => formatDateTimeVN(dateStr);
 
   const getStatusBadge = (status) => {
     const cls = (status || '').toLowerCase() === 'returnrequested' ? 'return-requested' : (status || '').toLowerCase();

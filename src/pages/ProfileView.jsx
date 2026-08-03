@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield } from 'lucide-react';
 import * as api from '../services/api';
+import { formatDateVN } from '../utils/dateUtils';
 import './ProfileView.css';
 
 const GENDER_OPTIONS = ['Nam', 'Nữ', 'Khác'];
@@ -74,10 +75,7 @@ export default function ProfileView({ onNavigate }) {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const formatDate = (d) => {
-    if (!d) return '';
-    return new Date(d).toLocaleDateString('vi-VN');
-  };
+  const formatDate = (d) => formatDateVN(d);
 
   const formatPrice = (p) =>
     p == null ? 'Liên hệ' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, User, Syringe, ChevronRight, CheckCircle2, ShieldAlert, MapPin, Clock } from 'lucide-react';
+import { formatDateVN } from '../utils/dateUtils';
 import './VaccineBookingView.css';
 
 const VACCINES = [
@@ -257,7 +258,7 @@ const VaccineBookingView = ({ onBack }) => {
               </div>
               <div className="detail-row">
                 <span>Ngày hẹn tiêm:</span>
-                <strong>{new Date(bookingDate).toLocaleDateString('vi-VN')}</strong>
+                <strong>{formatDateVN(bookingDate)}</strong>
               </div>
               <div className="detail-row">
                 <span>Cơ sở tiêm:</span>
