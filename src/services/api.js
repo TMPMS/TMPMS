@@ -313,6 +313,36 @@ export async function sendOtp(phone) {
   return true;
 }
 
+export async function requestPasswordReset(phone) {
+  const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(body || 'Không thể gửi mã xác nhận');
+  return body ? JSON.parse(body) : {};
+}
+
+export async function resetPassword(phone, code, newPassword, confirmPassword) {
+  const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code, newPassword, confirmPassword }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(body || 'Không thể đặt lại mật khẩu');
+  return body ? JSON.parse(body) : {};
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const res = await requestWithAuth(`${API_URL}/api/auth/change-password`, {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(body || 'Không thể đổi mật khẩu');
+  return body ? JSON.parse(body) : {};
+}
+
 export async function registerUser(username, email, password, phone) {
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',

@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
 import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
-import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG } from '../../services/api';
+import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG, requestPasswordReset, resetPassword } from '../../services/api';
 import './Header.css';
 
 const USERNAME_PATTERN = /^[A-Za-z]+$/;
@@ -31,7 +31,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authMode, setAuthMode] = useState('login'); // login | register | forgot | reset
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   // Auth Form State
@@ -41,6 +41,10 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [phone, setPhone] = useState('');
   const [authError, setAuthError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
 
   // Voice & Image Search states
   const [isVoiceSearchOpen, setIsVoiceSearchOpen] = useState(false);
@@ -62,6 +66,12 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
       setAuthError('');
     }
   }, [isAuthModalOpen]);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return undefined;
+    const timer = window.setTimeout(() => setResendSeconds(value => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   useEffect(() => {
     const handleOpenAuth = (e) => {
@@ -198,6 +208,9 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setPassword('');
     setEmail('');
     setPhone('');
+    setOtpCode('');
+    setConfirmPassword('');
+    setResendSeconds(0);
     setIsAuthModalOpen(true);
   };
 
@@ -205,7 +218,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     e.preventDefault();
     setAuthError('');
 
-    if (!USERNAME_PATTERN.test(username)) {
+    if ((authMode === 'login' || authMode === 'register') && !USERNAME_PATTERN.test(username)) {
       setAuthError('Tên đăng nhập chỉ được chứa chữ cái, không có số, khoảng trắng hoặc ký tự đặc biệt.');
       return;
     }
@@ -215,6 +228,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
       return;
     }
 
+    setAuthSubmitting(true);
     try {
       if (authMode === 'login') {
         const loggedInUser = await login(username, password);
@@ -223,14 +237,46 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
           onNavigate('admin');
         }
-      } else {
+      } else if (authMode === 'register') {
         await register(username, email, password, phone);
         setAuthMode('login');
         setAuthError('Đăng ký thành công! Vui lòng đăng nhập.');
         setPassword('');
+      } else if (authMode === 'forgot') {
+        await requestPasswordReset(phone);
+        setAuthMode('reset');
+        setResendSeconds(60);
+        setAuthError('Mã xác nhận đã được gửi nếu số điện thoại tồn tại trong hệ thống.');
+      } else {
+        if (!PASSWORD_PATTERN.test(password)) {
+          throw new Error('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+        }
+        await resetPassword(phone, otpCode, password, confirmPassword);
+        setAuthMode('login');
+        setAuthError('Đặt lại mật khẩu thành công! Bạn có thể đăng nhập.');
+        setPassword('');
+        setConfirmPassword('');
+        setOtpCode('');
       }
     } catch (err) {
       setAuthError(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleResendResetOtp = async () => {
+    if (resendSeconds > 0 || authSubmitting) return;
+    setAuthSubmitting(true);
+    setAuthError('');
+    try {
+      await requestPasswordReset(phone);
+      setResendSeconds(60);
+      setAuthError('Mã xác nhận mới đã được gửi và có hiệu lực trong 2 phút.');
+    } catch (err) {
+      setAuthError(err.message || 'Không thể gửi lại mã xác nhận.');
+    } finally {
+      setAuthSubmitting(false);
     }
   };
 
@@ -504,12 +550,12 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
           <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
             <button className="auth-modal-close" onClick={() => setIsAuthModalOpen(false)}>×</button>
             <h3 className="auth-modal-title">
-              {authMode === 'login' ? 'Đăng nhập tài khoản' : 'Đăng ký tài khoản'}
+              {authMode === 'login' ? 'Đăng nhập tài khoản' : authMode === 'register' ? 'Đăng ký tài khoản' : authMode === 'forgot' ? 'Quên mật khẩu' : 'Đặt lại mật khẩu'}
             </h3>
             
             {authError && <div className="auth-error">{authError}</div>}
             <form className="auth-form" onSubmit={handleAuthSubmit}>
-              <div className="auth-input-group">
+              {(authMode === 'login' || authMode === 'register') && <div className="auth-input-group">
                 <label className="auth-input-label">Tên tài khoản</label>
                 <input
                   type="text"
@@ -522,7 +568,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                   placeholder="Ví dụ: nguyenvana"
                 />
                 <span className="auth-field-hint">Chỉ dùng chữ cái, không có số hoặc ký tự đặc biệt.</span>
-              </div>
+              </div>}
 
               {authMode === 'register' && (
                 <div className="auth-input-group">
@@ -538,7 +584,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 </div>
               )}
 
-              <div className="auth-input-group">
+              {(authMode === 'login' || authMode === 'register' || authMode === 'reset') && <div className="auth-input-group">
                 <label className="auth-input-label">Mật khẩu</label>
                 <input
                   type="password"
@@ -546,16 +592,16 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu"
+                  placeholder={authMode === 'reset' ? 'Nhập mật khẩu mới' : 'Nhập mật khẩu'}
                 />
                 {authMode === 'register' && (
                   <span className="auth-field-hint">
                     Ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
                   </span>
                 )}
-              </div>
+              </div>}
 
-              {authMode === 'register' && (
+              {(authMode === 'register' || authMode === 'forgot' || authMode === 'reset') && (
                 <div className="auth-input-group">
                   <label className="auth-input-label">Số điện thoại</label>
                   <input
@@ -572,8 +618,29 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 </div>
               )}
 
-              <button type="submit" className="auth-submit-btn">
-                {authMode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+              {authMode === 'reset' && <>
+                <div className="auth-input-group">
+                  <label className="auth-input-label">Mã xác nhận</label>
+                  <input className="auth-input" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))} placeholder="Nhập mã gồm 6 số" />
+                  <div className="auth-otp-actions">
+                    <span className="auth-field-hint">Mã có hiệu lực trong 2 phút.</span>
+                    <button type="button" className="auth-resend-link" disabled={resendSeconds > 0 || authSubmitting} onClick={handleResendResetOtp}>
+                      {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : 'Gửi lại mã'}
+                    </button>
+                  </div>
+                </div>
+                <div className="auth-input-group">
+                  <label className="auth-input-label">Xác nhận mật khẩu mới</label>
+                  <input type="password" className="auth-input" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Nhập lại mật khẩu mới" />
+                </div>
+              </>}
+
+              {authMode === 'login' && (
+                <button type="button" className="auth-forgot-link" onClick={() => { setAuthMode('forgot'); setAuthError(''); setPhone(''); }}>Quên mật khẩu?</button>
+              )}
+
+              <button type="submit" className="auth-submit-btn" disabled={authSubmitting}>
+                {authSubmitting ? 'Đang xử lý...' : authMode === 'login' ? 'Đăng nhập' : authMode === 'register' ? 'Đăng ký' : authMode === 'forgot' ? 'Gửi mã xác nhận' : 'Đặt lại mật khẩu'}
               </button>
             </form>
 
@@ -610,14 +677,14 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                     Đăng ký ngay
                   </span>
                 </>
-              ) : (
+              ) : authMode === 'register' ? (
                 <>
                   Đã có tài khoản?{' '}
                   <span className="auth-switch-link" onClick={() => openAuthModal('login')}>
                     Đăng nhập
                   </span>
                 </>
-              )}
+              ) : <span className="auth-switch-link" onClick={() => openAuthModal('login')}>Quay lại đăng nhập</span>}
             </p>
           </div>
         </div>

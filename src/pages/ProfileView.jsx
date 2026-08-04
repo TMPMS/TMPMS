@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield } from 'lucide-react';
+import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound } from 'lucide-react';
 import * as api from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
 import './ProfileView.css';
@@ -26,6 +26,7 @@ export default function ProfileView({ onNavigate }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
   const user = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
 
@@ -75,6 +76,22 @@ export default function ProfileView({ onNavigate }) {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.'); return;
+    }
+    setSaving(true);
+    try {
+      await api.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSuccess('Đổi mật khẩu thành công!');
+    } catch (e) {
+      setError(e.message || 'Không thể đổi mật khẩu.');
+    } finally { setSaving(false); }
+  };
+
   const formatDate = (d) => formatDateVN(d);
 
   const formatPrice = (p) =>
@@ -122,6 +139,12 @@ export default function ProfileView({ onNavigate }) {
 
         {/* Nav Tabs */}
         <nav className="profile-nav">
+          <button
+            className={`pnav-btn ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('security'); setError(''); setSuccess(''); }}
+          >
+            <KeyRound size={16} /> Đổi mật khẩu
+          </button>
           <button
             className={`pnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
@@ -247,6 +270,28 @@ export default function ProfileView({ onNavigate }) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="profile-card">
+            <div className="profile-card-header"><h2>Đổi mật khẩu</h2></div>
+            <form className="password-form" onSubmit={handleChangePassword}>
+              <div className="pform-group">
+                <label>Mật khẩu hiện tại</label>
+                <input className="pform-input" type="password" autoComplete="current-password" required value={passwordForm.currentPassword} onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))} />
+              </div>
+              <div className="pform-group">
+                <label>Mật khẩu mới</label>
+                <input className="pform-input" type="password" autoComplete="new-password" required minLength={8} value={passwordForm.newPassword} onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))} />
+                <small>Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</small>
+              </div>
+              <div className="pform-group">
+                <label>Xác nhận mật khẩu mới</label>
+                <input className="pform-input" type="password" autoComplete="new-password" required value={passwordForm.confirmPassword} onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))} />
+              </div>
+              <button type="submit" className="save-btn password-submit" disabled={saving}><KeyRound size={15} /> {saving ? 'Đang xử lý...' : 'Đổi mật khẩu'}</button>
+            </form>
           </div>
         )}
 
