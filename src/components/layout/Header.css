@@ -909,4 +909,39 @@
   margin: 0;
 }
 
+.auth-forgot-link {
+  align-self: flex-end;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+}
 
+.auth-forgot-link:hover { text-decoration: underline; }
+
+.auth-otp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-resend-link {
+  flex: none;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0;
+}
+
+.auth-resend-link:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}

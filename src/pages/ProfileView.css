@@ -550,3 +550,11 @@
     transition: none;
   }
 }
+.password-form {
+  display: grid;
+  gap: 18px;
+  max-width: 520px;
+}
+
+.password-form small { color: #64748b; line-height: 1.5; }
+.password-submit { justify-self: start; margin-top: 4px; }
