@@ -40,7 +40,7 @@ async function refreshAccessToken() {
     if (!storedUser || !storedUser.refreshToken) {
       throw new Error('No refresh token available');
     }
-    const res = await fetch(`${API_URL}/api/auth/refresh-token`, {
+    const res = await fetch(`${API_URL}/auth/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: storedUser.refreshToken }),
@@ -86,7 +86,7 @@ async function requestWithAuth(url, options = {}) {
 }
 
 export async function createDiagnosis(diagnosisData) {
-  const res = await requestWithAuth(`${API_URL}/api/Diagnosis`, {
+  const res = await requestWithAuth(`${API_URL}/Diagnosis`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(diagnosisData)
@@ -96,7 +96,7 @@ export async function createDiagnosis(diagnosisData) {
 }
 
 export async function fetchPatientDiagnoses(patientId) {
-  const res = await requestWithAuth(`${API_URL}/api/Diagnosis/patient/${patientId}`, {
+  const res = await requestWithAuth(`${API_URL}/Diagnosis/patient/${patientId}`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải lịch sử chẩn đoán');
@@ -104,13 +104,13 @@ export async function fetchPatientDiagnoses(patientId) {
 }
 
 export async function fetchDiagnosisQuestions() {
-  const res = await fetch(`${API_URL}/api/Diagnosis/questions`);
+  const res = await fetch(`${API_URL}/Diagnosis/questions`);
   if (!res.ok) throw new Error('Không thể tải bộ câu hỏi chẩn đoán');
   return res.json();
 }
 
 export async function classifyDiagnosis(answers) {
-  const res = await requestWithAuth(`${API_URL}/api/Diagnosis/classify`, {
+  const res = await requestWithAuth(`${API_URL}/Diagnosis/classify`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ answers })
@@ -121,13 +121,13 @@ export async function classifyDiagnosis(answers) {
 
 export async function fetchInvoiceByOrder(orderId) {
   try {
-    const res = await requestWithAuth(`${API_URL}/api/Invoice/order/${orderId}`, {
+    const res = await requestWithAuth(`${API_URL}/Invoice/order/${orderId}`, {
       headers: getAuthHeaders()
     });
     if (res.ok) return await res.json();
   } catch (e) {}
 
-  const genRes = await requestWithAuth(`${API_URL}/api/Invoice/generate/${orderId}`, {
+  const genRes = await requestWithAuth(`${API_URL}/Invoice/generate/${orderId}`, {
     method: 'POST',
     headers: getAuthHeaders()
   });
@@ -136,7 +136,7 @@ export async function fetchInvoiceByOrder(orderId) {
 }
 
 export async function fetchReportDashboard() {
-  const res = await requestWithAuth(`${API_URL}/api/Report/dashboard`, {
+  const res = await requestWithAuth(`${API_URL}/Report/dashboard`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải báo cáo doanh thu & thống kê');
@@ -144,7 +144,7 @@ export async function fetchReportDashboard() {
 }
 
 export async function fetchReportTopSelling(from, to, top = 10) {
-  const res = await requestWithAuth(`${API_URL}/api/Report/top-selling?from=${from}&to=${to}&top=${top}`, {
+  const res = await requestWithAuth(`${API_URL}/Report/top-selling?from=${from}&to=${to}&top=${top}`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách bán chạy');
@@ -157,7 +157,7 @@ export async function fetchCategories() {
     if (res.ok) return await res.json();
   } catch (e) {}
   try {
-    const res = await fetch(`${API_URL}/api/herbalmedicine`);
+    const res = await fetch(`${API_URL}/herbalmedicine`);
     if (res.ok) {
       const data = await res.json();
       return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
@@ -226,7 +226,7 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
 }
 
 export async function loginUser(username, password) {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userName: username, password }),
@@ -251,7 +251,7 @@ export async function loginUser(username, password) {
 }
 
 export async function loginUserByOtp(phone, code) {
-  const res = await fetch(`${API_URL}/api/auth/otp-login`, {
+  const res = await fetch(`${API_URL}/auth/otp-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone, code }),
@@ -276,7 +276,7 @@ export async function loginUserByOtp(phone, code) {
 }
 
 export async function googleLogin(idToken) {
-  const res = await fetch(`${API_URL}/api/auth/google-login`, {
+  const res = await fetch(`${API_URL}/auth/google-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken }),
@@ -301,7 +301,7 @@ export async function googleLogin(idToken) {
 }
 
 export async function sendOtp(phone) {
-  const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+  const res = await fetch(`${API_URL}/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phone }),
@@ -314,7 +314,7 @@ export async function sendOtp(phone) {
 }
 
 export async function requestPasswordReset(email) {
-  const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   });
@@ -324,7 +324,7 @@ export async function requestPasswordReset(email) {
 }
 
 export async function resetPassword(email, code, newPassword, confirmPassword) {
-  const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, code, newPassword, confirmPassword }),
   });
@@ -334,7 +334,7 @@ export async function resetPassword(email, code, newPassword, confirmPassword) {
 }
 
 export async function changePassword(currentPassword, newPassword) {
-  const res = await requestWithAuth(`${API_URL}/api/auth/change-password`, {
+  const res = await requestWithAuth(`${API_URL}/auth/change-password`, {
     method: 'POST',
     body: JSON.stringify({ currentPassword, newPassword }),
   });
@@ -344,7 +344,7 @@ export async function changePassword(currentPassword, newPassword) {
 }
 
 export async function registerUser(username, email, password, phone) {
-  const res = await fetch(`${API_URL}/api/auth/register`, {
+  const res = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -478,7 +478,7 @@ export async function createOrder(orderData) {
 }
 
 export async function createPayOSPaymentLink(orderId, returnUrl, cancelUrl) {
-  const res = await requestWithAuth(`${API_URL}/api/payos/payment-link`, {
+  const res = await requestWithAuth(`${API_URL}/payos/payment-link`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ orderId, returnUrl, cancelUrl }),
@@ -491,7 +491,7 @@ export async function createPayOSPaymentLink(orderId, returnUrl, cancelUrl) {
 }
 
 export async function verifyPayOSPayment(orderId) {
-  const res = await requestWithAuth(`${API_URL}/api/payos/verify/${orderId}`, {
+  const res = await requestWithAuth(`${API_URL}/payos/verify/${orderId}`, {
     method: 'POST',
     headers: getAuthHeaders(),
   });
@@ -503,7 +503,7 @@ export async function verifyPayOSPayment(orderId) {
 }
 
 export async function calculateShipping(address, deliveryMethod) {
-  const res = await fetch(`${API_URL}/api/shipping/calculate`, {
+  const res = await fetch(`${API_URL}/shipping/calculate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ address, deliveryMethod }),
@@ -610,7 +610,7 @@ export async function requestOrderReturn(orderId, reason) {
 }
 
 export async function updatePaymentStatus(paymentId, status, transactionCode = '') {
-  const res = await requestWithAuth(`${API_URL}/api/Payment/${paymentId}/status`, {
+  const res = await requestWithAuth(`${API_URL}/Payment/${paymentId}/status`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ status, transactionCode }),
@@ -694,7 +694,7 @@ export async function fetchSuppliers() {
 }
 
 export async function fetchWarehouses() {
-  const res = await requestWithAuth(`${API_URL}/api/Warehouse`, {
+  const res = await requestWithAuth(`${API_URL}/Warehouse`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách nhà kho');
@@ -703,7 +703,7 @@ export async function fetchWarehouses() {
 
 // User & Role Management APIs
 export async function fetchUsers() {
-  const res = await requestWithAuth(`${API_URL}/api/users/list`, {
+  const res = await requestWithAuth(`${API_URL}/users/list`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách người dùng');
@@ -733,7 +733,7 @@ export async function updateUserRole(userId, roleInput) {
     roleName = roleMap[roleInput] || "User";
   }
 
-  const res = await requestWithAuth(`${API_URL}/api/users/assign-role`, {
+  const res = await requestWithAuth(`${API_URL}/users/assign-role`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ userId: userId, roleName: roleName }),
@@ -754,7 +754,7 @@ export async function toggleUserStatus(userId, isActive) {
 
 // Patient Management APIs
 export async function fetchPatients() {
-  const res = await requestWithAuth(`${API_URL}/api/patients`, {
+  const res = await requestWithAuth(`${API_URL}/patients`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách bệnh nhân');
@@ -786,7 +786,7 @@ export async function createPatient(patientData) {
     dateOfBirth: patientData.date_of_birth || patientData.dateOfBirth,
     address: patientData.address || patientData.Address
   };
-  const res = await requestWithAuth(`${API_URL}/api/patients`, {
+  const res = await requestWithAuth(`${API_URL}/patients`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -810,7 +810,7 @@ export async function updatePatient(patientId, patientData) {
     address: patientData.address || patientData.Address,
     isActive: patientData.is_active !== undefined ? patientData.is_active : patientData.isActive
   };
-  const res = await requestWithAuth(`${API_URL}/api/patients/${patientId}`, {
+  const res = await requestWithAuth(`${API_URL}/patients/${patientId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -823,7 +823,7 @@ export async function updatePatient(patientId, patientData) {
 }
 
 export async function deletePatient(patientId) {
-  const res = await requestWithAuth(`${API_URL}/api/patients/${patientId}`, {
+  const res = await requestWithAuth(`${API_URL}/patients/${patientId}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
@@ -833,7 +833,7 @@ export async function deletePatient(patientId) {
 
 // Appointment Management APIs
 export async function fetchAppointments() {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/all`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/all`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách lịch hẹn');
@@ -867,7 +867,7 @@ export async function createAppointment(appointmentData) {
     notes: appointmentData.notes || appointmentData.Notes || appointmentData.note,
     status: appointmentData.status || appointmentData.Status || "Scheduled"
   };
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/book`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/book`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -885,7 +885,7 @@ export async function createAppointment(appointmentData) {
 }
 
 export async function cancelAppointment(appointmentId) {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/cancel/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/cancel/${appointmentId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
   });
@@ -897,7 +897,7 @@ export async function cancelAppointment(appointmentId) {
 }
 
 export async function approveAppointment(appointmentId) {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/approve/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/approve/${appointmentId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
   });
@@ -909,7 +909,7 @@ export async function approveAppointment(appointmentId) {
 }
 
 export async function rejectAppointment(appointmentId, reason) {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/reject/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/reject/${appointmentId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ reason }),
@@ -922,7 +922,7 @@ export async function rejectAppointment(appointmentId, reason) {
 }
 
 export async function completeAppointment(appointmentId) {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/complete/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/complete/${appointmentId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
   });
@@ -939,7 +939,7 @@ export async function updateAppointment(appointmentId, appointmentData) {
     reason: appointmentData.reason || appointmentData.Reason || "",
     note: appointmentData.notes || appointmentData.Notes || appointmentData.note
   };
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${appointmentId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -949,7 +949,7 @@ export async function updateAppointment(appointmentId, appointmentData) {
 }
 
 export async function deleteAppointment(appointmentId) {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/${appointmentId}`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${appointmentId}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
@@ -959,7 +959,7 @@ export async function deleteAppointment(appointmentId) {
 
 // Diagnosis & Prescription APIs
 export async function fetchPrescriptions() {
-  const res = await requestWithAuth(`${API_URL}/api/prescription`, {
+  const res = await requestWithAuth(`${API_URL}/prescription`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách đơn thuốc');
@@ -979,7 +979,7 @@ export async function fetchPrescriptions() {
 }
 
 export async function createPrescription(prescriptionData) {
-  const res = await requestWithAuth(`${API_URL}/api/prescription`, {
+  const res = await requestWithAuth(`${API_URL}/prescription`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(prescriptionData),
@@ -989,7 +989,7 @@ export async function createPrescription(prescriptionData) {
 }
 
 export async function updatePrescriptionStatus(prescriptionId, status) {
-  const res = await requestWithAuth(`${API_URL}/api/prescription/${prescriptionId}/status`, {
+  const res = await requestWithAuth(`${API_URL}/prescription/${prescriptionId}/status`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ status }),
@@ -1000,20 +1000,20 @@ export async function updatePrescriptionStatus(prescriptionId, status) {
 
 // Product Review & Rating APIs
 export async function fetchProductReviews(productId) {
-  const res = await fetch(`${API_URL}/api/reviews/medicine/${productId}`);
+  const res = await fetch(`${API_URL}/reviews/medicine/${productId}`);
   if (!res.ok) throw new Error('Không thể tải đánh giá sản phẩm');
   return res.json();
 }
 
 export async function checkReviewEligibility(productId, userId) {
-  const res = await requestWithAuth(`${API_URL}/api/reviews/check-eligibility?medicineId=${productId}&userId=${userId}`, { headers: getAuthHeaders() });
+  const res = await requestWithAuth(`${API_URL}/reviews/check-eligibility?medicineId=${productId}&userId=${userId}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error('Không thể kiểm tra điều kiện đánh giá');
   const data = await res.json();
   return data.eligible;
 }
 
 export async function submitProductReview(rating, comment, productId, userId) {
-  const res = await requestWithAuth(`${API_URL}/api/reviews`, {
+  const res = await requestWithAuth(`${API_URL}/reviews`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({
@@ -1092,7 +1092,7 @@ function getUserIdHeader() {
 }
 
 export async function fetchMyProfile() {
-  const res = await requestWithAuth(`${API_URL}/api/profile/me`, { headers: getUserIdHeader() });
+  const res = await requestWithAuth(`${API_URL}/profile/me`, { headers: getUserIdHeader() });
   if (!res.ok) {
     const message = await res.text();
     throw new Error(message || 'Không thể tải hồ sơ');
@@ -1112,7 +1112,7 @@ export async function updateMyProfile(data) {
     gender: data.gender || null,
   };
 
-  const res = await requestWithAuth(`${API_URL}/api/profile/me`, {
+  const res = await requestWithAuth(`${API_URL}/profile/me`, {
     method: 'PATCH',
     headers: getUserIdHeader(),
     body: JSON.stringify(payload),
@@ -1125,7 +1125,7 @@ export async function updateMyProfile(data) {
 }
 
 export async function askAiChatbot(messageText, history = []) {
-  const res = await fetch(`${API_URL}/api/chat`, {
+  const res = await fetch(`${API_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: messageText, history }),
@@ -1137,7 +1137,7 @@ export async function askAiChatbot(messageText, history = []) {
 
 // Customer-facing Patient APIs
 export async function fetchUserAppointments() {
-  const res = await requestWithAuth(`${API_URL}/api/Appointment/my-appointments`, {
+  const res = await requestWithAuth(`${API_URL}/Appointment/my-appointments`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải lịch hẹn cá nhân');
@@ -1157,7 +1157,7 @@ export async function fetchUserAppointments() {
 }
 
 export async function fetchUserPrescriptions(userId) {
-  const endpoint = userId ? `${API_URL}/api/prescription/user/${userId}` : `${API_URL}/api/prescription`;
+  const endpoint = userId ? `${API_URL}/prescription/user/${userId}` : `${API_URL}/prescription`;
   const res = await requestWithAuth(endpoint, {
     headers: getAuthHeaders()
   });
@@ -1178,7 +1178,7 @@ export async function fetchUserPrescriptions(userId) {
 
 // Pharmacy Live Chat APIs
 export async function fetchMyPharmacyChatSession() {
-  const res = await requestWithAuth(`${API_URL}/api/PharmacyChat/my-session`, {
+  const res = await requestWithAuth(`${API_URL}/PharmacyChat/my-session`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải phiên tư vấn Dược sĩ');
@@ -1187,7 +1187,7 @@ export async function fetchMyPharmacyChatSession() {
 
 export async function fetchPharmacyChatSessions(status) {
   const query = status ? `?status=${encodeURIComponent(status)}` : '';
-  const res = await requestWithAuth(`${API_URL}/api/PharmacyChat/sessions${query}`, {
+  const res = await requestWithAuth(`${API_URL}/PharmacyChat/sessions${query}`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải danh sách phiên tư vấn');
@@ -1195,7 +1195,7 @@ export async function fetchPharmacyChatSessions(status) {
 }
 
 export async function fetchPharmacyChatMessages(sessionId) {
-  const res = await requestWithAuth(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/messages`, {
+  const res = await requestWithAuth(`${API_URL}/PharmacyChat/sessions/${sessionId}/messages`, {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải lịch sử tin nhắn');
@@ -1203,7 +1203,7 @@ export async function fetchPharmacyChatMessages(sessionId) {
 }
 
 export async function assignPharmacyChatSession(sessionId) {
-  const res = await requestWithAuth(`${API_URL}/api/PharmacyChat/sessions/${sessionId}/assign`, {
+  const res = await requestWithAuth(`${API_URL}/PharmacyChat/sessions/${sessionId}/assign`, {
     method: 'POST',
     headers: getAuthHeaders()
   });
@@ -1212,7 +1212,7 @@ export async function assignPharmacyChatSession(sessionId) {
 }
 
 export async function fetchHealthReelsVideos() {
-  const res = await fetch(`${API_URL}/api/HealthReels/videos`);
+  const res = await fetch(`${API_URL}/HealthReels/videos`);
   if (!res.ok) throw new Error('Không thể tải bản tin video sức khỏe');
   return res.json();
 }
@@ -1221,17 +1221,17 @@ export async function fetchHealthReelsVideos() {
 // Excel Bulk Import APIs
 // ============================================================
 export function getImportTemplateUrl() {
-  return `${API_URL}/api/admin/products/import/template`;
+  return `${API_URL}/admin/products/import/template`;
 }
 
 export function getExportUrl() {
-  return `${API_URL}/api/admin/products/export`;
+  return `${API_URL}/admin/products/export`;
 }
 
 export async function previewImport(file) {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await requestWithAuth(`${API_URL}/api/admin/products/import/preview`, {
+  const res = await requestWithAuth(`${API_URL}/admin/products/import/preview`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${getAuthToken()}` },
     body: formData
@@ -1244,7 +1244,7 @@ export async function previewImport(file) {
 }
 
 export async function confirmImport(importSessionId, confirmedRowIndexes) {
-  const res = await requestWithAuth(`${API_URL}/api/admin/products/import/confirm`, {
+  const res = await requestWithAuth(`${API_URL}/admin/products/import/confirm`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ importSessionId, confirmedRowIndexes })
