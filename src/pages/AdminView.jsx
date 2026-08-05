@@ -1801,12 +1801,12 @@ const AdminView = () => {
                         value={prodCategoryId}
                         onChange={(e) => setProdCategoryId(e.target.value)}
                       >
-                        <option value={1}>Thực phẩm chức năng / Bổ dưỡng</option>
-                        <option value={2}>Dược mỹ phẩm thảo dược</option>
-                        <option value={3}>Thuốc điều trị Đông Y</option>
-                        <option value={4}>Chăm sóc cá nhân tự nhiên</option>
-                        <option value={5}>Thiết bị y tế</option>
-                        <option value={6}>Châm cứu &amp; Trị liệu</option>
+                        <option value={2}>Thực phẩm chức năng / Bổ dưỡng</option>
+                        <option value={3}>Dược mỹ phẩm thảo dược</option>
+                        <option value={4}>Thuốc điều trị Đông Y</option>
+                        <option value={5}>Chăm sóc cá nhân tự nhiên</option>
+                        <option value={6}>Thiết bị y tế</option>
+                        <option value={7}>Châm cứu &amp; Trị liệu</option>
                       </select>
                     </div>
 
