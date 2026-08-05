@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -23,6 +26,8 @@ jobs:
           context: .
           push: true
           tags: angeldhit/tmpms-fe:latest
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
