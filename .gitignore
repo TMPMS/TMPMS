@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 *.local
 .env
+.env.production
 
 # .NET / Backend Build & Outputs
 [Bb]in/
