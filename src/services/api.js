@@ -313,20 +313,20 @@ export async function sendOtp(phone) {
   return true;
 }
 
-export async function requestPasswordReset(phone) {
+export async function requestPasswordReset(email) {
   const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone }),
+    body: JSON.stringify({ email }),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(body || 'Không thể gửi mã xác nhận');
   return body ? JSON.parse(body) : {};
 }
 
-export async function resetPassword(phone, code, newPassword, confirmPassword) {
+export async function resetPassword(email, code, newPassword, confirmPassword) {
   const res = await fetch(`${API_URL}/api/auth/reset-password`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, code, newPassword, confirmPassword }),
+    body: JSON.stringify({ email, code, newPassword, confirmPassword }),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(body || 'Không thể đặt lại mật khẩu');

@@ -243,15 +243,15 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         setAuthError('Đăng ký thành công! Vui lòng đăng nhập.');
         setPassword('');
       } else if (authMode === 'forgot') {
-        await requestPasswordReset(phone);
+        await requestPasswordReset(email);
         setAuthMode('reset');
         setResendSeconds(60);
-        setAuthError('Mã xác nhận đã được gửi nếu số điện thoại tồn tại trong hệ thống.');
+        setAuthError('Mã xác nhận đã được gửi nếu email tồn tại trong hệ thống.');
       } else {
         if (!PASSWORD_PATTERN.test(password)) {
           throw new Error('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
         }
-        await resetPassword(phone, otpCode, password, confirmPassword);
+        await resetPassword(email, otpCode, password, confirmPassword);
         setAuthMode('login');
         setAuthError('Đặt lại mật khẩu thành công! Bạn có thể đăng nhập.');
         setPassword('');
@@ -270,7 +270,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setAuthSubmitting(true);
     setAuthError('');
     try {
-      await requestPasswordReset(phone);
+      await requestPasswordReset(email);
       setResendSeconds(60);
       setAuthError('Mã xác nhận mới đã được gửi và có hiệu lực trong 2 phút.');
     } catch (err) {
@@ -570,7 +570,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 <span className="auth-field-hint">Chỉ dùng chữ cái, không có số hoặc ký tự đặc biệt.</span>
               </div>}
 
-              {authMode === 'register' && (
+              {(authMode === 'register' || authMode === 'forgot' || authMode === 'reset') && (
                 <div className="auth-input-group">
                   <label className="auth-input-label">Email</label>
                   <input
@@ -601,7 +601,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 )}
               </div>}
 
-              {(authMode === 'register' || authMode === 'forgot' || authMode === 'reset') && (
+              {authMode === 'register' && (
                 <div className="auth-input-group">
                   <label className="auth-input-label">Số điện thoại</label>
                   <input
@@ -636,7 +636,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               </>}
 
               {authMode === 'login' && (
-                <button type="button" className="auth-forgot-link" onClick={() => { setAuthMode('forgot'); setAuthError(''); setPhone(''); }}>Quên mật khẩu?</button>
+                <button type="button" className="auth-forgot-link" onClick={() => { setAuthMode('forgot'); setAuthError(''); setEmail(''); }}>Quên mật khẩu?</button>
               )}
 
               <button type="submit" className="auth-submit-btn" disabled={authSubmitting}>
