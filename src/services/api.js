@@ -1231,27 +1231,52 @@ export function getExportUrl() {
 export async function previewImport(file) {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await requestWithAuth(`${API_URL}/admin/products/import/preview`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-    body: formData
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Không thể đọc file Excel');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+  try {
+    const res = await requestWithAuth(`${API_URL}/admin/products/import/preview`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
+      body: formData,
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể đọc file Excel');
+    }
+    return res.json();
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw new Error('Quá thời gian chờ xử lý (120 giây) — file quá lớn hoặc máy chủ quá chậm. Vui lòng thử lại hoặc chia nhỏ file.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
 }
 
 export async function confirmImport(importSessionId, confirmedRowIndexes) {
-  const res = await requestWithAuth(`${API_URL}/admin/products/import/confirm`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ importSessionId, confirmedRowIndexes })
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Không thể xác nhận nhập hàng loạt');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+  try {
+    const res = await requestWithAuth(`${API_URL}/admin/products/import/confirm`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ importSessionId, confirmedRowIndexes }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể xác nhận nhập hàng loạt');
+    }
+    return res.json();
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw new Error('Quá thời gian chờ xác nhận nhập (120 giây) — vui lòng thử lại.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+>>>>>>> a238b9b (fix: increase import preview and confirm request timeout to 120s)
   }
-  return res.json();
 }
