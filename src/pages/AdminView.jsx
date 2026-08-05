@@ -42,6 +42,16 @@ const AdminView = () => {
   const [medicines, setMedicines] = useState([]);
   const [vouchers, setVouchers] = useState([]);
   const [reportData, setReportData] = useState(null);
+  const [revenueReport, setRevenueReport] = useState([]);
+  const [revenueFrom, setRevenueFrom] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().slice(0, 10);
+  });
+  const [revenueTo, setRevenueTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [revenueGroupBy, setRevenueGroupBy] = useState('Day');
+  const [revenueLoading, setRevenueLoading] = useState(false);
+  const [revenueError, setRevenueError] = useState('');
 
   // Voucher form state
   const [editingVoucherId, setEditingVoucherId] = useState(null);
@@ -156,6 +166,7 @@ const AdminView = () => {
         setAppointments(appointmentsData);
         setMedicines(medData);
         setReportData(repData);
+        await loadRevenueReport(revenueFrom, revenueTo, revenueGroupBy);
       } else if (activeTab === 'products') {
         const medData = await api.fetchMedicines(null, '', null, null, true);
         setMedicines(medData);
@@ -798,6 +809,27 @@ const AdminView = () => {
       lowStockCount: lowStock.length,
       medicinesCount: medicines.length
     };
+  };
+
+  const loadRevenueReport = async (from = revenueFrom, to = revenueTo, groupBy = revenueGroupBy) => {
+    setRevenueError('');
+    setRevenueLoading(true);
+    try {
+      const fromIso = new Date(from).toISOString();
+      const toIso = new Date(to).toISOString();
+      const data = await api.fetchRevenueReport(fromIso, toIso, groupBy);
+      setRevenueReport(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setRevenueError('Không thể tải chi tiết doanh thu. Vui lòng thử lại.');
+      setRevenueReport([]);
+    } finally {
+      setRevenueLoading(false);
+    }
+  };
+
+  const handleRevenueFilterApply = async () => {
+    await loadRevenueReport(revenueFrom, revenueTo, revenueGroupBy);
   };
 
   const stats = activeTab === 'stats' ? getStats() : {};
@@ -1715,6 +1747,67 @@ const AdminView = () => {
 
               {/* Detail graphs placeholder & Lists */}
               <div className="stats-detail-grid">
+                <div className="stats-detail-card revenue-report-card">
+                  <div className="revenue-report-header">
+                    <div>
+                      <h4>📊 Chi tiết doanh thu</h4>
+                      <p className="sub-label">Bảng tổng hợp doanh thu theo khoảng thời gian và nhóm dữ liệu.</p>
+                    </div>
+                    <div className="revenue-report-filters">
+                      <label>
+                        Nhóm theo
+                        <select value={revenueGroupBy} onChange={e => setRevenueGroupBy(e.target.value)}>
+                          <option value="Day">Ngày</option>
+                          <option value="Month">Tháng</option>
+                          <option value="Year">Năm</option>
+                        </select>
+                      </label>
+                      <label>
+                        Từ
+                        <input type="date" value={revenueFrom} onChange={e => setRevenueFrom(e.target.value)} />
+                      </label>
+                      <label>
+                        Đến
+                        <input type="date" value={revenueTo} onChange={e => setRevenueTo(e.target.value)} />
+                      </label>
+                      <button type="button" className="btn-small" onClick={handleRevenueFilterApply} disabled={revenueLoading}>
+                        Áp dụng
+                      </button>
+                    </div>
+                  </div>
+
+                  {revenueError && <div className="admin-error-msg">{revenueError}</div>}
+
+                  {revenueLoading ? (
+                    <p className="loading-text">Đang tải doanh thu...</p>
+                  ) : (
+                    <div className="revenue-report-table-wrapper">
+                      {revenueReport.length === 0 ? (
+                        <p className="no-data-text">Không có dữ liệu doanh thu cho khoảng thời gian này.</p>
+                      ) : (
+                        <table className="revenue-report-table">
+                          <thead>
+                            <tr>
+                              <th>Khoảng</th>
+                              <th>Doanh thu</th>
+                              <th>Đơn hàng</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {revenueReport.map((point, idx) => (
+                              <tr key={idx}>
+                                <td>{point.period}</td>
+                                <td>{formatPrice(point.revenue)}</td>
+                                <td>{point.orderCount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="stats-detail-card">
                   <h4>⚠️ Cảnh báo tồn kho cực thấp (dưới 20 đơn vị)</h4>
                   <div className="low-stock-list">

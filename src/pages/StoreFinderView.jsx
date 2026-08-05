@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapPin, Phone, Clock, Search, ChevronRight, Navigation } from 'lucide-react';
+import { API_URL } from '../services/api';
 import './StoreFinderView.css';
 
 const provinces = [
@@ -57,7 +58,7 @@ const StoreFinderView = ({ onBack }) => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/Stores`);
+        const res = await fetch(`${API_URL}/api/Stores`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {

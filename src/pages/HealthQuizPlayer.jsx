@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, RotateCcw, Calendar, AlertTriangle, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react';
+import { API_URL } from '../services/api';
 import './HealthQuizPlayer.css';
 
 const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
@@ -17,7 +18,7 @@ const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/HealthQuiz/${quizCode}/questions`);
+        const res = await fetch(`${API_URL}/api/HealthQuiz/${quizCode}/questions`);
         if (!res.ok) throw new Error('Không thể tải nội dung bài test.');
         const data = await res.json();
         setQuizData(data);
@@ -69,7 +70,7 @@ const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/HealthQuiz/${quizCode}/submit`, {
+      const res = await fetch(`${API_URL}/api/HealthQuiz/${quizCode}/submit`, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)

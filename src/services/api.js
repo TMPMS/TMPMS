@@ -1,4 +1,14 @@
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+export const DEFAULT_API_PORT = 5000;
+export const envApiUrl = import.meta.env.VITE_API_URL?.trim();
+export const defaultApiUrl = typeof window !== 'undefined'
+  ? `${window.location.protocol}//${window.location.hostname}:${DEFAULT_API_PORT}`
+  : '';
+
+export const API_URL = envApiUrl || defaultApiUrl;
+
+if (!envApiUrl && typeof window !== 'undefined') {
+  console.warn(`VITE_API_URL is not configured. Falling back to ${API_URL}`);
+}
 
 export const FALLBACK_MED_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" rx="12" fill="#f1f5f9"/><circle cx="100" cy="82" r="34" fill="#0f766e" opacity="0.15"/><path d="M100 74v28M86 88h28" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/><rect x="62" y="120" width="76" height="14" rx="7" fill="#0f766e" opacity="0.25"/><rect x="78" y="142" width="44" height="10" rx="5" fill="#0f766e" opacity="0.18"/></svg>'
@@ -140,6 +150,16 @@ export async function fetchReportDashboard() {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Không thể tải báo cáo doanh thu & thống kê');
+  return res.json();
+}
+
+export async function fetchRevenueReport(from, to, groupBy = 'Day') {
+  const fromValue = encodeURIComponent(from);
+  const toValue = encodeURIComponent(to);
+  const res = await requestWithAuth(`${API_URL}/api/Report/revenue?from=${fromValue}&to=${toValue}&groupBy=${groupBy}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải chi tiết doanh thu');
   return res.json();
 }
 
