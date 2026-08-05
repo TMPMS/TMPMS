@@ -1817,10 +1817,10 @@ const AdminView = () => {
                         value={prodSupplierId}
                         onChange={(e) => setProdSupplierId(e.target.value)}
                       >
-                        <option value={1}>Công ty Cổ phần Traphaco</option>
-                        <option value={2}>Công ty TNHH Dược phẩm OPC</option>
-                        <option value={3}>Công ty Cổ phần Bách Thảo Dược</option>
-                        <option value={4}>Nhà sâm KGC Hàn Quốc</option>
+                        <option value={1}>Công ty Dược Liệu Trung Ương 1</option>
+                        <option value={2}>Tập đoàn Y Dược Bảo Long</option>
+                        <option value={3}>Viện Dược Liệu Đông Y Việt Nam</option>
+                        {/* <option value={4}>Nhà sâm KGC Hàn Quốc</option> */}
                       </select>
                     </div>
 
