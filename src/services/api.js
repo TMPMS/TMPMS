@@ -1277,6 +1277,5 @@ export async function confirmImport(importSessionId, confirmedRowIndexes) {
     throw err;
   } finally {
     clearTimeout(timer);
->>>>>>> a238b9b (fix: increase import preview and confirm request timeout to 120s)
   }
 }
