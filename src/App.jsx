@@ -33,7 +33,7 @@ import HealthQuizList from './pages/HealthQuizList';
 import HealthQuizPlayer from './pages/HealthQuizPlayer';
 import PaymentResultView from './pages/PaymentResultView';
 
-import { fetchMedicines } from './services/api';
+import { fetchMedicines, verifyAppointmentPayOS } from './services/api';
 
 const mapProduct = (p) => ({
   id: p.id,
@@ -67,6 +67,23 @@ function App() {
     return params.get('payment') ? params.get('orderCode') : null;
   });
   const [currentPage, setCurrentPage] = useState(paymentOrderCode ? 'payment-result' : 'home');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const appointmentResult = params.get('appointmentPayment');
+    if (!appointmentResult) return;
+    if (appointmentResult === 'cancelled') {
+      alert('Thanh toán tiền cọc đã bị hủy. Khung giờ sẽ được mở lại khi thời gian giữ chỗ kết thúc.');
+      setCurrentPage('patient-portal');
+      return;
+    }
+    const orderCode = sessionStorage.getItem('appointmentPaymentOrderCode');
+    if (!orderCode) { setCurrentPage('patient-portal'); return; }
+    verifyAppointmentPayOS(orderCode)
+      .then(result => alert(result.intentStatus === 'Paid' ? 'Đặt cọc thành công. Lịch đang chờ nhà thuốc xác nhận.' : 'Giao dịch đang được PayOS xử lý.'))
+      .catch(err => alert(err.message))
+      .finally(() => { sessionStorage.removeItem('appointmentPaymentOrderCode'); setCurrentPage('patient-portal'); });
+  }, []);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   

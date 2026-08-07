@@ -426,6 +426,17 @@ const AdminView = () => {
     }
   };
 
+  const handleCheckInAppointment = async (id) => {
+    try { await api.checkInAppointment(id); showSuccess('Đã check-in bệnh nhân!'); await loadTabContent(); }
+    catch (err) { setError(err.message || 'Không thể check-in.'); }
+  };
+
+  const handleNoShowAppointment = async (id) => {
+    if (!window.confirm('Xác nhận khách không đến? Tiền cọc sẽ không được hoàn.')) return;
+    try { await api.markAppointmentNoShow(id); showSuccess('Đã đánh dấu khách không đến.'); await loadTabContent(); }
+    catch (err) { setError(err.message || 'Không thể đánh dấu không đến.'); }
+  };
+
   // Prescription functions
   const addMedicineToPrescription = () => {
     if (!selectedMedicineId) return;
@@ -1229,7 +1240,7 @@ const AdminView = () => {
                           <td>{a.patientPhone}</td>
                           <td>Thầy thuốc {a.doctorName || 'Chưa phân công'}</td>
                           <td>{formatDate(a.appointmentDate)}</td>
-                          <td>{a.reason}</td>
+                          <td>{a.symptomDescription || a.reason}{a.prescriptionImageUrl && <div><a href={api.formatImageUrl(a.prescriptionImageUrl)} target="_blank" rel="noreferrer">Xem ảnh đơn thuốc</a></div>}<small>{a.paymentStatus ? `Cọc: ${Number(a.depositAmount || 0).toLocaleString('vi-VN')}đ · ${a.paymentStatus}` : ''}</small></td>
                           <td>
                             <span className={`appointment-status ${a.status.toLowerCase()}`}>
                               {a.status === 'PendingConfirmation' || a.status === 'Pending' || a.status === 'Scheduled' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Hoàn thành' : a.status === 'Rejected' ? 'Đã từ chối' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
@@ -1244,9 +1255,11 @@ const AdminView = () => {
                                   <button className="action-icon-btn reject" onClick={() => handleRejectAppointment(a.id)} title="Từ chối lịch hẹn"><X size={14} /></button>
                                 </>
                               )}
-                              {a.status === 'Confirmed' && (
-                                <button className="action-icon-btn complete" onClick={() => handleCompleteAppointment(a.id)} title="Đánh dấu đã khám xong"><CheckCheck size={14} /></button>
-                              )}
+                              {a.status === 'Confirmed' && <>
+                                <button className="action-icon-btn approve" onClick={() => handleCheckInAppointment(a.id)} title="Check-in bệnh nhân"><Check size={14} /></button>
+                                <button className="action-icon-btn reject" onClick={() => handleNoShowAppointment(a.id)} title="Khách không đến"><X size={14} /></button>
+                              </>}
+                              {a.status === 'CheckedIn' && <button className="action-icon-btn complete" onClick={() => handleCompleteAppointment(a.id)} title="Đánh dấu đã khám xong"><CheckCheck size={14} /></button>}
                               <button className="action-icon-btn edit" onClick={() => { setCurrentAppointment(a); setAppointmentModal('edit'); }} title="Sửa lịch"><Edit2 size={14} /></button>
                               <button className="action-icon-btn delete" onClick={() => handleDeleteAppointment(a.id)} title="Xóa lịch"><Trash2 size={14} /></button>
                             </div>
