@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import SelfDiagnosis from './SelfDiagnosis';
+import AppointmentBooking from '../components/AppointmentBooking';
 import { 
   Heart, Calendar, FileText, Activity, ShieldAlert, Sparkles, Check, Clock, User
 } from 'lucide-react';
@@ -116,6 +116,15 @@ const PatientPortal = ({ onBack }) => {
     setActiveTab('appointments');
   };
 
+  const handleCancelAppointment = async (appointment) => {
+    try {
+      const quote = await api.getAppointmentCancellationQuote(appointment.id);
+      if (!window.confirm(`Khoản hoàn dự kiến: ${Number(quote.refundAmount).toLocaleString('vi-VN')}đ (${quote.refundPercentage}%). Xác nhận hủy lịch?`)) return;
+      await api.cancelAppointmentWithRefund(appointment.id);
+      await refreshAppointments();
+    } catch (e) { alert(e.message || 'Không thể hủy lịch.'); }
+  };
+
   const formatDate = (dateStr) => formatDateTimeVN(dateStr);
 
   if (!user) {
@@ -151,7 +160,7 @@ const PatientPortal = ({ onBack }) => {
           <Heart size={16} /> Tổng quan sức khỏe
         </button>
         <button className={`portal-tab-item ${activeTab === 'diagnose' ? 'active' : ''}`} onClick={() => setActiveTab('diagnose')}>
-          <Activity size={16} /> Tự chẩn đoán Đông Y
+          <Activity size={16} /> Đặt lịch mới
         </button>
         <button className={`portal-tab-item ${activeTab === 'appointments' ? 'active' : ''}`} onClick={() => setActiveTab('appointments')}>
           <Calendar size={16} /> Lịch hẹn khám ({myAppointments.length})
@@ -248,9 +257,9 @@ const PatientPortal = ({ onBack }) => {
             </div>
           )}
 
-          {/* TAB: DIAGNOSE (Symptom analysis helper) */}
+          {/* TAB: DIRECT APPOINTMENT BOOKING */}
           {activeTab === 'diagnose' && (
-            <SelfDiagnosis onBack={() => setActiveTab('dashboard')} onAppointmentBooked={handleAppointmentBooked} />
+            <AppointmentBooking appointments={myAppointments} onBack={() => setActiveTab('appointments')} onBooked={handleAppointmentBooked} />
           )}
 
           {/* TAB: MY APPOINTMENTS */}
@@ -282,6 +291,9 @@ const PatientPortal = ({ onBack }) => {
                         <span className={`status-badge-portal ${a.status.toLowerCase()}`}>
                           {a.status === 'PendingConfirmation' || a.status === 'Pending' || a.status === 'Scheduled' ? 'Chờ xác nhận' : a.status === 'Confirmed' ? 'Đã xác nhận' : a.status === 'Completed' ? 'Đã khám xong' : a.status === 'Rejected' ? 'Đã từ chối' : a.status === 'Expired' ? 'Quá hạn' : 'Đã hủy'}
                         </span>
+                        {['PendingConfirmation', 'Confirmed', 'AlternativeProposed', 'RescheduleRequested'].includes(a.status) && (
+                          <button className="appt-cancel-btn" onClick={() => handleCancelAppointment(a)}>Yêu cầu hủy</button>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -852,7 +852,14 @@ export async function fetchAppointments() {
     created_at: a.createdAt || a.CreatedAt,
     confirmationDeadline: a.confirmationDeadline || a.ConfirmationDeadline,
     confirmedAt: a.confirmedAt || a.ConfirmedAt,
-    rejectionReason: a.rejectionReason || a.RejectionReason
+    rejectionReason: a.rejectionReason || a.RejectionReason,
+    symptomDescription: a.symptomDescription || a.SymptomDescription || "",
+    prescriptionImageUrl: a.prescriptionImageUrl || a.PrescriptionImageUrl,
+    location: a.location || a.Location || "",
+    depositAmount: a.depositAmount ?? a.DepositAmount ?? 0,
+    paymentStatus: a.paymentStatus || a.PaymentStatus || "",
+    paymentMethod: a.paymentMethod || a.PaymentMethod,
+    refundAmount: a.refundAmount ?? a.RefundAmount ?? 0
   }));
 }
 
@@ -955,6 +962,79 @@ export async function deleteAppointment(appointmentId) {
   });
   if (!res.ok) throw new Error('Không thể xóa lịch hẹn');
   return res.json();
+}
+
+export async function fetchAppointmentAvailability(date, location) {
+  const params = new URLSearchParams({ date, location });
+  const res = await requestWithAuth(`${API_URL}/Appointment/availability?${params}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error((await res.json().catch(() => null))?.message || 'Không thể tải khung giờ');
+  return res.json();
+}
+
+export async function holdAppointmentSlot(appointmentDate, location) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/hold`, {
+    method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ appointmentDate, location })
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể giữ khung giờ');
+  return data;
+}
+
+export async function uploadAppointmentPrescription(file) {
+  const body = new FormData(); body.append('file', file);
+  const res = await requestWithAuth(`${API_URL}/Appointment/upload-prescription`, { method: 'POST', body });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể tải ảnh đơn thuốc');
+  return data;
+}
+
+export async function checkoutAppointment(payload) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/checkout`, {
+    method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể hoàn tất đặt lịch');
+  return data;
+}
+
+export async function verifyAppointmentPayOS(orderCode) {
+  const res = await requestWithAuth(`${API_URL}/payos/appointment/verify/${orderCode}`, { method: 'POST', headers: getAuthHeaders() });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error || 'Không thể xác minh tiền cọc');
+  return data;
+}
+
+export async function getAppointmentCancellationQuote(id) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${id}/cancellation-quote`, { headers: getAuthHeaders() });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể tính tiền hoàn');
+  return data;
+}
+
+export async function cancelAppointmentWithRefund(id) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${id}/cancel-with-refund`, { method: 'POST', headers: getAuthHeaders() });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể hủy lịch');
+  return data;
+}
+
+export async function rescheduleAppointment(id, appointmentDate, reason) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${id}/reschedule`, {
+    method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ appointmentDate, reason })
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể đổi lịch');
+  return data;
+}
+
+export async function checkInAppointment(id) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${id}/check-in`, { method: 'PUT', headers: getAuthHeaders() });
+  const data = await res.json().catch(() => null); if (!res.ok) throw new Error(data?.message || 'Không thể check-in'); return data;
+}
+
+export async function markAppointmentNoShow(id) {
+  const res = await requestWithAuth(`${API_URL}/Appointment/${id}/no-show`, { method: 'PUT', headers: getAuthHeaders() });
+  const data = await res.json().catch(() => null); if (!res.ok) throw new Error(data?.message || 'Không thể đánh dấu không đến'); return data;
 }
 
 // Diagnosis & Prescription APIs
@@ -1152,7 +1232,14 @@ export async function fetchUserAppointments() {
     notes: a.note || a.Note || "",
     confirmationDeadline: a.confirmationDeadline || a.ConfirmationDeadline,
     confirmedAt: a.confirmedAt || a.ConfirmedAt,
-    rejectionReason: a.rejectionReason || a.RejectionReason
+    rejectionReason: a.rejectionReason || a.RejectionReason,
+    symptomDescription: a.symptomDescription || a.SymptomDescription || "",
+    prescriptionImageUrl: a.prescriptionImageUrl || a.PrescriptionImageUrl,
+    location: a.location || a.Location || "",
+    depositAmount: a.depositAmount ?? a.DepositAmount ?? 0,
+    paymentStatus: a.paymentStatus || a.PaymentStatus || "",
+    paymentMethod: a.paymentMethod || a.PaymentMethod,
+    refundAmount: a.refundAmount ?? a.RefundAmount ?? 0
   }));
 }
 
