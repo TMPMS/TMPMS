@@ -10,7 +10,10 @@ export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
-  
+  // Hiện khi BE từ chối thêm thuốc kê đơn vào giỏ vì chưa có đơn thuốc được duyệt
+  // (chưa khám / chưa được Dược sĩ kê đơn) — hướng người dùng sang đặt lịch khám thay vì chỉ báo lỗi.
+  const [rxPrompt, setRxPrompt] = useState(null); // { productName } | null
+
   // Keep a ref of cart items to avoid dependency cycle in useEffect
   const guestCartRef = useRef([]);
 
@@ -55,6 +58,8 @@ export const CartProvider = ({ children }) => {
           quantity: item.quantity,
           requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
           allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,
+          stockQuantity: item.medicine.stockQuantity !== undefined ? item.medicine.stockQuantity
+            : (item.medicine.stock_quantity !== undefined ? item.medicine.stock_quantity : item.medicine.StockQuantity),
         }));
         setCartItems(mappedItems);
       } catch (e) {
@@ -84,16 +89,19 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems, user]);
 
+  // Trả về true nếu thêm thành công, false nếu thất bại (kể cả khi bị chặn vì cần đơn thuốc),
+  // để nơi gọi (ProductCard, trang chi tiết sản phẩm...) biết có nên báo "thành công" hay không.
   const addToCart = useCallback(async (product) => {
     let showToastMessage = `Đã thêm ${product.name} vào giỏ hàng`;
     let toastType = 'success';
+    let success = true;
     const cartId = user ? (user.cart_id || user.cartId) : null;
-    
+
     if (user && cartId) {
       try {
         // BE cộng dồn số lượng cho dòng đã tồn tại (cart_id + medicine_id), nên chỉ cần gửi 1 đơn vị
         await api.addCartItem(cartId, product.id, 1);
-        
+
         // Re-fetch cart items to get updated state and database item IDs
         const dbItems = await api.fetchCartItems(cartId);
         const mappedItems = dbItems.map(item => ({
@@ -105,10 +113,19 @@ export const CartProvider = ({ children }) => {
           quantity: item.quantity,
           requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
           allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,
+          stockQuantity: item.medicine.stockQuantity !== undefined ? item.medicine.stockQuantity
+            : (item.medicine.stock_quantity !== undefined ? item.medicine.stock_quantity : item.medicine.StockQuantity),
         }));
         setCartItems(mappedItems);
       } catch (e) {
         console.error(e);
+        success = false;
+        // BE trả 403 khi thuốc kê đơn chưa có đơn thuốc được duyệt cho khách hàng này —
+        // thay vì chỉ báo lỗi, mời khách đặt lịch khám để Dược sĩ kê đơn.
+        if (e.responseStatus === 403) {
+          setRxPrompt({ productName: product.name });
+          return false;
+        }
         showToastMessage = e.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng';
         toastType = 'error';
       }
@@ -127,7 +144,25 @@ export const CartProvider = ({ children }) => {
     setTimeout(() => {
       setToast({ visible: false, message: '' });
     }, 3000);
+    return success;
   }, [user]);
+
+  const closeRxPrompt = useCallback(() => setRxPrompt(null), []);
+
+  // Điều hướng sang Cổng thông tin bệnh nhân và tự động mở tab "Đặt lịch mới"
+  // để khách hàng đặt lịch hẹn khám, được Dược sĩ tư vấn và kê đơn cho thuốc kê đơn này.
+  const goBookAppointmentForRx = useCallback(() => {
+    setRxPrompt(null);
+    sessionStorage.setItem('pp_open_booking', '1');
+    window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'patient-portal' }));
+  }, []);
+
+  // Lựa chọn thay thế: khách hàng đã có sẵn toa thuốc giấy — mở modal "Gửi Toa Thuốc" (miễn phí,
+  // không cần đặt lịch khám) để Dược sĩ xem ảnh & kê đơn trực tiếp từ toa đó.
+  const goUploadPrescriptionForRx = useCallback(() => {
+    setRxPrompt(null);
+    window.dispatchEvent(new CustomEvent('open-upload-prescription-modal'));
+  }, []);
 
   const updateQuantity = useCallback(async (productId, quantity) => {
     if (quantity <= 0) {
@@ -191,6 +226,20 @@ export const CartProvider = ({ children }) => {
       {toast.visible && (
         <div className={`toast-notification ${toast.type === 'error' ? 'toast-error' : ''} fade-in`}>
           {toast.message}
+        </div>
+      )}
+      {rxPrompt && (
+        <div className="rx-appt-modal-overlay" onClick={closeRxPrompt}>
+          <div className="rx-appt-modal fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="rx-appt-modal-icon">💊</div>
+            <h3>Cần đơn thuốc từ Dược sĩ</h3>
+            <p><strong>{rxPrompt.productName}</strong> là thuốc kê đơn. Bạn cần được Dược sĩ kê đơn trước khi có thể mua sản phẩm này — chọn một trong hai cách bên dưới:</p>
+            <div className="rx-appt-modal-actions" style={{ flexDirection: 'column' }}>
+              <button className="rx-appt-btn-primary" onClick={goBookAppointmentForRx}>📅 Đặt lịch khám để được kê đơn</button>
+              <button className="rx-appt-btn-primary rx-appt-btn-alt" onClick={goUploadPrescriptionForRx}>📄 Tôi đã có toa thuốc — Gửi cho Dược sĩ (miễn phí)</button>
+              <button className="rx-appt-btn-secondary" onClick={closeRxPrompt}>Để sau</button>
+            </div>
+          </div>
         </div>
       )}
     </CartContext.Provider>

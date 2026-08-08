@@ -338,6 +338,157 @@
   box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.2);
 }
 
+/* Sidebar Search Box */
+.cl-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cl-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+}
+
+.cl-search-input {
+  width: 100%;
+  padding: 8px 30px 8px 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.cl-search-input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+}
+
+.cl-clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+}
+
+.cl-clear-search-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cl-badge-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.cl-toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cl-toggle-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.cl-toggle-chip:hover { background: #f8fafc; }
+
+.cl-toggle-chip.active {
+  background: #f0fdfa;
+  border-color: #ccfbf1;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.cl-toggle-chip input {
+  margin: 0;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
+/* Active Filters Pills Bar */
+.cl-active-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cl-active-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.cl-pills-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ccfbf1;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.cl-pill button {
+  background: none;
+  border: none;
+  color: #0d9488;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.cl-pill button:hover {
+  color: #0f766e;
+}
+
+.cl-clear-all-pill {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 4px;
+}
+
 /* Responsive design */
 @media (max-width: 1200px) {
   .cl-grid {

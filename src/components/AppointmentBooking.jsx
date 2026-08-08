@@ -60,6 +60,19 @@ export default function AppointmentBooking({ appointments = [], onBooked, onBack
     finally { setBusy(false); }
   };
 
+  const demoCheckout = async () => {
+    if (!policy) return setError('Vui lòng xác nhận đã đọc chính sách.');
+    setBusy(true); setError('');
+    try {
+      const payment = await api.checkoutAppointment({ holdToken: hold.token, symptomDescription: symptoms, prescriptionImageUrl: imageUrl || null, note, paymentMethod: 'PayOS', policyAccepted: true, returnUrl: `${window.location.origin}/?appointmentPayment=success`, cancelUrl: `${window.location.origin}/?appointmentPayment=cancelled` });
+      await api.demoPayOSAppointment(payment.orderCode);
+      alert('⚡ GIẢ LẬP DEMO: Đã xác nhận thanh toán tiền cọc lịch hẹn thành công!');
+      setStep(4);
+      if (onBooked) onBooked();
+    } catch (e) { setError(e.message); }
+    finally { setBusy(false); }
+  };
+
   if (activeCount >= 3) return <div className="booking-shell booking-limit"><Calendar size={40}/><h3>Bạn đã có đủ 3 lịch đang hoạt động</h3><p>Vui lòng hoàn thành hoặc hủy một lịch trước khi đặt tiếp.</p><button onClick={onBack}>Quay lại danh sách lịch</button></div>;
 
   return <div className="booking-shell">
@@ -83,7 +96,31 @@ export default function AppointmentBooking({ appointments = [], onBooked, onBack
       <h3>Xác nhận và đặt cọc</h3><div className="booking-summary"><p><b>Triệu chứng:</b> {symptoms}</p><p><b>Thời gian:</b> {formatDateTimeVN(selected)}</p><p><b>Địa điểm:</b> {location}</p><p><b>Tiền cọc:</b> {Number(hold?.depositAmount || 0).toLocaleString('vi-VN')}đ</p></div>
       <div className="booking-policy"><b>Chính sách đổi, hủy và hoàn tiền</b><p>Hủy trước ít nhất 24 giờ: hoàn 100%. Hủy trong vòng 24 giờ: hoàn 50%. Không đến hoặc muộn quá 15 phút: không hoàn tiền. Nhà thuốc từ chối: hoàn 100%.</p><label><input type="checkbox" checked={policy} onChange={e => setPolicy(e.target.checked)}/> Tôi đã đọc và đồng ý chính sách</label></div>
       <label>Phương thức thanh toán<select value={method} onChange={e => setMethod(e.target.value)}><option value="PayOS">PayOS / Chuyển khoản ngân hàng</option></select></label>
-      <div className="booking-actions"><button className="secondary" onClick={() => setStep(2)}>Chọn giờ khác</button><button onClick={checkout} disabled={busy || !policy}><ShieldCheck size={16}/>{busy ? 'Đang xử lý…' : 'Thanh toán và đặt lịch'}</button></div>
+      <div className="booking-actions" style={{ flexDirection: 'column', gap: '10px', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+          <button className="secondary" style={{ flex: 1 }} onClick={() => setStep(2)}>Chọn giờ khác</button>
+          <button style={{ flex: 2 }} onClick={checkout} disabled={busy || !policy}><ShieldCheck size={16}/>{busy ? 'Đang xử lý…' : 'Quét mã VietQR PayOS'}</button>
+        </div>
+        <button
+          type="button"
+          onClick={demoCheckout}
+          disabled={busy || !policy}
+          style={{
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            color: '#ffffff',
+            border: 'none',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            cursor: 'pointer',
+            width: '100%',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+          }}
+        >
+          ⚡ Thanh toán DEMO (Xác nhận Đã cọc thành công ngay)
+        </button>
+      </div>
     </section>}
     {step === 4 && <section className="booking-success"><ShieldCheck size={54}/><h3>Đặt lịch thành công</h3><p>Lịch đang chờ nhà thuốc xác nhận. Giao dịch tiền cọc đã được ghi nhận.</p><button onClick={onBack}>Xem danh sách lịch</button></section>}
   </div>;

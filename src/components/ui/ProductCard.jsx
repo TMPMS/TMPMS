@@ -18,8 +18,9 @@ const isDongY = (name = '', description = '') => {
   return DONG_Y_KEYWORDS.some(kw => text.includes(kw));
 };
 
-// Random rating 4.3 – 5.0 based on product id
-const getStarRating = (id) => {
+// Rating 4.3 – 5.0 dựa theo product id để đồng bộ toàn trang
+export const getStarRating = (id) => {
+  if (!id) return '4.8';
   const base = 43 + (id % 8);
   return (base / 10).toFixed(1);
 };
@@ -47,7 +48,9 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
   const [hovered, setHovered] = useState(false);
 
   const dongy = isDongY(product.name, product.description);
-  const rating = getStarRating(product.id || 42);
+  const rating = product.rating !== undefined && product.rating !== null
+    ? Number(product.rating).toFixed(1)
+    : getStarRating(product.id || 42);
 
   const formatMaskedPrice = (price) => {
     if (!price) return '';
@@ -58,10 +61,12 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
     return 'xx.xxxđ';
   };
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+  const handleAddToCart = async () => {
+    const ok = await addToCart(product);
+    if (ok) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500);
+    }
   };
 
   return (

@@ -1,0 +1,326 @@
+/* ============================================================
+   HEALTH VIDEO SECTION — Long Chau Style
+   ============================================================ */
+
+.health-video-section {
+  margin: 32px 0;
+  padding: 0 4px;
+}
+
+.hv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.hv-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hv-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: white;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hv-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.hv-see-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.hv-see-all:hover {
+  background: rgba(13, 148, 136, 0.08);
+}
+
+/* Scroll Container */
+.hv-scroll-wrapper {
+  position: relative;
+}
+
+.hv-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-60%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #475569;
+}
+
+.hv-arrow:hover {
+  background: #0d9488;
+  color: white;
+  border-color: #0d9488;
+}
+
+.hv-arrow-left { left: -18px; }
+.hv-arrow-right { right: -18px; }
+
+.hv-scroll-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 4px 2px 8px;
+}
+
+.hv-scroll-track::-webkit-scrollbar { display: none; }
+
+/* Video Card */
+.hv-card {
+  flex: 0 0 220px;
+  scroll-snap-align: start;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  transition: transform 0.22s, box-shadow 0.22s;
+}
+
+.hv-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.hv-thumb-wrap {
+  position: relative;
+  height: 142px;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.hv-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.hv-card:hover .hv-thumb {
+  transform: scale(1.05);
+}
+
+.hv-play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.hv-card:hover .hv-play-overlay {
+  opacity: 1;
+}
+
+.hv-play-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+}
+
+.hv-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.hv-duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.hv-card-body {
+  padding: 10px 12px 12px;
+}
+
+.hv-category {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.hv-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 4px 0 6px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hv-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Lightbox */
+.hv-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hv-lightbox-inner {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  max-width: 560px;
+  width: 100%;
+  position: relative;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hv-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.hv-lightbox-close:hover { background: rgba(0,0,0,0.8); }
+
+.hv-lightbox-video {
+  position: relative;
+  height: 280px;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hv-lightbox-video img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.hv-lightbox-play {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-align: center;
+}
+
+.hv-lightbox-play p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  max-width: 260px;
+}
+
+.hv-lightbox-info {
+  padding: 16px 20px 20px;
+}
+
+.hv-lightbox-info h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 8px 0 8px;
+  line-height: 1.5;
+}

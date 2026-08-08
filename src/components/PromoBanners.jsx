@@ -15,8 +15,7 @@ const BANNERS = [
     cta: 'Mua ngay kẻo hết',
     ctaBg: '#fff',
     ctaColor: '#dc2626',
-    countdown: true,
-    hours: 5, mins: 42, secs: 18,
+    searchTerm: 'giảm giá',
     particles: ['⚡','🔥','💥','✨'],
     badge: { text: 'ĐẾN -40%', bg: '#fef2f2', color: '#dc2626' },
     floatEmoji: '🔥',
@@ -34,7 +33,7 @@ const BANNERS = [
     cta: 'Khám phá ngay',
     ctaBg: '#fff',
     ctaColor: '#059669',
-    countdown: false,
+    searchTerm: 'trà thảo dược',
     particles: ['🌿','🍃','🌺','🌱'],
     badge: { text: 'HÀNG MỚI', bg: '#ecfdf5', color: '#059669' },
     floatEmoji: '🌿',
@@ -52,7 +51,7 @@ const BANNERS = [
     cta: 'Xem bộ sưu tập',
     ctaBg: '#fef3c7',
     ctaColor: '#92400e',
-    countdown: false,
+    searchTerm: 'nhân sâm',
     particles: ['👑','✨','🌟','💛'],
     badge: { text: 'NHẬP KHẨU', bg: '#fffbeb', color: '#b45309' },
     floatEmoji: '✨',
@@ -70,42 +69,15 @@ const BANNERS = [
     cta: 'Chọn combo ngay',
     ctaBg: '#eef2ff',
     ctaColor: '#3730a3',
-    countdown: true,
-    hours: 23, mins: 15, secs: 44,
+    searchTerm: 'cao dược liệu',
     particles: ['🎁','🎉','🛍️','🏷️'],
     badge: { text: 'MUA 2 TẶNG 1', bg: '#eef2ff', color: '#4f46e5' },
     floatEmoji: '🎁',
   },
 ];
 
-/* --- Countdown hook --- */
-const useCountdown = (initialH, initialM, initialS, active) => {
-  const [time, setTime] = useState({ h: initialH, m: initialM, s: initialS });
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => {
-      setTime(prev => {
-        let { h, m, s } = prev;
-        if (s > 0) return { h, m, s: s - 1 };
-        if (m > 0) return { h, m: m - 1, s: 59 };
-        if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return { h: 0, m: 0, s: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [active]);
-  return time;
-};
-
-const pad = n => String(n).padStart(2, '0');
-
 /* --- Single banner slide --- */
-const BannerSlide = ({ banner, active }) => {
-  const { h, m, s } = useCountdown(
-    banner.hours || 0, banner.mins || 0, banner.secs || 0,
-    active && banner.countdown
-  );
-
+const BannerSlide = ({ banner, active, onSearch }) => {
   return (
     <div
       className={`pb-slide${active ? ' pb-slide--active' : ''}`}
@@ -141,30 +113,16 @@ const BannerSlide = ({ banner, active }) => {
           {/* Sub */}
           <p className="pb-sub">{banner.sub}</p>
 
-          {/* Countdown */}
-          {banner.countdown && (
-            <div className="pb-countdown">
-              <span className="pb-countdown-label">⏰ Kết thúc sau:</span>
-              <div className="pb-countdown-blocks">
-                {[['Giờ', pad(h)], ['Phút', pad(m)], ['Giây', pad(s)]].map(([lbl, val]) => (
-                  <div key={lbl} className="pb-time-block">
-                    <span className="pb-time-num" style={{ color: banner.accentColor }}>{val}</span>
-                    <span className="pb-time-lbl">{lbl}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* CTA Button */}
-          <a
-            href="#"
+          <button
+            type="button"
             className="pb-cta"
-            style={{ background: banner.ctaBg, color: banner.ctaColor }}
+            style={{ background: banner.ctaBg, color: banner.ctaColor, border: 'none', cursor: 'pointer', font: 'inherit' }}
+            onClick={() => onSearch && onSearch(banner.searchTerm)}
           >
             {banner.cta}
             <span className="pb-cta-arrow">→</span>
-          </a>
+          </button>
         </div>
 
         <div className="pb-right">
@@ -183,7 +141,7 @@ const BannerSlide = ({ banner, active }) => {
 };
 
 /* --- Main component --- */
-const PromoBanners = () => {
+const PromoBanners = ({ onSearch }) => {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const timerRef = useRef(null);
@@ -216,7 +174,7 @@ const PromoBanners = () => {
       {/* Slider */}
       <div className={`pb-slider${transitioning ? ' pb-slider--out' : ''}`}>
         {BANNERS.map((b, i) => (
-          <BannerSlide key={b.id} banner={b} active={i === current} />
+          <BannerSlide key={b.id} banner={b} active={i === current} onSearch={onSearch} />
         ))}
       </div>
 

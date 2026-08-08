@@ -18,6 +18,7 @@ const ProductCard = ({ product, onProductClick }) => {
       {/* Badges */}
       {product.discount && <span className="pc-badge-disc">-{product.discount}%</span>}
       {product.isNew && <span className="pc-badge-new">MỚI</span>}
+      {product.requiresPrescription && <span className="pc-badge-rx">Kê đơn</span>}
 
       {/* Origin */}
       {product.origin && (

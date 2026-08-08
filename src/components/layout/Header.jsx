@@ -1,17 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight, FileText } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
 import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
-import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG, requestPasswordReset, resetPassword } from '../../services/api';
+import SpinWheelModal from '../SpinWheelModal';
+import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG, requestPasswordReset, resetPassword, fetchWheelStatus, searchMedicineByImage } from '../../services/api';
 import './Header.css';
 
 const USERNAME_PATTERN = /^[A-Za-z]+$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,}$/;
 
 const categories = [
+  { label: 'Thảo Dược Đông Y', sub: ['Vị thuốc kê đơn', 'Cao dược liệu', 'Nhân sâm & Đông trùng'] },
   { label: 'Thực phẩm chức năng', sub: ['Vitamin & Khoáng chất', 'Bổ não', 'Hỗ trợ gan', 'Đẹp da'] },
   { label: 'Dược mỹ phẩm', sub: ['Kem dưỡng da', 'Chống nắng', 'Tẩy trang', 'Serum'] },
   { label: 'Thuốc', sub: ['Thuốc kê đơn', 'Thuốc không kê đơn', 'Kháng sinh', 'Hạ sốt'] },
@@ -49,9 +51,12 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   // Voice & Image Search states
   const [isVoiceSearchOpen, setIsVoiceSearchOpen] = useState(false);
   const [voiceSearchStatus, setVoiceSearchStatus] = useState('Đang chuẩn bị...');
+  const [voiceSearchError, setVoiceSearchError] = useState('');
+  const recognitionRef = useRef(null);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [imageSearchError, setImageSearchError] = useState('');
 
   // Search input state
   const [searchText, setSearchText] = useState('');
@@ -60,12 +65,28 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [allMedicines, setAllMedicines] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [isWheelModalOpen, setIsWheelModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthModalOpen) {
       setAuthError('');
     }
   }, [isAuthModalOpen]);
+
+  // Mỗi ngày khi user đăng nhập vào, tự động gợi ý quay vòng quay may mắn 1 lần
+  // (chỉ nhắc trong phiên/ngày, server vẫn là nguồn xác thực thật cho việc còn lượt quay hay không).
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const promptKey = `wheelPrompted_${user.id}_${today}`;
+    if (sessionStorage.getItem(promptKey)) return;
+    sessionStorage.setItem(promptKey, '1');
+    fetchWheelStatus()
+      .then((status) => {
+        if (status.canSpinToday) setIsWheelModalOpen(true);
+      })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (resendSeconds <= 0) return undefined;
@@ -81,9 +102,20 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     return () => window.removeEventListener('open-auth-modal', handleOpenAuth);
   }, []);
 
+  // Cho phép các nơi khác trong app (vd: lời mời "cần đơn thuốc" khi mua thuốc kê đơn) mở
+  // thẳng modal "Gửi Toa Thuốc" mà không cần biết Header đang quản lý state này.
+  useEffect(() => {
+    const handleOpenUploadPrescription = () => {
+      if (!user) openAuthModal('login');
+      else setIsPrescriptionModalOpen(true);
+    };
+    window.addEventListener('open-upload-prescription-modal', handleOpenUploadPrescription);
+    return () => window.removeEventListener('open-upload-prescription-modal', handleOpenUploadPrescription);
+  }, [user]);
+
   const loadSuggestions = async () => {
     try {
-      const data = await fetchMedicines();
+      const data = await fetchMedicines(null, '', null, null, true);
       setAllMedicines(data);
     } catch (e) {
       console.error('Lỗi khi tải gợi ý tìm kiếm:', e);
@@ -116,25 +148,71 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     if (onSearch) onSearch(tag);
   };
 
-  // Voice Search Activation
+  // Voice Search Activation — dùng Web Speech API thật của trình duyệt (Chrome/Edge)
   const startVoiceSearch = () => {
     setIsVoiceSearchOpen(true);
-    setVoiceSearchStatus('Đang nghe... 🎤');
-    
-    // Step 1: Voice recording simulation
-    setTimeout(() => {
-      setVoiceSearchStatus('Đang phân tích giọng nói... ⚙️');
-    }, 1200);
+    setVoiceSearchError('');
 
-    // Step 2: Auto search keyword
-    setTimeout(() => {
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      setVoiceSearchStatus('Không hỗ trợ');
+      setVoiceSearchError('Trình duyệt của bạn không hỗ trợ tìm kiếm bằng giọng nói. Vui lòng dùng Chrome hoặc Edge.');
+      return;
+    }
+
+    setVoiceSearchStatus('Đang nghe... 🎤');
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'vi-VN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (!transcript) {
+        setVoiceSearchError('Không nghe rõ, vui lòng thử lại.');
+        return;
+      }
       setIsVoiceSearchOpen(false);
-      setSearchText('Khương Thảo Đan');
-      if (onSearch) onSearch('Khương Thảo Đan');
+      setSearchText(transcript);
+      if (onSearch) onSearch(transcript);
       // Trigger focus and load suggestions
       setIsSearchFocused(true);
       loadSuggestions();
-    }, 2500);
+    };
+
+    recognition.onspeechend = () => {
+      setVoiceSearchStatus('Đang phân tích giọng nói... ⚙️');
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        setVoiceSearchError('Vui lòng cho phép truy cập micro để sử dụng tìm kiếm bằng giọng nói.');
+      } else if (event.error === 'no-speech') {
+        setVoiceSearchError('Không nghe thấy gì. Vui lòng thử lại.');
+      } else {
+        setVoiceSearchError('Không thể nhận diện giọng nói. Vui lòng thử lại.');
+      }
+    };
+
+    recognition.onend = () => {
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (e) {
+      setVoiceSearchError('Không thể khởi động micro. Vui lòng thử lại.');
+    }
+  };
+
+  const closeVoiceSearch = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsVoiceSearchOpen(false);
   };
 
   // Image Search Activation
@@ -142,28 +220,69 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setIsImageSearchOpen(true);
     setIsScanning(false);
     setImageFile(null);
+    setImageSearchError('');
+  };
+
+  const processImageSearchFile = async (file) => {
+    if (!file) return;
+    setImageFile(file);
+    setIsScanning(true);
+    setImageSearchError('');
+
+    try {
+      const result = await searchMedicineByImage(file);
+      if (!result || !result.keyword) {
+        setIsScanning(false);
+        setImageSearchError(result?.disclaimer || 'Không nhận diện được sản phẩm trong ảnh. Vui lòng thử ảnh khác hoặc tìm bằng tên.');
+        return;
+      }
+
+      setIsImageSearchOpen(false);
+      setIsScanning(false);
+      setSearchText(result.keyword);
+      if (onSearch) onSearch(result.keyword);
+      // Trigger focus and load suggestions
+      setIsSearchFocused(true);
+      loadSuggestions();
+    } catch (err) {
+      setIsScanning(false);
+      setImageSearchError(err.message || 'Không thể nhận diện ảnh sản phẩm. Vui lòng thử lại.');
+    }
   };
 
   const handleImageFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setIsScanning(true);
-      
-      // Scanning laser simulation
-      setTimeout(() => {
-        setIsImageSearchOpen(false);
-        setIsScanning(false);
-        setSearchText('Sachi');
-        if (onSearch) onSearch('Sachi');
-        // Trigger focus and load suggestions
-        setIsSearchFocused(true);
-        loadSuggestions();
-      }, 2500);
+      processImageSearchFile(e.target.files[0]);
     }
   };
 
+  // Allow pasting an image (Ctrl+V) from the clipboard while the modal is open
+  useEffect(() => {
+    if (!isImageSearchOpen || imageFile) return;
+
+    const handlePaste = (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            processImageSearchFile(file);
+          }
+          break;
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [isImageSearchOpen, imageFile]);
+
   const handleCategoryClick = (catLabel) => {
     const catMap = {
+      'Thảo Dược Đông Y': 9,
       'Thực phẩm chức năng': 1,
       'Dược mỹ phẩm': 2,
       'Thuốc': 3,
@@ -420,6 +539,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                   <div className="user-dropdown-menu">
                     <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>👤 Hồ sơ của tôi</button>
                     <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>🎟️ Voucher của tôi</button>
+                    <button className="user-dropdown-item" onClick={() => { setIsWheelModalOpen(true); setIsUserMenuOpen(false); }}>🎡 Vòng quay may mắn</button>
                     <button className="user-dropdown-item" style={{ color: '#0d9488' }} onClick={() => { onNavigate('history'); setIsUserMenuOpen(false); }}>Lịch sử mua</button>
                     {user.role_id === 2 && (
                       <button className="user-dropdown-item" style={{ color: '#0f766e', fontWeight: 'bold' }} onClick={() => { onNavigate('patient-portal'); setIsUserMenuOpen(false); }}>Sức khỏe & Lịch hẹn</button>
@@ -690,46 +810,58 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         </div>
       )}
 
-      {/* Voice Search Modal Popup Mock */}
+      {/* Voice Search Modal Popup — Web Speech API thật */}
       {isVoiceSearchOpen && (
-        <div className="search-modal-overlay" onClick={() => setIsVoiceSearchOpen(false)}>
+        <div className="search-modal-overlay" onClick={closeVoiceSearch}>
           <div className="search-modal voice" onClick={(e) => e.stopPropagation()}>
-            <button className="search-modal-close" onClick={() => setIsVoiceSearchOpen(false)}>×</button>
-            <div className="voice-mic-wave-container">
-              <div className="pulse-mic-circle">
-                <Mic size={36} className="mic-pulse-icon" />
+            <button className="search-modal-close" onClick={closeVoiceSearch}>×</button>
+            {!voiceSearchError && (
+              <div className="voice-mic-wave-container">
+                <div className="pulse-mic-circle">
+                  <Mic size={36} className="mic-pulse-icon" />
+                </div>
+                <div className="mic-wave-bars">
+                  <span className="wave-bar bar-1"></span>
+                  <span className="wave-bar bar-2"></span>
+                  <span className="wave-bar bar-3"></span>
+                  <span className="wave-bar bar-4"></span>
+                  <span className="wave-bar bar-5"></span>
+                </div>
               </div>
-              <div className="mic-wave-bars">
-                <span className="wave-bar bar-1"></span>
-                <span className="wave-bar bar-2"></span>
-                <span className="wave-bar bar-3"></span>
-                <span className="wave-bar bar-4"></span>
-                <span className="wave-bar bar-5"></span>
-              </div>
-            </div>
-            <h4>{voiceSearchStatus}</h4>
-            <p className="voice-search-tip">Nói rõ các từ khóa như: "Khương Thảo Đan", "Sachi", "Bình Vị"...</p>
+            )}
+            {voiceSearchError ? (
+              <>
+                <h4>Không thể tìm bằng giọng nói</h4>
+                <p className="voice-search-tip">{voiceSearchError}</p>
+                <button className="search-modal-close" style={{ position: 'static', marginTop: 12 }} onClick={startVoiceSearch}>Thử lại</button>
+              </>
+            ) : (
+              <>
+                <h4>{voiceSearchStatus}</h4>
+                <p className="voice-search-tip">Hãy nói rõ tên sản phẩm bạn muốn tìm...</p>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Image Search Modal Popup Mock */}
+      {/* Image Search Modal Popup */}
       {isImageSearchOpen && (
         <div className="search-modal-overlay" onClick={() => setIsImageSearchOpen(false)}>
           <div className="search-modal image" onClick={(e) => e.stopPropagation()}>
             <button className="search-modal-close" onClick={() => setIsImageSearchOpen(false)}>×</button>
             <h4>Tìm Kiếm Thuốc Bằng Hình Ảnh</h4>
-            
+
             {!imageFile ? (
               <div className="image-drag-area">
                 <Camera size={44} className="image-camera-icon" />
-                <p>Kéo thả ảnh đơn thuốc/vỏ thuốc hoặc click chọn tệp để quét</p>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageFileChange} 
-                  id="image-search-input" 
-                  className="hidden-file-input" 
+                <p>Kéo thả, dán (Ctrl+V) ảnh đơn thuốc/vỏ thuốc hoặc click chọn tệp để quét</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileChange}
+                  id="image-search-input"
+                  className="hidden-file-input"
                 />
                 <label htmlFor="image-search-input" className="image-choose-btn">Chọn ảnh quét</label>
               </div>
@@ -740,8 +872,17 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                   {isScanning && <div className="scanning-laser-line"></div>}
                 </div>
                 <h5 className="scanning-status-text">
-                  {isScanning ? '🔍 Đang nhận diện nhãn hiệu và bốc thuốc...' : 'Quét hoàn thành'}
+                  {isScanning ? '🔍 Đang nhận diện nhãn hiệu và bốc thuốc...' : (imageSearchError || 'Quét hoàn thành')}
                 </h5>
+                {!isScanning && imageSearchError && (
+                  <button
+                    type="button"
+                    className="image-choose-btn"
+                    onClick={() => { setImageFile(null); setImageSearchError(''); }}
+                  >
+                    Thử ảnh khác
+                  </button>
+                )}
               </div>
             )}
             <p className="image-search-tip">💡 Tải lên hình ảnh vỏ thuốc rõ nét để hệ thống AI nhận diện tự động.</p>
@@ -761,6 +902,12 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         isOpen={isPrescriptionModalOpen}
         onClose={() => setIsPrescriptionModalOpen(false)}
         user={user}
+      />
+
+      {/* Vòng quay may mắn hàng ngày */}
+      <SpinWheelModal
+        isOpen={isWheelModalOpen}
+        onClose={() => setIsWheelModalOpen(false)}
       />
     </header>
   );

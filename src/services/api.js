@@ -151,18 +151,62 @@ export async function fetchReportTopSelling(from, to, top = 10) {
   return res.json();
 }
 
+export async function fetchReportRevenue(fromDate, toDate, groupBy = 'Day') {
+  const res = await requestWithAuth(`${API_URL}/Report/revenue`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ fromDate, toDate, groupBy })
+  });
+  if (!res.ok) throw new Error('Không thể tải báo cáo doanh thu theo khoảng thời gian');
+  return res.json();
+}
+
+export async function fetchReportOrderStatus() {
+  const res = await requestWithAuth(`${API_URL}/Report/order-status`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải phân bố trạng thái đơn hàng');
+  return res.json();
+}
+
+export async function fetchReportCategoryRevenue(from, to) {
+  const res = await requestWithAuth(`${API_URL}/Report/category-revenue?from=${from}&to=${to}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải doanh thu theo danh mục');
+  return res.json();
+}
+
+export async function fetchReportStaffRevenue(from, to) {
+  const res = await requestWithAuth(`${API_URL}/Report/staff-revenue?from=${from}&to=${to}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải doanh thu theo nhân viên');
+  return res.json();
+}
+
+export async function exportReportRevenueExcel(from, to, groupBy = 'Day') {
+  const res = await requestWithAuth(`${API_URL}/Report/revenue/export-excel?from=${from}&to=${to}&groupBy=${groupBy}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể xuất báo cáo Excel');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bao_cao_doanh_thu_${from.slice(0, 10)}_${to.slice(0, 10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export async function fetchCategories() {
   try {
     const res = await fetch(`${API_URL}/categories`);
     if (res.ok) return await res.json();
   } catch (e) {}
-  try {
-    const res = await fetch(`${API_URL}/herbalmedicine`);
-    if (res.ok) {
-      const data = await res.json();
-      return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
-    }
-  } catch (e) {}
+  // /categories không truy cập được — trả về danh mục mặc định để UI vẫn hiển thị được thay vì trống trơn.
   return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
 }
 
@@ -172,6 +216,29 @@ export function formatImageUrl(url) {
     return `${API_URL}${url}`;
   }
   return url;
+}
+
+function normalizeMedicine(m) {
+  const rawUrl = m.imageUrl || m.image_url || m.ImageUrl || '';
+  const imgUrl = formatImageUrl(rawUrl);
+  return {
+    ...m,
+    id: m.id || m.Id,
+    name: m.name || m.Name,
+    price: m.price !== undefined ? m.price : (m.Price !== undefined ? m.Price : 0),
+    old_price: m.old_price !== undefined ? m.old_price : m.OldPrice,
+    oldPrice: m.oldPrice !== undefined ? m.oldPrice : (m.old_price !== undefined ? m.old_price : m.OldPrice),
+    stock_quantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.stockQuantity !== undefined ? m.stockQuantity : (m.StockQuantity || 0)),
+    stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0)),
+    image_url: imgUrl,
+    imageUrl: imgUrl,
+    image: imgUrl,
+    packaging: m.packaging || m.Packaging,
+    unit: m.unit || m.Unit,
+    requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : (m.requiresPrescription !== undefined ? m.requiresPrescription : m.RequiresPrescription),
+    requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : (m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription),
+    rating: m.rating !== undefined ? m.rating : m.Rating
+  };
 }
 
 export async function fetchMedicines(categoryId = null, search = '', limit = null, offset = null, includeRx = false) {
@@ -202,27 +269,170 @@ export async function fetchMedicines(categoryId = null, search = '', limit = nul
   if (!res.ok) throw new Error('Không thể tải danh sách dược phẩm');
   const data = await res.json();
 
-  return (Array.isArray(data) ? data : []).map(m => {
-    const rawUrl = m.imageUrl || m.image_url || m.ImageUrl || '';
-    const imgUrl = formatImageUrl(rawUrl);
-    return {
-      ...m,
-      id: m.id || m.Id,
-      name: m.name || m.Name,
-      price: m.price !== undefined ? m.price : (m.Price !== undefined ? m.Price : 0),
-      old_price: m.old_price !== undefined ? m.old_price : m.OldPrice,
-      oldPrice: m.oldPrice !== undefined ? m.oldPrice : (m.old_price !== undefined ? m.old_price : m.OldPrice),
-      stock_quantity: m.stock_quantity !== undefined ? m.stock_quantity : (m.stockQuantity !== undefined ? m.stockQuantity : (m.StockQuantity || 0)),
-      stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity !== undefined ? m.stock_quantity : (m.StockQuantity || 0)),
-      image_url: imgUrl,
-      imageUrl: imgUrl,
-      image: imgUrl,
-      packaging: m.packaging || m.Packaging,
-      unit: m.unit || m.Unit,
-      requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : (m.requiresPrescription !== undefined ? m.requiresPrescription : m.RequiresPrescription),
-      requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : (m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription)
-    };
+  return (Array.isArray(data) ? data : []).map(normalizeMedicine);
+}
+
+// Gửi ảnh vỏ/hộp thuốc do khách hàng dán hoặc chọn ở ô tìm kiếm bằng hình ảnh để AI (Gemini Vision)
+// đọc tên sản phẩm, dùng làm từ khoá tìm kiếm. Timeout 20s vì gọi AI có thể chậm hơn API thường.
+export async function searchMedicineByImage(file) {
+  const body = new FormData();
+  body.append('file', file);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(`${API_URL}/medicines/search-by-image`, {
+      method: 'POST',
+      body,
+      signal: controller.signal
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.message || 'Không thể nhận diện ảnh sản phẩm');
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Quá thời gian nhận diện ảnh, vui lòng thử lại');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Tìm kiếm/lọc thuốc với đầy đủ tiêu chí (giá, xuất xứ, đơn vị, tồn kho, khuyến mãi,
+// bộ phận dùng/công dụng Đông y) + phân trang/sort THẬT phía server.
+export async function fetchMedicinesFiltered(filters = {}) {
+  const {
+    categoryId, search, minPrice, maxPrice, origin, unit, supplierId,
+    inStock, hasDiscount, partUsed, effects, herbalOnly,
+    includeRx = false, sort, page = 1, pageSize = 12,
+  } = filters;
+
+  const params = new URLSearchParams();
+  if (includeRx) params.set('include_rx', 'true');
+  if (categoryId) params.set('category_id', String(categoryId));
+  if (supplierId) params.set('supplier_id', String(supplierId));
+  if (search) params.set('name', search);
+  if (origin) params.set('origin', origin);
+  if (unit) params.set('unit', unit);
+  if (minPrice != null) params.set('min_price', String(minPrice));
+  if (maxPrice != null) params.set('max_price', String(maxPrice));
+  if (inStock) params.set('in_stock', 'true');
+  if (hasDiscount) params.set('has_discount', 'true');
+  if (partUsed) params.set('part_used', partUsed);
+  if (effects) params.set('effects', effects);
+  if (herbalOnly) params.set('herbal_only', 'true');
+  if (sort) params.set('sort', sort);
+  params.set('page', String(page));
+  params.set('page_size', String(pageSize));
+
+  const res = await fetch(`${API_URL}/medicines?${params.toString()}`);
+  if (!res.ok) throw new Error('Không thể tải danh sách dược phẩm');
+  const data = await res.json();
+
+  const items = Array.isArray(data) ? data : (data.items || []);
+  return {
+    items: items.map(normalizeMedicine),
+    totalCount: Array.isArray(data) ? items.length : (data.totalCount ?? items.length),
+  };
+}
+
+export async function fetchHerbalMedicineInfo(medicineId) {
+  try {
+    const res = await fetch(`${API_URL}/HerbalMedicine/${medicineId}`);
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+// Phân tích AI (Gemini) quy kinh/huyệt vị — chỉ gọi khi sản phẩm không có dữ liệu tĩnh đã kiểm duyệt.
+// Kết quả được backend cache theo medicineId nên gọi lại nhiều lần không tốn quota.
+export async function fetchMeridianAnalysis(medicineId) {
+  const res = await fetch(`${API_URL}/MeridianAnalysis/${medicineId}`);
+  if (!res.ok) throw new Error('Không thể phân tích quy kinh bằng AI.');
+  try {
+    return await res.json();
+  } catch {
+    throw new Error('Không thể phân tích quy kinh bằng AI. Vui lòng thử lại sau.');
+  }
+}
+
+export async function fetchHerbalFilterOptions() {
+  try {
+    const res = await fetch(`${API_URL}/medicines/herbal-filter-options`);
+    if (!res.ok) return { partUsed: [], effects: [] };
+    return await res.json();
+  } catch {
+    return { partUsed: [], effects: [] };
+  }
+}
+
+export async function verifyMedicineImage(payload) {
+  const res = await requestWithAuth(`${API_URL}/Medicines/verify-image`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload)
   });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Không thể thẩm định ảnh bằng AI');
+  }
+  return res.json();
+}
+
+export async function getPatientAddresses(userId) {
+  try {
+    const res = await requestWithAuth(`${API_URL}/patient-address/user/${userId}`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Không thể lấy danh sách địa chỉ:', err);
+    return [];
+  }
+}
+
+export async function addAddress(userId, dto) {
+  const res = await requestWithAuth(`${API_URL}/patient-address/user/${userId}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(dto),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể thêm địa chỉ');
+  return data;
+}
+
+export async function updateAddress(addressId, dto) {
+  const res = await requestWithAuth(`${API_URL}/patient-address/${addressId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(dto),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể cập nhật địa chỉ');
+  return data;
+}
+
+export async function deleteAddress(addressId) {
+  const res = await requestWithAuth(`${API_URL}/patient-address/${addressId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể xóa địa chỉ');
+  return data;
+}
+
+export async function setDefaultAddress(addressId) {
+  const res = await requestWithAuth(`${API_URL}/patient-address/${addressId}/set-default`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể đặt địa chỉ mặc định');
+  return data;
 }
 
 export async function loginUser(username, password) {
@@ -502,6 +712,18 @@ export async function verifyPayOSPayment(orderId) {
   return res.json();
 }
 
+export async function demoPayOSPayment(orderId) {
+  const res = await requestWithAuth(`${API_URL}/payos/demo-pay/${orderId}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Không thể thực hiện giả lập thanh toán PayOS');
+  }
+  return res.json();
+}
+
 export async function calculateShipping(address, deliveryMethod) {
   const res = await fetch(`${API_URL}/shipping/calculate`, {
     method: 'POST',
@@ -627,7 +849,6 @@ export async function addMedicine(medicineData) {
     name: medicineData.name,
     description: medicineData.description,
     price: parseFloat(medicineData.price),
-    stockQuantity: medicineData.stock_quantity !== undefined ? parseInt(medicineData.stock_quantity) : parseInt(medicineData.stockQuantity),
     unit: medicineData.unit,
     origin: medicineData.origin,
     packaging: medicineData.packaging,
@@ -635,8 +856,6 @@ export async function addMedicine(medicineData) {
     requiresPrescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
     categoryId: medicineData.category_id || medicineData.categoryId,
     supplierId: medicineData.supplier_id || medicineData.supplierId,
-    manufactureDate: medicineData.manufacture_date || medicineData.manufactureDate,
-    expiryDate: medicineData.expiry_date || medicineData.expiryDate,
   };
 
   const res = await requestWithAuth(`${API_URL}/medicines`, {
@@ -644,7 +863,10 @@ export async function addMedicine(medicineData) {
     headers: getAuthHeaders(),
     body: JSON.stringify(mappedData),
   });
-  if (!res.ok) throw new Error('Không thể thêm thuốc mới');
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể thêm thuốc mới');
+  }
   return res.json();
 }
 
@@ -654,7 +876,6 @@ export async function updateMedicine(medicineId, medicineData) {
     description: medicineData.description,
     price: parseFloat(medicineData.price),
     oldPrice: medicineData.old_price !== undefined ? parseFloat(medicineData.old_price) : (medicineData.oldPrice !== undefined ? parseFloat(medicineData.oldPrice) : null),
-    stockQuantity: parseInt(medicineData.stock_quantity !== undefined ? medicineData.stock_quantity : medicineData.stockQuantity),
     unit: medicineData.unit,
     origin: medicineData.origin,
     packaging: medicineData.packaging,
@@ -681,7 +902,11 @@ export async function deleteMedicine(medicineId) {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
-  if (!res.ok) throw new Error('Không thể xóa thuốc');
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể xóa thuốc');
+  }
   return res.json();
 }
 
@@ -690,6 +915,246 @@ export async function deleteMedicine(medicineId) {
 export async function fetchSuppliers() {
   const res = await fetch(`${API_URL}/suppliers`);
   if (!res.ok) throw new Error('Không thể tải danh sách nhà cung cấp');
+  return res.json();
+}
+
+function mapSupplierPayload(supplierData) {
+  return {
+    companyName: supplierData.companyName,
+    contactPerson: supplierData.contactPerson,
+    email: supplierData.email,
+    phone: supplierData.phone,
+    address: supplierData.address,
+    taxCode: supplierData.taxCode,
+    status: supplierData.status || 'Active',
+  };
+}
+
+export async function createSupplier(supplierData) {
+  const res = await requestWithAuth(`${API_URL}/api/Supplier`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(mapSupplierPayload(supplierData)),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể thêm nhà cung cấp');
+  }
+  return res.json();
+}
+
+export async function updateSupplier(id, supplierData) {
+  const res = await requestWithAuth(`${API_URL}/api/Supplier/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(mapSupplierPayload(supplierData)),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể cập nhật nhà cung cấp');
+  }
+  return res.json();
+}
+
+export async function deleteSupplier(id) {
+  const res = await requestWithAuth(`${API_URL}/api/Supplier/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể xóa nhà cung cấp');
+  }
+  return true;
+}
+
+export async function fetchNewsArticles(tag) {
+  try {
+    const qs = tag ? `?tag=${encodeURIComponent(tag)}` : '';
+    const res = await fetch(`${API_URL}/news${qs}`);
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  return [];
+}
+
+function mapNewsPayload(articleData) {
+  return {
+    title: articleData.title,
+    excerpt: articleData.excerpt,
+    content: articleData.content,
+    tag: articleData.tag,
+    imageUrl: articleData.imageUrl || '',
+    isActive: articleData.isActive !== undefined ? articleData.isActive : true,
+  };
+}
+
+export async function createNewsArticle(articleData) {
+  const res = await requestWithAuth(`${API_URL}/api/News`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(mapNewsPayload(articleData)),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể thêm bài viết');
+  }
+  return res.json();
+}
+
+export async function updateNewsArticle(id, articleData) {
+  const res = await requestWithAuth(`${API_URL}/api/News/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(mapNewsPayload(articleData)),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể cập nhật bài viết');
+  }
+  return res.json();
+}
+
+export async function deleteNewsArticle(id) {
+  const res = await requestWithAuth(`${API_URL}/api/News/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || 'Không thể xóa bài viết');
+  }
+  return true;
+}
+
+// ==== Quản lý theo lô (batch/lot) — nhập kho có hạn dùng riêng từng đợt ====
+
+export async function createStockBatch(batchData) {
+  const payload = {
+    medicineId: parseInt(batchData.medicineId),
+    warehouseId: parseInt(batchData.warehouseId),
+    batchNumber: batchData.batchNumber || '',
+    manufactureDate: batchData.manufactureDate,
+    expiryDate: batchData.expiryDate,
+    quantity: parseInt(batchData.quantity),
+    unitCostPrice: batchData.unitCostPrice ? parseFloat(batchData.unitCostPrice) : null,
+    supplierId: batchData.supplierId ? parseInt(batchData.supplierId) : null,
+    note: batchData.note || null,
+    registrationNumber: batchData.registrationNumber || null,
+    storageCondition: batchData.storageCondition || null,
+    qcStatus: batchData.qcStatus || 'Pass',
+  };
+  const res = await requestWithAuth(`${API_URL}/api/inventory/batches`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể nhập lô hàng mới');
+  }
+  return res.json();
+}
+
+export async function fetchBatchesByMedicine(medicineId, warehouseId = null) {
+  const qs = warehouseId ? `?warehouseId=${warehouseId}` : '';
+  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/medicine/${medicineId}${qs}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách lô hàng');
+  return res.json();
+}
+
+export async function fetchBatchesByWarehouse(warehouseId) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/warehouse/${warehouseId}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách lô hàng');
+  return res.json();
+}
+
+export async function disposeBatch(batchId, quantity, reason) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/${batchId}/dispose`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ quantity: quantity ? parseInt(quantity) : null, reason }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể hủy lô hàng');
+  }
+  return res.json();
+}
+
+export async function adjustBatch(batchId, quantityRemaining, reason) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/${batchId}/adjust`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ quantityRemaining: parseInt(quantityRemaining), reason }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể điều chỉnh lô hàng');
+  }
+  return res.json();
+}
+
+export async function fetchExpiryAlerts(daysAhead = 30) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/alerts/expiry?daysAhead=${daysAhead}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải cảnh báo hạn dùng');
+  return res.json();
+}
+
+// ==== Flash Sale hàng gần hết hạn ====
+
+export async function fetchFlashSaleCandidates(daysThreshold = 30) {
+  const res = await fetch(`${API_URL}/api/inventory/flash-sale/candidates?daysThreshold=${daysThreshold}`);
+  if (!res.ok) throw new Error('Không thể tải danh sách Flash Sale');
+  return res.json();
+}
+
+export async function applyFlashSale(medicineId, discountPercent = null) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/${medicineId}/apply`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ discountPercent }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể đưa sản phẩm vào Flash Sale');
+  }
+  return res.json();
+}
+
+export async function removeFlashSale(medicineId) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/${medicineId}/remove`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Không thể gỡ Flash Sale');
+  }
+  return res.json();
+}
+
+export async function fetchFlashSaleList(activeOnly = true) {
+  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/list?activeOnly=${activeOnly}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải bảng quản lý Flash Sale');
+  return res.json();
+}
+
+export async function fetchBatchProfitReport(warehouseId = null, medicineId = null) {
+  const params = new URLSearchParams();
+  if (warehouseId) params.set('warehouseId', warehouseId);
+  if (medicineId) params.set('medicineId', medicineId);
+  const res = await requestWithAuth(`${API_URL}/api/inventory/reports/profit?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải báo cáo lãi gộp');
   return res.json();
 }
 
@@ -1004,6 +1469,16 @@ export async function verifyAppointmentPayOS(orderCode) {
   return data;
 }
 
+export async function demoPayOSAppointment(orderCode) {
+  const res = await requestWithAuth(`${API_URL}/payos/appointment/demo-pay/${orderCode}`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error || 'Không thể giả lập thanh toán cọc lịch hẹn');
+  return data;
+}
+
 export async function getAppointmentCancellationQuote(id) {
   const res = await requestWithAuth(`${API_URL}/Appointment/${id}/cancellation-quote`, { headers: getAuthHeaders() });
   const data = await res.json().catch(() => null);
@@ -1049,13 +1524,27 @@ export async function fetchPrescriptions() {
     userId: p.userId || p.UserId,
     userName: p.userName || p.UserName || "",
     patientId: p.patientId || p.PatientId || p.userId || p.UserId,
+    patientName: p.patientName || p.PatientName || "",
+    isSubmittedForOther: p.isSubmittedForOther ?? p.IsSubmittedForOther ?? false,
     doctorName: p.doctorName || p.DoctorName || "Thầy thuốc Đông Y",
     hospital: p.hospital || p.Hospital || "Phòng khám Đông Y",
     prescriptionDate: p.prescriptionDate || p.PrescriptionDate,
+    diagnosisNote: p.diagnosisNote || p.DiagnosisNote || "",
+    imageUrl: p.imageUrl || p.ImageUrl || "",
     status: p.status || p.Status || "Pending",
     appointmentId: p.appointmentId !== undefined ? p.appointmentId : (p.AppointmentId !== undefined ? p.AppointmentId : null),
     items: p.items || p.Items || []
   }));
+}
+
+export async function checkHerbalSafety(medicineIds) {
+  const res = await requestWithAuth(`${API_URL}/herbalinteraction/check-safety`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ medicineIds }),
+  });
+  if (!res.ok) throw new Error('Không thể kiểm tra tương tác vị thuốc');
+  return res.json();
 }
 
 export async function createPrescription(prescriptionData) {
@@ -1076,6 +1565,38 @@ export async function updatePrescriptionStatus(prescriptionId, status) {
   });
   if (!res.ok) throw new Error('Không thể cập nhật trạng thái đơn thuốc');
   return res.json();
+}
+
+// Khách hàng tải ảnh toa thuốc thật lên (tính năng "Gửi Toa Thuốc" — miễn phí, không cần đặt lịch khám)
+export async function uploadPrescriptionImage(file) {
+  const body = new FormData(); body.append('file', file);
+  const res = await requestWithAuth(`${API_URL}/prescription/upload-image`, { method: 'POST', body });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể tải ảnh toa thuốc');
+  return data;
+}
+
+// Dược sĩ dùng AI đọc ảnh toa thuốc khách gửi để gợi ý sẵn thông tin & danh sách thuốc trước khi kê đơn
+export async function scanPrescriptionImage(prescriptionId) {
+  const res = await requestWithAuth(`${API_URL}/prescription/${prescriptionId}/scan-image`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể quét ảnh toa thuốc bằng AI');
+  return data;
+}
+
+// Dược sĩ hoàn thiện (kê đơn) một đơn thuốc "Pending" khách gửi kèm ảnh: gắn thuốc + trừ kho + duyệt
+export async function finalizePrescription(prescriptionId, payload) {
+  const res = await requestWithAuth(`${API_URL}/prescription/${prescriptionId}/finalize`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể hoàn thiện đơn thuốc');
+  return data;
 }
 
 // Product Review & Rating APIs
@@ -1153,14 +1674,45 @@ export async function deleteVoucher(id) {
   return res.json();
 }
 
-export async function validateVoucher(code, orderTotal) {
-  const res = await fetch(`${API_URL}/vouchers/validate`, {
+export async function fetchMyVouchers() {
+  const res = await requestWithAuth(`${API_URL}/vouchers/mine`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Không thể tải voucher của tôi');
+  return res.json();
+}
+
+// type: 'product' | 'shipping'. shippingFee chỉ cần khi type === 'shipping' (để cap giảm giá không vượt phí ship).
+export async function validateVoucher(code, orderTotal, type = 'product', shippingFee = 0) {
+  const res = await requestWithAuth(`${API_URL}/vouchers/validate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, order_total: orderTotal }),
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ code, order_total: orderTotal, type, shippingFee }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Voucher không hợp lệ');
+  return data;
+}
+
+// ============ VÒNG QUAY MAY MẮN APIs ============
+
+export async function fetchWheelPrizes() {
+  const res = await fetch(`${API_URL}/vouchers/wheel/prizes`);
+  if (!res.ok) throw new Error('Không thể tải danh sách phần thưởng');
+  return res.json();
+}
+
+export async function fetchWheelStatus() {
+  const res = await requestWithAuth(`${API_URL}/vouchers/wheel/status`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Không thể tải trạng thái vòng quay');
+  return res.json();
+}
+
+export async function spinWheel() {
+  const res = await requestWithAuth(`${API_URL}/vouchers/wheel/spin`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Không thể quay lúc này');
   return data;
 }
 

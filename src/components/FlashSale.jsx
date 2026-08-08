@@ -4,16 +4,15 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import './FlashSale.css';
-import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG } from '../services/api';
+import { fetchFlashSaleCandidates, formatImageUrl, FALLBACK_MED_IMG } from '../services/api';
 
-const FLASH_PRODUCTS = [
-  { id: 101, discount: 23, origin: 'Việt Nam', originColor: '#10b981' },
-  { id: 206, discount: 21, origin: 'Việt Nam', originColor: '#10b981' },
-  { id: 103, discount: 25, origin: 'Việt Nam', originColor: '#10b981' },
-  { id: 203, discount: 20, origin: 'Hàn Quốc', originColor: '#1d4ed8' },
-  { id: 204, discount: 23, origin: 'Hàn Quốc', originColor: '#1d4ed8' },
-  { id: 102, discount: 25, origin: 'Việt Nam', originColor: '#10b981' },
-];
+const originColorFor = (origin) => {
+  if (!origin) return '#6b7280';
+  const o = origin.toLowerCase();
+  if (o.includes('việt') || o.includes('viet')) return '#10b981';
+  if (o.includes('hàn') || o.includes('han')) return '#1d4ed8';
+  return '#7c3aed';
+};
 
 const FALLBACK_FLASH_PRODUCTS = [
   { id: 101, name: 'Hoạt Huyết Dưỡng Não Traphaco (Hộp 5 vỉ x 20 viên)', price: 95000, oldPrice: 105000, unit: 'Hộp', discount: 23, origin: 'Việt Nam', originColor: '#10b981', image: '' },
@@ -24,12 +23,6 @@ const FALLBACK_FLASH_PRODUCTS = [
   { id: 102, name: 'Trà Sâm Đất Vy & Tea giải nhiệt giải độc (Hộp 20 gói)', price: 45000, oldPrice: null, unit: 'Hộp', discount: 25, origin: 'Việt Nam', originColor: '#10b981', image: '' },
 ];
 
-const TIME_SLOTS = [
-  { label: '08:00 – 22:00', date: '18/05', active: true },
-  { label: '08:00 – 22:00', date: '19/05', active: false },
-  { label: '08:00 – 22:00', date: '20/05', active: false },
-];
-
 const maskPrice = (price) => {
   const s = price.toString();
   if (s.length <= 5) return 'xx.x00đ';
@@ -37,49 +30,31 @@ const maskPrice = (price) => {
   return 'x.xxx.x00đ';
 };
 
-const pad = (n) => String(n).padStart(2, '0');
-
 const FlashSale = ({ onProductClick }) => {
-  const [time, setTime] = useState({ h: 0, m: 7, s: 42 });
-  const [activeTab, setActiveTab] = useState(0);
   const [products, setProducts] = useState(FALLBACK_FLASH_PRODUCTS);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTime(prev => {
-        let { h, m, s } = prev;
-        if (s > 0) return { h, m, s: s - 1 };
-        if (m > 0) return { h, m: m - 1, s: 59 };
-        if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return { h: 0, m: 0, s: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
-
+  // Sản phẩm Flash Sale = thuốc/dược liệu có lô sắp/đã hết hạn được Dược sĩ đưa vào giảm giá,
+  // lấy trực tiếp từ tồn kho thật (không còn danh sách ID cứng).
   useEffect(() => {
     let mounted = true;
-    fetchMedicines()
+    fetchFlashSaleCandidates(30)
       .then(data => {
         if (!mounted || !Array.isArray(data)) return;
-        const byId = new Map(data.map(m => [m.id, m]));
-        setProducts(FLASH_PRODUCTS.map(spec => {
-          const m = byId.get(spec.id);
-          if (!m) return null;
-          const discount = m.oldPrice && m.oldPrice > m.price
-            ? Math.round(((m.oldPrice - m.price) / m.oldPrice) * 100)
-            : spec.discount;
-          return {
-            ...spec,
-            id: m.id,
-            name: m.name,
-            image: m.imageUrl || m.image,
-            price: m.price,
-            oldPrice: m.oldPrice,
-            unit: m.unit || spec.unit,
-            discount,
-          };
-        }).filter(Boolean));
+        const onSale = data
+          .filter(c => c.isOnFlashSale && c.price != null)
+          .map(c => ({
+            id: c.medicineId,
+            name: c.medicineName,
+            image: c.imageUrl,
+            price: c.price,
+            oldPrice: c.oldPrice,
+            unit: c.unit || 'Hộp',
+            discount: c.discount || c.suggestedDiscountPercent,
+            origin: c.origin || 'Việt Nam',
+            originColor: originColorFor(c.origin),
+            daysUntilExpiry: c.daysUntilExpiry,
+          }));
+        if (onSale.length > 0) setProducts(onSale);
       })
       .catch(() => {});
     return () => { mounted = false; };
@@ -106,31 +81,10 @@ const FlashSale = ({ onProductClick }) => {
 
       {/* Content panel */}
       <div className="flashsale-panel">
-        {/* Tabs */}
-        <div className="flashsale-tabs">
-          {TIME_SLOTS.map((slot, i) => (
-            <button
-              key={i}
-              className={`flashsale-tab ${i === activeTab ? 'active' : ''}`}
-              onClick={() => setActiveTab(i)}
-            >
-              <span className="tab-time">{slot.label}</span>
-              <span className="tab-date">{slot.date}</span>
-              <span className="tab-status">Sắp diễn ra</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Countdown */}
+        {/* Các sản phẩm dưới đây đang giảm giá NGAY LÚC NÀY (lấy từ tồn kho thật, không phải lịch giảm giá
+            theo khung giờ cố định) — nên hiển thị trạng thái "đang diễn ra" thay vì đếm ngược/tab ngày giả. */}
         <div className="flashsale-countdown">
-          <span className="countdown-label">Bắt đầu sau</span>
-          <div className="countdown-digits">
-            <span className="digit-box">{pad(time.h)}</span>
-            <span className="digit-sep">:</span>
-            <span className="digit-box">{pad(time.m)}</span>
-            <span className="digit-sep">:</span>
-            <span className="digit-box">{pad(time.s)}</span>
-          </div>
+          <span className="countdown-label">🔥 Đang diễn ra — số lượng có hạn</span>
         </div>
 
         {/* Product Swiper */}

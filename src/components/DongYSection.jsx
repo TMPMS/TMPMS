@@ -17,6 +17,7 @@ const mapProduct = (p) => ({
   description: p.description,
   requiresPrescription: p.requires_prescription !== undefined ? p.requires_prescription : p.requiresPrescription,
   stockQuantity: p.stockQuantity !== undefined ? p.stockQuantity : (p.stock_quantity !== undefined ? p.stock_quantity : 99),
+  rating: p.rating !== undefined ? p.rating : p.Rating,
 });
 
 const BENEFITS = [
