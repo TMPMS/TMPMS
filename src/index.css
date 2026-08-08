@@ -79,3 +79,70 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   content: '✗';
   background: #ef4444;
 }
+
+/* Rx appointment prompt modal */
+.rx-appt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+}
+.rx-appt-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 22px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.rx-appt-modal-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+.rx-appt-modal h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+.rx-appt-modal p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.rx-appt-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.rx-appt-modal-actions button {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.rx-appt-btn-secondary {
+  background: #f1f5f9;
+  color: var(--text-main);
+}
+.rx-appt-btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+.rx-appt-btn-primary:hover {
+  background: var(--primary-hover);
+}
+.rx-appt-btn-alt {
+  background: #fff;
+  color: var(--primary-color);
+  border: 1.5px solid var(--primary-color);
+}
+.rx-appt-btn-alt:hover {
+  background: var(--primary-light);
+}

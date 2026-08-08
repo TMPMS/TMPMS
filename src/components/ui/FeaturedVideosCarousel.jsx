@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { fetchHealthReelsVideos } from '../../services/api';
-import '../HealthVideoSection.css'; // Reuse & extend health video styles
+import './FeaturedVideosCarousel.css'; // Reuse & extend health video styles
 
 export default function FeaturedVideosCarousel({ onNavigate }) {
   const [videos, setVideos] = useState([]);

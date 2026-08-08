@@ -1,37 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { fetchNewsArticles } from '../services/api';
 import './HealthNews.css';
 
 const TABS = ['Dinh dưỡng', 'Phòng chữa bệnh', 'Khỏe đẹp'];
+const INITIAL_COUNT = 5;
 
-const ARTICLES = {
-  'Dinh dưỡng': [
-    { id: 1, title: 'Vitamin D3 và K2: Cần uống như thế nào để hiệu quả nhất?', excerpt: 'Vitamin D3 và K2 thường được kết hợp sử dụng để tăng cường hấp thu canxi cho xương...', tag: 'Dinh dưỡng', date: '17/05/2025', featured: true },
-    { id: 2, title: 'Canxi và Magie: Tại sao cần bổ sung cùng nhau?', excerpt: '', tag: 'Dinh dưỡng', date: '16/05/2025', featured: false },
-    { id: 3, title: 'Top 5 thực phẩm giàu Omega-3 tốt cho não bộ', excerpt: '', tag: 'Dinh dưỡng', date: '15/05/2025', featured: false },
-    { id: 4, title: 'Sữa công thức và những điều mẹ cần biết', excerpt: '', tag: 'Dinh dưỡng', date: '14/05/2025', featured: false },
-    { id: 5, title: 'Chế độ ăn uống cho người bị tiểu đường type 2', excerpt: '', tag: 'Dinh dưỡng', date: '13/05/2025', featured: false },
-  ],
-  'Phòng chữa bệnh': [
-    { id: 6, title: 'Cách phòng ngừa cảm cúm mùa hè hiệu quả', excerpt: 'Cảm cúm không chỉ xuất hiện vào mùa đông. Tìm hiểu ngay các biện pháp phòng ngừa...', tag: 'Phòng chữa bệnh', date: '17/05/2025', featured: true },
-    { id: 7, title: 'Huyết áp cao: Dấu hiệu và cách kiểm soát', excerpt: '', tag: 'Phòng chữa bệnh', date: '16/05/2025', featured: false },
-    { id: 8, title: 'Tiểu đường: Các biến chứng nguy hiểm cần biết', excerpt: '', tag: 'Phòng chữa bệnh', date: '15/05/2025', featured: false },
-    { id: 9, title: 'Sỏi thận: Nguyên nhân và phòng tránh', excerpt: '', tag: 'Phòng chữa bệnh', date: '14/05/2025', featured: false },
-    { id: 10, title: 'Các bệnh về gan: Dấu hiệu nhận biết sớm', excerpt: '', tag: 'Phòng chữa bệnh', date: '13/05/2025', featured: false },
-  ],
-  'Khỏe đẹp': [
-    { id: 11, title: 'Chăm sóc da mặt đúng cách theo từng loại da', excerpt: 'Biết loại da của mình là bước đầu tiên để có làn da khỏe đẹp. Xem ngay hướng dẫn...', tag: 'Khỏe đẹp', date: '17/05/2025', featured: true },
-    { id: 12, title: 'Kem chống nắng: Nên dùng SPF bao nhiêu?', excerpt: '', tag: 'Khỏe đẹp', date: '16/05/2025', featured: false },
-    { id: 13, title: 'Retinol và cách sử dụng an toàn cho da', excerpt: '', tag: 'Khỏe đẹp', date: '15/05/2025', featured: false },
-    { id: 14, title: 'Top 5 serum vitamin C tốt nhất hiện nay', excerpt: '', tag: 'Khỏe đẹp', date: '14/05/2025', featured: false },
-    { id: 15, title: 'Chế độ ngủ ảnh hưởng thế nào đến làn da?', excerpt: '', tag: 'Khỏe đẹp', date: '13/05/2025', featured: false },
-  ],
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('vi-VN');
 };
 
 const HealthNews = () => {
   const [tab, setTab] = useState(TABS[0]);
-  const articles = ARTICLES[tab] || [];
-  const featured = articles.find(a => a.featured);
-  const rest = articles.filter(a => !a.featured);
+  const [articles, setArticles] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+  const [openArticle, setOpenArticle] = useState(null);
+
+  useEffect(() => {
+    setShowAll(false);
+    fetchNewsArticles(tab).then(data => {
+      if (Array.isArray(data)) setArticles(data);
+    }).catch(() => setArticles([]));
+  }, [tab]);
+
+  if (articles.length === 0) return null;
+
+  const visible = showAll ? articles : articles.slice(0, INITIAL_COUNT);
+  const featured = visible[0];
+  const rest = visible.slice(1);
 
   return (
     <section className="hn-section">
@@ -45,21 +43,23 @@ const HealthNews = () => {
             <button key={t} className={`hn-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
           ))}
         </div>
-        <a href="#" className="hn-all">Xem tất cả →</a>
+        {!showAll && articles.length > INITIAL_COUNT && (
+          <a href="#" className="hn-all" onClick={(e) => { e.preventDefault(); setShowAll(true); }}>Xem tất cả →</a>
+        )}
       </div>
 
       <div className="hn-content">
         {/* Featured */}
         {featured && (
-          <a href="#" className="hn-featured">
+          <a href="#" className="hn-featured" onClick={(e) => { e.preventDefault(); setOpenArticle(featured); }}>
             <div className="hn-featured-img">
-              <div className="hn-img-placeholder">{featured.tag[0]}</div>
+              <div className="hn-img-placeholder">{(featured.tag || tab)[0]}</div>
             </div>
             <div className="hn-featured-body">
               <span className="hn-tag">{featured.tag}</span>
               <h3 className="hn-featured-title">{featured.title}</h3>
               <p className="hn-featured-excerpt">{featured.excerpt}</p>
-              <span className="hn-date">{featured.date}</span>
+              <span className="hn-date">{formatDate(featured.publishedDate || featured.published_date)}</span>
             </div>
           </a>
         )}
@@ -67,19 +67,31 @@ const HealthNews = () => {
         {/* List */}
         <div className="hn-list">
           {rest.map(a => (
-            <a key={a.id} href="#" className="hn-item">
+            <a key={a.id} href="#" className="hn-item" onClick={(e) => { e.preventDefault(); setOpenArticle(a); }}>
               <div className="hn-item-img">
-                <div className="hn-img-sm-placeholder">{a.tag[0]}</div>
+                <div className="hn-img-sm-placeholder">{(a.tag || tab)[0]}</div>
               </div>
               <div className="hn-item-body">
                 <span className="hn-tag">{a.tag}</span>
                 <p className="hn-item-title">{a.title}</p>
-                <span className="hn-date">{a.date}</span>
+                <span className="hn-date">{formatDate(a.publishedDate || a.published_date)}</span>
               </div>
             </a>
           ))}
         </div>
       </div>
+
+      {openArticle && (
+        <div className="hn-reader-overlay" onClick={() => setOpenArticle(null)}>
+          <div className="hn-reader" onClick={(e) => e.stopPropagation()}>
+            <button className="hn-reader-close" onClick={() => setOpenArticle(null)}>×</button>
+            <span className="hn-tag">{openArticle.tag}</span>
+            <h3 className="hn-reader-title">{openArticle.title}</h3>
+            <span className="hn-date">{formatDate(openArticle.publishedDate || openArticle.published_date)}</span>
+            <p className="hn-reader-body">{openArticle.content}</p>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

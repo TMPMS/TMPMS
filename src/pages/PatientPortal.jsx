@@ -56,6 +56,15 @@ const PatientPortal = ({ onBack }) => {
     loadPatientData();
   }, [user]);
 
+  // Khi được điều hướng tới đây từ lời mời "đặt lịch khám để được kê đơn" (thuốc kê đơn
+  // chưa có đơn thuốc được duyệt), tự động mở thẳng tab đặt lịch thay vì tab tổng quan.
+  useEffect(() => {
+    if (sessionStorage.getItem('pp_open_booking') === '1') {
+      sessionStorage.removeItem('pp_open_booking');
+      setActiveTab('diagnose');
+    }
+  }, []);
+
   const loadPatientData = async () => {
     setLoading(true);
     try {
@@ -333,9 +342,14 @@ const PatientPortal = ({ onBack }) => {
                             const alreadyAdded = !!cartAddedMap[`${p.id}-${item.medicineId}`];
                             const isAdding = addingCartKey === `${p.id}-${item.medicineId}`;
                             return (
-                              <div key={idx} className="item-row-detail">
-                                <span>🌿 {item.medicineName}</span>
-                                <strong>x{item.quantity}</strong>
+                              <div key={idx} className="item-row-detail" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                  <span>🌿 {item.medicineName}</span>
+                                  <strong>x{item.quantity}</strong>
+                                </div>
+                                {item.instructions && (
+                                  <span style={{ fontSize: 12, color: '#0f766e', marginTop: 2 }}>📝 Cách dùng: {item.instructions}</span>
+                                )}
                                 {(p.status === 'Approved' || p.status === 'Fulfilled') && (
                                   <button
                                     className="presc-add-cart-btn"

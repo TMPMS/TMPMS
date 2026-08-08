@@ -35,22 +35,29 @@ import PaymentResultView from './pages/PaymentResultView';
 
 import { fetchMedicines, verifyAppointmentPayOS } from './services/api';
 
-const mapProduct = (p) => ({
-  id: p.id,
-  name: p.name,
-  image: p.image_url || p.imageUrl,
-  price: parseFloat(p.price),
-  oldPrice: p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null),
-  unit: p.unit || 'Hộp',
-  discount: p.discount,
-  origin: p.origin || 'Việt Nam',
-  packaging: p.packaging || 'Hộp',
-  description: p.description,
-  requiresPrescription: p.requires_prescription !== undefined ? p.requires_prescription : p.requiresPrescription,
-  stockQuantity: p.stockQuantity !== undefined ? p.stockQuantity : (p.stock_quantity !== undefined ? p.stock_quantity : 99),
-});
+const mapProduct = (p) => {
+  const sid = p.supplierId !== undefined ? p.supplierId : (p.supplier_id !== undefined ? p.supplier_id : (p.SupplierId !== undefined ? p.SupplierId : 1));
+  return {
+    id: p.id || p.Id,
+    name: p.name || p.Name,
+    image: p.image_url || p.imageUrl || p.ImageUrl,
+    price: parseFloat(p.price !== undefined ? p.price : (p.Price !== undefined ? p.Price : 0)),
+    oldPrice: p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : (p.OldPrice ? parseFloat(p.OldPrice) : null)),
+    unit: p.unit || p.Unit || 'Hộp',
+    discount: p.discount,
+    origin: p.origin || p.Origin || 'Việt Nam',
+    packaging: p.packaging || p.Packaging || 'Hộp',
+    description: p.description || p.Description,
+    supplierId: sid,
+    supplier_id: sid,
+    requiresPrescription: p.requires_prescription !== undefined ? p.requires_prescription : (p.requiresPrescription !== undefined ? p.requiresPrescription : p.RequiresPrescription),
+    stockQuantity: p.stockQuantity !== undefined ? p.stockQuantity : (p.stock_quantity !== undefined ? p.stock_quantity : (p.StockQuantity || 99)),
+    rating: p.rating !== undefined ? p.rating : p.Rating,
+  };
+};
 
 const categoryNames = {
+  9: 'Thảo Dược Đông Y',
   1: 'Thực phẩm chức năng',
   2: 'Dược mỹ phẩm',
   3: 'Thuốc',
@@ -85,6 +92,7 @@ function App() {
       .finally(() => { sessionStorage.removeItem('appointmentPaymentOrderCode'); setCurrentPage('patient-portal'); });
   }, []);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedSupplier, setSelectedSupplier] = useState(null); // { id, name } — chế độ xem sản phẩm theo nhà cung cấp (Brands)
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   const [bestSellers, setBestSellers] = useState([]);
@@ -93,8 +101,8 @@ function App() {
   const handleSelectProduct = (product) => {
     setSelectedProduct(product);
     setCurrentPage('detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const [categoryProducts, setCategoryProducts] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,24 +145,6 @@ function App() {
     return () => window.removeEventListener('app-navigate', handleAppNav);
   }, []);
 
-  // Load Category Products
-  useEffect(() => {
-    const loadCategoryProducts = async () => {
-      if (!selectedCategoryId) return;
-      try {
-        setLoading(true);
-        const catData = await fetchMedicines(selectedCategoryId);
-        setCategoryProducts(catData.map(mapProduct));
-      } catch (err) {
-        console.error('Không thể tải sản phẩm danh mục:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategoryProducts();
-  }, [selectedCategoryId]);
-
   const handleSearch = async (query) => {
     setSearchQuery(query);
     if (query.trim()) {
@@ -162,7 +152,7 @@ function App() {
       setSelectedCategoryId(null); // Clear category filter when searching
       setCurrentPage('home'); // Switch to home page when searching
       try {
-        const data = await fetchMedicines(null, query);
+        const data = await fetchMedicines(null, query, null, null, true);
         setSearchResults(data.map(mapProduct));
       } catch (err) {
         console.error('Lỗi tìm kiếm:', err);
@@ -177,12 +167,23 @@ function App() {
     setCurrentPage(page);
     setIsSearching(false);
     setSearchQuery('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectCategory = (catId) => {
     setSelectedCategoryId(catId);
+    setSelectedSupplier(null);
     setIsSearching(false);
     setSearchQuery('');
+  };
+
+  const handleSelectSupplier = (supplierId, supplierName) => {
+    setSelectedSupplier({ id: supplierId, name: supplierName });
+    setSelectedCategoryId(null);
+    setIsSearching(false);
+    setSearchQuery('');
+    setCurrentPage('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const [selectedQuizCode, setSelectedQuizCode] = useState(null);
@@ -249,20 +250,30 @@ function App() {
             <CategoryListView
               categoryId={selectedCategoryId}
               categoryName={categoryName}
-              products={categoryProducts}
               onProductClick={handleSelectProduct}
               onBackToHome={() => setSelectedCategoryId(null)}
             />
           );
         }
 
+        if (selectedSupplier) {
+          return (
+            <CategoryListView
+              supplierId={selectedSupplier.id}
+              supplierName={selectedSupplier.name}
+              onProductClick={handleSelectProduct}
+              onBackToHome={() => setSelectedSupplier(null)}
+            />
+          );
+        }
+
         return (
           <>
-            <HeroBanner />
+            <HeroBanner onSearch={handleSearch} />
             <DongYPromoStrip />
             <QuickLinks onNavigate={handleNavigate} />
             <FlashSale onProductClick={handleSelectProduct} />
-            <PromoBanners />
+            <PromoBanners onSearch={handleSearch} />
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '18px', color: 'var(--text-color)' }}>
                 Đang tải dữ liệu sản phẩm...
@@ -270,13 +281,13 @@ function App() {
             ) : (
               <>
                 <ProductSection title="🌿 Thuốc Đông Y Bán Chạy" products={bestSellers} onProductClick={handleSelectProduct} />
-                <FeaturedCategories />
+                <FeaturedCategories onSelectCategory={handleSelectCategory} onNavigate={handleNavigate} />
                 <DongYSection onProductClick={handleSelectProduct} />
                 <ProductSection title="🍃 Thảo Dược & Cao Dược Liệu" products={supplements} onProductClick={handleSelectProduct} />
               </>
             )}
             <FeaturedVideosCarousel onNavigate={handleNavigate} />
-            <Brands />
+            <Brands onSelectSupplier={handleSelectSupplier} />
             <HealthNews />
             <StorePromoBar onNavigate={handleNavigate} />
           </>

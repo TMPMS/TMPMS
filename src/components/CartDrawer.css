@@ -1,4 +1,10 @@
-/* ============ CART DRAWER ============ */
+/* Ẩn tất cả nút chat floating khi mở Giỏ hàng để tránh vướng víu */
+body.cart-drawer-open .float-wrap,
+body.cart-drawer-open .ai-chatbot-wrapper,
+body.cart-drawer-open .pharmacy-chat-widget {
+  display: none !important;
+}
+
 .cart-drawer-overlay {
   position: fixed;
   top: 0;
@@ -7,7 +13,7 @@
   height: 100vh;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  z-index: 999;
+  z-index: 100000;
   display: flex;
   justify-content: flex-end;
   animation: fadeIn 0.25s ease-out;
@@ -244,6 +250,14 @@
   color: #e1251b;
 }
 
+.cart-item-stock-warning {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
 .cart-item-actions {
   display: flex;
   justify-content: space-between;
@@ -303,7 +317,7 @@
 
 /* Footer */
 .cart-drawer-footer {
-  padding: 24px;
+  padding: 20px 24px 28px;
   border-top: 1px solid #e5e7eb;
   background-color: #fafafa;
 }
@@ -397,6 +411,30 @@
   border-color: #0d9488;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
+
+.saved-address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.saved-address-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1f2937;
+  transition: all 0.2s;
+}
+.saved-address-option:hover { border-color: #cbd5e1; }
+.saved-address-option.active { border-color: #0d9488; background-color: #f0fdfa; }
+.saved-address-option input { margin-top: 3px; accent-color: #0d9488; flex-shrink: 0; }
+.saved-address-default-tag { color: #0d9488; font-weight: 700; }
 
 .payment-options {
   display: flex;
@@ -634,6 +672,144 @@
   font-size: 11px;
   color: #16a34a;
   font-weight: 600;
+}
+
+.voucher-applied-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f0fdfa;
+  border: 1px dashed #0d9488;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.voucher-applied-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.voucher-applied-info strong {
+  font-family: monospace;
+  font-size: 13px;
+  color: #0f172a;
+  letter-spacing: 0.3px;
+}
+
+.voucher-applied-info span {
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.voucher-auto-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0d9488;
+  background: #ccfbf1;
+  border-radius: 20px;
+  padding: 1px 8px;
+  margin-top: 2px;
+}
+
+.voucher-applied-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.voucher-applied-actions button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.voucher-applied-actions button:hover {
+  background: #f1f5f9;
+}
+
+.voucher-list-toggle {
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0;
+  text-align: left;
+  width: fit-content;
+}
+
+.voucher-list-toggle:hover {
+  text-decoration: underline;
+}
+
+.voucher-list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px;
+  background: #fff;
+}
+
+.voucher-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.voucher-list-item:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+
+.voucher-list-item.active {
+  border-color: #0d9488;
+  background: #ccfbf1;
+}
+
+.voucher-list-item-code {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 12px;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.voucher-list-item-name {
+  flex: 1;
+  font-size: 11.5px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voucher-list-item-value {
+  font-size: 12px;
+  font-weight: 800;
+  color: #16a34a;
+  flex-shrink: 0;
 }
 
 /* ============ DETAILED CALCULATIONS BOX ============ */

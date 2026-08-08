@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound } from 'lucide-react';
+import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound, Plus, Trash2, Star } from 'lucide-react';
 import * as api from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
 import './ProfileView.css';
 
 const GENDER_OPTIONS = ['Nam', 'Nữ', 'Khác'];
+
+const EMPTY_ADDRESS_FORM = { addressLine: '', city: '', district: '', ward: '', isDefault: false };
 
 const VOUCHER_COLORS = [
   ['#0d9488', '#134e4a'],
@@ -19,7 +21,8 @@ export default function ProfileView({ onNavigate }) {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({});
-  const [vouchers, setVouchers] = useState([]);
+  const [vouchers, setVouchers] = useState([]); // voucher công khai
+  const [myVouchers, setMyVouchers] = useState([]); // voucher cá nhân (VD trúng vòng quay may mắn)
   const [copiedCode, setCopiedCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -28,16 +31,31 @@ export default function ProfileView({ onNavigate }) {
   const [error, setError] = useState('');
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
+  const [addresses, setAddresses] = useState([]);
+  const [addressFormOpen, setAddressFormOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressFormData, setAddressFormData] = useState(EMPTY_ADDRESS_FORM);
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrError, setAddrError] = useState('');
+
   const user = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+
+  const reloadAddresses = async () => {
+    if (!user?.id) return;
+    const list = await api.getPatientAddresses(user.id);
+    setAddresses(Array.isArray(list) ? list : []);
+  };
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setLoadError('');
       try {
-        const [prof, vouch] = await Promise.allSettled([
+        const [prof, vouch, myVouch, addr] = await Promise.allSettled([
           api.fetchMyProfile(),
           api.fetchVouchers(),
+          api.fetchMyVouchers(),
+          user?.id ? api.getPatientAddresses(user.id) : Promise.resolve([]),
         ]);
         if (prof.status === 'fulfilled') {
           setProfile(prof.value);
@@ -46,12 +64,83 @@ export default function ProfileView({ onNavigate }) {
           setLoadError(prof.reason?.message || 'Không thể tải hồ sơ.');
         }
         if (vouch.status === 'fulfilled') setVouchers(vouch.value);
+        if (myVouch.status === 'fulfilled') setMyVouchers(myVouch.value);
+        if (addr.status === 'fulfilled') setAddresses(Array.isArray(addr.value) ? addr.value : []);
       } finally {
         setLoading(false);
       }
     };
     load();
   }, []);
+
+  const openAddAddress = () => {
+    setEditingAddressId(null);
+    setAddressFormData(EMPTY_ADDRESS_FORM);
+    setAddrError('');
+    setAddressFormOpen(true);
+  };
+
+  const openEditAddress = (addr) => {
+    setEditingAddressId(addr.id);
+    setAddressFormData({
+      addressLine: addr.addressLine || '',
+      city: addr.city || '',
+      district: addr.district || '',
+      ward: addr.ward || '',
+      isDefault: !!addr.isDefault,
+    });
+    setAddrError('');
+    setAddressFormOpen(true);
+  };
+
+  const closeAddressForm = () => {
+    setAddressFormOpen(false);
+    setEditingAddressId(null);
+    setAddressFormData(EMPTY_ADDRESS_FORM);
+  };
+
+  const handleSaveAddress = async () => {
+    if (!addressFormData.addressLine.trim()) {
+      setAddrError('Vui lòng nhập địa chỉ chi tiết.');
+      return;
+    }
+    setAddrSaving(true);
+    setAddrError('');
+    try {
+      if (editingAddressId) {
+        await api.updateAddress(editingAddressId, addressFormData);
+      } else {
+        await api.addAddress(user.id, addressFormData);
+      }
+      await reloadAddresses();
+      closeAddressForm();
+    } catch (e) {
+      setAddrError(e.message || 'Không thể lưu địa chỉ.');
+    } finally {
+      setAddrSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm('Xóa địa chỉ này?')) return;
+    setAddrError('');
+    try {
+      await api.deleteAddress(addressId);
+      await reloadAddresses();
+    } catch (e) {
+      setAddrError(e.message || 'Không thể xóa địa chỉ.');
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    setAddrError('');
+    try {
+      await api.setDefaultAddress(addressId);
+      await reloadAddresses();
+    } catch (e) {
+      setAddrError(e.message || 'Không thể đặt địa chỉ mặc định.');
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -96,6 +185,46 @@ export default function ProfileView({ onNavigate }) {
 
   const formatPrice = (p) =>
     p == null ? 'Liên hệ' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+
+  const renderVoucherCard = (v, i) => {
+    const [bg1, bg2] = VOUCHER_COLORS[i % VOUCHER_COLORS.length];
+    const isCopied = copiedCode === v.code;
+    const daysLeft = v.endDate ? Math.ceil((new Date(v.endDate) - new Date()) / 86400000) : null;
+
+    return (
+      <div key={v.id} className="voucher-card" style={{ '--c1': bg1, '--c2': bg2 }}>
+        <div className="vc-left">
+          <div className="vc-discount">
+            {v.discountType === 'percent'
+              ? <><span className="vc-val">{v.discountValue}%</span><span className="vc-type">GIẢM</span></>
+              : <><span className="vc-val">{new Intl.NumberFormat('vi-VN').format(v.discountValue)}</span><span className="vc-type">VND OFF</span></>
+            }
+          </div>
+          <div className="vc-zigzag" />
+        </div>
+        <div className="vc-right">
+          <div className="vc-name">{v.name}</div>
+          {v.minOrderValue > 0 && (
+            <div className="vc-condition">Đơn tối thiểu {formatPrice(v.minOrderValue)}</div>
+          )}
+          {v.maxDiscount && (
+            <div className="vc-condition">Giảm tối đa {formatPrice(v.maxDiscount)}</div>
+          )}
+          <div className="vc-code-row">
+            <span className="vc-code">{v.code}</span>
+            <button className="vc-copy-btn" onClick={() => handleCopy(v.code)}>
+              {isCopied ? <><Check size={12} /> Đã copy!</> : <><Copy size={12} /> Sao chép</>}
+            </button>
+          </div>
+          {daysLeft !== null && (
+            <div className={`vc-expires ${daysLeft <= 3 ? 'urgent' : ''}`}>
+              {daysLeft <= 0 ? 'Hết hạn' : `Còn ${daysLeft} ngày`}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const displayName = profile?.fullName || profile?.username || user?.username || 'Người dùng';
   const avatarLetter = (displayName || 'U')[0].toUpperCase();
@@ -152,11 +281,18 @@ export default function ProfileView({ onNavigate }) {
             <User size={16} /> Hồ sơ của tôi
           </button>
           <button
+            className={`pnav-btn ${activeTab === 'addresses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('addresses')}
+          >
+            <MapPin size={16} /> Sổ địa chỉ
+            <span className="pnav-badge">{addresses.length}</span>
+          </button>
+          <button
             className={`pnav-btn ${activeTab === 'vouchers' ? 'active' : ''}`}
             onClick={() => setActiveTab('vouchers')}
           >
-            <Tag size={16} /> Voucher của tôi
-            <span className="pnav-badge">{vouchers.length}</span>
+            <Tag size={16} /> Voucher
+            <span className="pnav-badge">{myVouchers.length + vouchers.length}</span>
           </button>
           <button
             className={`pnav-btn ${activeTab === 'orders' ? 'active' : ''}`}
@@ -295,62 +431,128 @@ export default function ProfileView({ onNavigate }) {
           </div>
         )}
 
-        {/* ─── TAB: VOUCHERS ─── */}
-        {activeTab === 'vouchers' && (
+        {/* ─── TAB: ADDRESSES ─── */}
+        {activeTab === 'addresses' && (
           <div className="profile-card">
             <div className="profile-card-header">
-              <h2>Voucher của tôi</h2>
+              <h2>Sổ địa chỉ</h2>
+              {!addressFormOpen && (
+                <button type="button" className="edit-btn" onClick={openAddAddress}>
+                  <Plus size={15} /> Thêm địa chỉ
+                </button>
+              )}
             </div>
 
-            {vouchers.length === 0 ? (
-              <div className="voucher-empty">
-                <Tag size={48} strokeWidth={1} />
-                <p>Chưa có voucher nào. Mua hàng để nhận voucher!</p>
-              </div>
-            ) : (
-              <div className="voucher-grid">
-                {vouchers.map((v, i) => {
-                  const [bg1, bg2] = VOUCHER_COLORS[i % VOUCHER_COLORS.length];
-                  const isCopied = copiedCode === v.code;
-                  const daysLeft = v.end_date ? Math.ceil((new Date(v.end_date) - new Date()) / 86400000) : null;
+            {addrError && <div className="profile-error" role="alert">{addrError}</div>}
 
-                  return (
-                    <div key={v.id} className="voucher-card" style={{ '--c1': bg1, '--c2': bg2 }}>
-                      <div className="vc-left">
-                        <div className="vc-discount">
-                          {v.discount_type === 'percent'
-                            ? <><span className="vc-val">{v.discount_value}%</span><span className="vc-type">GIẢM</span></>
-                            : <><span className="vc-val">{new Intl.NumberFormat('vi-VN').format(v.discount_value)}</span><span className="vc-type">VND OFF</span></>
-                          }
-                        </div>
-                        <div className="vc-zigzag" />
-                      </div>
-                      <div className="vc-right">
-                        <div className="vc-name">{v.name}</div>
-                        {v.min_order_value > 0 && (
-                          <div className="vc-condition">Đơn tối thiểu {formatPrice(v.min_order_value)}</div>
-                        )}
-                        {v.max_discount && (
-                          <div className="vc-condition">Giảm tối đa {formatPrice(v.max_discount)}</div>
-                        )}
-                        <div className="vc-code-row">
-                          <span className="vc-code">{v.code}</span>
-                          <button className="vc-copy-btn" onClick={() => handleCopy(v.code)}>
-                            {isCopied ? <><Check size={12} /> Đã copy!</> : <><Copy size={12} /> Sao chép</>}
-                          </button>
-                        </div>
-                        {daysLeft !== null && (
-                          <div className={`vc-expires ${daysLeft <= 3 ? 'urgent' : ''}`}>
-                            {daysLeft <= 0 ? 'Hết hạn' : `Còn ${daysLeft} ngày`}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+            {addressFormOpen && (
+              <div className="address-form">
+                <div className="profile-form-grid">
+                  <div className="pform-group pform-full">
+                    <label><MapPin size={13} /> Địa chỉ chi tiết (số nhà, đường)</label>
+                    <input className="pform-input" value={addressFormData.addressLine} onChange={e => setAddressFormData(p => ({ ...p, addressLine: e.target.value }))} placeholder="Số 12, ngõ 34, đường Láng" />
+                  </div>
+                  <div className="pform-group">
+                    <label>Phường/Xã</label>
+                    <input className="pform-input" value={addressFormData.ward} onChange={e => setAddressFormData(p => ({ ...p, ward: e.target.value }))} placeholder="Phường Láng Thượng" />
+                  </div>
+                  <div className="pform-group">
+                    <label>Quận/Huyện</label>
+                    <input className="pform-input" value={addressFormData.district} onChange={e => setAddressFormData(p => ({ ...p, district: e.target.value }))} placeholder="Đống Đa" />
+                  </div>
+                  <div className="pform-group pform-full">
+                    <label>Tỉnh/Thành phố</label>
+                    <input className="pform-input" value={addressFormData.city} onChange={e => setAddressFormData(p => ({ ...p, city: e.target.value }))} placeholder="Hà Nội" />
+                  </div>
+                  <div className="pform-group pform-full">
+                    <label className="address-default-check">
+                      <input type="checkbox" checked={addressFormData.isDefault} onChange={e => setAddressFormData(p => ({ ...p, isDefault: e.target.checked }))} />
+                      Đặt làm địa chỉ mặc định
+                    </label>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                  <button type="button" className="save-btn" onClick={handleSaveAddress} disabled={addrSaving}>
+                    <Save size={15} /> {addrSaving ? 'Đang lưu...' : 'Lưu địa chỉ'}
+                  </button>
+                  <button type="button" className="cancel-btn" onClick={closeAddressForm}>
+                    <X size={15} /> Hủy
+                  </button>
+                </div>
               </div>
             )}
+
+            {!addressFormOpen && (
+              addresses.length === 0 ? (
+                <div className="voucher-empty">
+                  <MapPin size={48} strokeWidth={1} />
+                  <p>Bạn chưa có địa chỉ nào. Thêm địa chỉ để đặt hàng nhanh hơn!</p>
+                </div>
+              ) : (
+                <div className="address-list">
+                  {addresses.map(addr => (
+                    <div key={addr.id} className={`address-card ${addr.isDefault ? 'is-default' : ''}`}>
+                      <div className="address-card-main">
+                        {addr.isDefault && <span className="address-default-badge"><Star size={11} /> Mặc định</span>}
+                        <p className="address-line">{addr.addressLine}</p>
+                        <p className="address-sub">{[addr.ward, addr.district, addr.city].filter(Boolean).join(', ')}</p>
+                      </div>
+                      <div className="address-card-actions">
+                        {!addr.isDefault && (
+                          <button type="button" className="address-action-btn" onClick={() => handleSetDefaultAddress(addr.id)}>
+                            <Star size={13} /> Đặt mặc định
+                          </button>
+                        )}
+                        <button type="button" className="address-action-btn" onClick={() => openEditAddress(addr)}>
+                          <Edit3 size={13} /> Sửa
+                        </button>
+                        <button type="button" className="address-action-btn danger" onClick={() => handleDeleteAddress(addr.id)}>
+                          <Trash2 size={13} /> Xóa
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
           </div>
+        )}
+
+        {/* ─── TAB: VOUCHERS ─── */}
+        {activeTab === 'vouchers' && (
+          <>
+            <div className="profile-card">
+              <div className="profile-card-header">
+                <h2>Voucher của tôi</h2>
+              </div>
+              {myVouchers.length === 0 ? (
+                <div className="voucher-empty">
+                  <Tag size={48} strokeWidth={1} />
+                  <p>Chưa có voucher cá nhân nào. Quay vòng quay may mắn mỗi ngày để nhận voucher!</p>
+                </div>
+              ) : (
+                <div className="voucher-grid">
+                  {myVouchers.map((v, i) => renderVoucherCard(v, i))}
+                </div>
+              )}
+            </div>
+
+            <div className="profile-card" style={{ marginTop: 16 }}>
+              <div className="profile-card-header">
+                <h2>Voucher công khai</h2>
+              </div>
+              {vouchers.length === 0 ? (
+                <div className="voucher-empty">
+                  <Tag size={48} strokeWidth={1} />
+                  <p>Hiện chưa có voucher công khai nào.</p>
+                </div>
+              ) : (
+                <div className="voucher-grid">
+                  {vouchers.map((v, i) => renderVoucherCard(v, i))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </main>
     </div>

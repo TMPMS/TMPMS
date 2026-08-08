@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { fetchProductReviews, checkReviewEligibility, submitProductReview } from '../services/api';
+import { fetchProductReviews, checkReviewEligibility, submitProductReview, fetchHerbalMedicineInfo } from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
+import { getMeridianInfoForMedicine, MERIDIANS_CATALOG } from '../data/meridianData';
+import { getStarRating } from '../components/ui/ProductCard';
 import './ProductDetailView.css';
+
+// three.js chỉ được tải khi người dùng thực sự mở modal 3D, tránh phình bundle chính.
+const Meridian3DModal = lazy(() => import('../components/ui/Meridian3DModal'));
 
 const ProductDetailView = ({ product, onBack }) => {
   const { addToCart } = useCart();
@@ -13,6 +18,8 @@ const ProductDetailView = ({ product, onBack }) => {
   const [isEligible, setIsEligible] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [showMeridianModal, setShowMeridianModal] = useState(false);
+  const [herbalInfo, setHerbalInfo] = useState(null);
 
   // Review Form state
   const [rating, setRating] = useState(5);
@@ -52,8 +59,16 @@ const ProductDetailView = ({ product, onBack }) => {
       }
     };
 
+    // Dữ liệu Tính vị/Công dụng thật từ backend (nếu dược sĩ/admin đã nhập), ưu tiên hơn
+    // chuỗi tĩnh trong meridianData.js để nội dung trên trang và trong modal 3D luôn khớp nhau.
+    const loadHerbalInfo = async () => {
+      const info = await fetchHerbalMedicineInfo(product.id);
+      setHerbalInfo(info);
+    };
+
     loadReviews();
     checkEligibility();
+    loadHerbalInfo();
   }, [product?.id, userId]);
 
   if (!product) {
@@ -70,12 +85,19 @@ const ProductDetailView = ({ product, onBack }) => {
   const displayPrice = product.price ? (typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0) : 0;
   const displayOldPrice = product.oldPrice ? (typeof product.oldPrice === 'number' ? product.oldPrice : parseFloat(product.oldPrice) || 0) : null;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    let successCount = 0;
     for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+      // eslint-disable-next-line no-await-in-loop
+      const ok = await addToCart(product);
+      if (!ok) break; // Dừng lại nếu bị chặn (ví dụ: cần đơn thuốc) để tránh gọi API thất bại nhiều lần
+      successCount++;
     }
-    // Show user some toast or visual feedback
-    alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng thành công!`);
+    if (successCount === quantity) {
+      alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng thành công!`);
+    } else if (successCount > 0) {
+      alert(`Đã thêm ${successCount}/${quantity} sản phẩm vào giỏ hàng.`);
+    }
   };
 
   const handleReviewSubmit = async (e) => {
@@ -100,9 +122,10 @@ const ProductDetailView = ({ product, onBack }) => {
     }
   };
 
+  const cardRating = getStarRating(product?.id);
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1) 
-    : null;
+    : cardRating;
 
   return (
     <div className="pd-container">
@@ -165,6 +188,58 @@ const ProductDetailView = ({ product, onBack }) => {
               Trạng thái: {product.stockQuantity <= 0 ? 'Tạm hết hàng' : `Còn hàng (Tồn kho: ${product.stockQuantity})`}
             </span>
           </div>
+
+          {/* Eastern Medicine Properties Card & Meridian 3D Trigger */}
+          {(() => {
+            const mData = getMeridianInfoForMedicine(product.name);
+            const activeMeridians = (mData?.meridians || []).map(k => MERIDIANS_CATALOG[k]).filter(Boolean);
+            // Ưu tiên dữ liệu thật từ backend (dược sĩ/admin nhập qua HerbalMedicineController),
+            // chỉ dùng chuỗi tĩnh trong meridianData.js làm dự phòng khi chưa có bản ghi HerbalMedicineInfo.
+            const natureText = herbalInfo?.properties || mData?.nature;
+            const functionsText = herbalInfo?.effects || mData?.functions;
+
+            return (
+              <div className="eastern-medicine-card" style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '14px 16px', margin: '12px 0 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '8px' }}>
+                    🌿 TÍNH VỊ Y HỌC CỔ TRUYỀN
+                  </span>
+                  <button
+                    onClick={() => setShowMeridianModal(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 8px rgba(56, 189, 248, 0.3)'
+                    }}
+                  >
+                    🌐 Xem Sơ Đồ Quy Kinh & Huyệt Vị 3D
+                  </button>
+                </div>
+                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.6' }}>
+                  {natureText && <p style={{ margin: '3px 0' }}><strong>Tính vị:</strong> {natureText}</p>}
+                  {activeMeridians.length > 0 ? (
+                    <p style={{ margin: '3px 0' }}>
+                      <strong>Quy kinh:</strong> {activeMeridians.map(m => m.name).join(', ')}
+                    </p>
+                  ) : (
+                    <p style={{ margin: '3px 0', color: '#64748b' }}>
+                      Nhấn "Xem Sơ Đồ Quy Kinh & Huyệt Vị 3D" để phân tích quy kinh bằng AI cho sản phẩm này.
+                    </p>
+                  )}
+                  {functionsText && <p style={{ margin: '3px 0' }}><strong>Công năng:</strong> {functionsText}</p>}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="pd-action-row">
             {product.priceStatus === 'contact' || product.price === null || product.price === undefined ? (
@@ -331,6 +406,21 @@ const ProductDetailView = ({ product, onBack }) => {
           )}
         </div>
       </div>
+
+      {/* 3D Interactive Meridian/Acupoint Modal (Three.js) — chỉ tải khi mở, không vào bundle chính */}
+      {showMeridianModal && (
+        <Suspense fallback={
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(8px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ color: '#e2e8f0', fontSize: '15px' }}>Đang tải mô hình 3D…</div>
+          </div>
+        }>
+          <Meridian3DModal
+            product={product}
+            curatedData={getMeridianInfoForMedicine(product.name)}
+            onClose={() => setShowMeridianModal(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

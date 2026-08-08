@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, CheckCircle2, ShieldAlert, FileText } from 'lucide-react';
-import { createPrescription } from '../../services/api';
+import { createPrescription, uploadPrescriptionImage } from '../../services/api';
 import { toLocalWallClockIso } from '../../utils/dateTime';
 import './UploadPrescriptionModal.css';
 
@@ -9,33 +9,42 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
   const [hospital, setHospital] = useState('');
   const [notes, setNotes] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-  
+  const [previewUrl, setPreviewUrl] = useState(''); // Xem trước cục bộ (local blob URL)
+  const [uploadedUrl, setUploadedUrl] = useState(''); // Đường dẫn ảnh thật đã lưu trên server
+  const [uploading, setUploading] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      // For demo / local database save, we'll use a placeholder or convert to base64
-      // In a real app we upload to Cloudinary/S3. Here we mock with a reliable health image
-      const mockImageUrls = [
-        "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop"
-      ];
-      const randomUrl = mockImageUrls[Math.floor(Math.random() * mockImageUrls.length)];
-      setPreviewUrl(randomUrl);
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploadedUrl('');
+    setError('');
+    setUploading(true);
+    try {
+      // Tải ảnh THẬT lên server — Dược sĩ cần xem đúng ảnh toa thuốc để duyệt, và AI chỉ đọc được
+      // đúng nội dung khi có ảnh thật (không dùng ảnh minh họa ngẫu nhiên như trước đây).
+      const { url } = await uploadPrescriptionImage(file);
+      setUploadedUrl(url);
+    } catch (err) {
+      setError(err.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
+      setSelectedFile(null);
+      setPreviewUrl('');
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!previewUrl) {
-      setError('Vui lòng chọn hoặc tải lên ảnh toa thuốc của bạn.');
+    if (!uploadedUrl) {
+      setError('Vui lòng chọn ảnh toa thuốc của bạn và chờ tải lên hoàn tất.');
       return;
     }
 
@@ -50,7 +59,8 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
         doctorName: doctorName || 'Bác sĩ chưa rõ',
         hospital: hospital || 'Bệnh viện chưa rõ',
         prescriptionDate: toLocalWallClockIso(new Date()),
-        imageUrl: previewUrl,
+        diagnosisNote: notes || null,
+        imageUrl: uploadedUrl,
         items: []
       };
 
@@ -63,6 +73,7 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
         setNotes('');
         setSelectedFile(null);
         setPreviewUrl('');
+        setUploadedUrl('');
         onClose();
       }, 3000);
     } catch (err) {
@@ -154,7 +165,9 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
                     {selectedFile ? (
                       <div className="upm-file-preview">
                         <img src={previewUrl} alt="Toa thuốc preview" className="upm-preview-img" />
-                        <span className="upm-file-name">{selectedFile.name} (Thay đổi ảnh)</span>
+                        <span className="upm-file-name">
+                          {selectedFile.name} {uploading ? '(Đang tải lên...)' : uploadedUrl ? '(Đã tải lên — nhấp để đổi ảnh)' : ''}
+                        </span>
                       </div>
                     ) : (
                       <>
@@ -183,8 +196,8 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
                 <button type="button" className="upm-cancel-btn" onClick={onClose} disabled={loading}>
                   Hủy bỏ
                 </button>
-                <button type="submit" className="upm-submit-btn" disabled={loading}>
-                  {loading ? 'Đang gửi toa...' : 'Gửi đơn thuốc cho Dược sĩ'}
+                <button type="submit" className="upm-submit-btn" disabled={loading || uploading || !uploadedUrl}>
+                  {loading ? 'Đang gửi toa...' : uploading ? 'Đang tải ảnh lên...' : 'Gửi đơn thuốc cho Dược sĩ'}
                 </button>
               </div>
             </form>

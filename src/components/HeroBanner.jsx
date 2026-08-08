@@ -14,6 +14,7 @@ const slides = [
     label: 'Thảo Dược Cổ Truyền\nViệt Nam',
     sub: 'TMPMS chắt lọc tinh hoa từ nguồn thảo dược thiên nhiên sạch, an toàn — chuẩn GMP-WHO',
     btn: 'Khám phá ngay',
+    searchTerm: 'thảo dược',
     btnColor: '#fff',
     btnBg: 'linear-gradient(135deg,#059669,#047857)',
     color: '#fff',
@@ -26,6 +27,7 @@ const slides = [
     label: 'Đông Trùng Hạ Thảo\nThượng Hạng',
     sub: 'Bồi bổ nguyên khí, tăng cường sức đề kháng và sinh lực toàn diện từ thiên nhiên',
     btn: 'Mua ngay',
+    searchTerm: 'đông trùng hạ thảo',
     btnColor: '#064e3b',
     btnBg: '#fff',
     color: '#fff',
@@ -38,6 +40,7 @@ const slides = [
     label: 'Hồng Sâm Hàn Quốc\n6 Năm Tuổi KGC',
     sub: 'Chuẩn hàng hiệu Cheong Kwan Jang — Tăng cường tuần hoàn máu và cải thiện sinh lực',
     btn: 'Xem sản phẩm',
+    searchTerm: 'hồng sâm',
     btnColor: '#78350f',
     btnBg: '#fef3c7',
     color: '#fff',
@@ -50,6 +53,7 @@ const slides = [
     label: 'Bộ Sưu Tập Linh Chi\nĐỏ Cao Cấp',
     sub: 'Tăng miễn dịch, chống oxy hóa, hỗ trợ gan — Chiết xuất Linh Chi đạt chuẩn quốc tế',
     btn: 'Nhận ưu đãi',
+    searchTerm: 'linh chi',
     btnColor: '#1e3a5f',
     btnBg: '#fff',
     color: '#fff',
@@ -65,6 +69,7 @@ const sideBanners = [
     label: 'TINH DẦU TRÀM HUẾ\nNGUYÊN CHẤT',
     link: 'Xem ngay →',
     accent: '#6ee7b7',
+    searchTerm: 'tinh dầu tràm',
   },
   {
     id: 2,
@@ -73,10 +78,11 @@ const sideBanners = [
     label: 'MẬT ONG RỪNG\nNGUYÊN CHẤT',
     link: 'Xem ngay →',
     accent: '#fcd34d',
+    searchTerm: 'mật ong rừng',
   },
 ];
 
-const HeroBanner = () => (
+const HeroBanner = ({ onSearch }) => (
   <div className="hero-banner">
     {/* Main Slider */}
     <div className="hero-main">
@@ -101,13 +107,14 @@ const HeroBanner = () => (
                 <span className="hero-tag">{slide.tag}</span>
                 <h2 className="hero-title" style={{ whiteSpace: 'pre-line' }}>{slide.label}</h2>
                 <p className="hero-sub">{slide.sub}</p>
-                <a
-                  href="#"
+                <button
+                  type="button"
                   className="hero-btn"
-                  style={{ background: slide.btnBg, color: slide.btnColor }}
+                  style={{ background: slide.btnBg, color: slide.btnColor, border: 'none', cursor: 'pointer', font: 'inherit' }}
+                  onClick={() => onSearch && onSearch(slide.searchTerm)}
                 >
                   {slide.btn}
-                </a>
+                </button>
               </div>
 
               {/* Decorative circles */}
@@ -132,9 +139,14 @@ const HeroBanner = () => (
           <div className="side-content">
             <span className="side-sub">{b.tag}</span>
             <strong className="side-label" style={{ whiteSpace: 'pre-line' }}>{b.label}</strong>
-            <a href="#" className="side-link" style={{ color: b.accent }}>
+            <button
+              type="button"
+              className="side-link"
+              style={{ color: b.accent, background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', padding: 0 }}
+              onClick={() => onSearch && onSearch(b.searchTerm)}
+            >
               {b.link}
-            </a>
+            </button>
           </div>
           <div className="side-shine" />
         </div>

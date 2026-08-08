@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Check, Clock3, Home, ReceiptText, RefreshCw } from 'lucide-react';
-import { verifyPayOSPayment } from '../services/api';
+import { AlertTriangle, Check, Clock3, Home, ReceiptText, RefreshCw, Zap } from 'lucide-react';
+import { verifyPayOSPayment, demoPayOSPayment } from '../services/api';
 import './PaymentResultView.css';
 
 const PaymentResultView = ({ orderCode, onNavigate }) => {
@@ -16,12 +16,22 @@ const PaymentResultView = ({ orderCode, onNavigate }) => {
       } else if (data.status === 'CANCELLED' || data.status === 'EXPIRED') {
         setResult({ status: 'failed', message: 'Giao dịch đã bị hủy hoặc liên kết thanh toán đã hết hạn.' });
       } else {
-        setResult({ status: 'pending', message: 'PayOS chưa ghi nhận thanh toán. Bạn có thể kiểm tra lại sau ít phút.' });
+        setResult({ status: 'pending', message: 'PayOS chưa ghi nhận thanh toán. Bạn có thể bấm nút "Giả lập Thanh toán Demo" bên dưới để hoàn tất thử nghiệm.' });
       }
     } catch (error) {
       setResult({ status: 'failed', message: error.message || 'Không thể kiểm tra giao dịch PayOS.' });
     }
   }, [orderCode]);
+
+  const handleDemoPay = async () => {
+    try {
+      setResult({ status: 'loading', message: 'Đang giả lập thanh toán PayOS thành công...' });
+      await demoPayOSPayment(orderCode);
+      setResult({ status: 'success', message: '🎉 Giả lập thanh toán DEMO thành công! Đơn hàng đã được ghi nhận Đã thanh toán.' });
+    } catch (err) {
+      setResult({ status: 'failed', message: err.message || 'Không thể thực hiện thanh toán demo.' });
+    }
+  };
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -62,11 +72,16 @@ const PaymentResultView = ({ orderCode, onNavigate }) => {
           </div>
         </div>
 
-        <div className="payment-result-actions">
+        <div className="payment-result-actions" style={{ flexDirection: 'column', gap: 10 }}>
           {result.status === 'failed' || result.status === 'pending' ? (
-            <button type="button" className="payment-result-btn payment-result-btn--primary" onClick={verifyPayment}>
-              <RefreshCw size={18} /> Kiểm tra lại
-            </button>
+            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+              <button type="button" className="payment-result-btn payment-result-btn--primary" onClick={verifyPayment} style={{ flex: 1 }}>
+                <RefreshCw size={18} /> Kiểm tra lại
+              </button>
+              <button type="button" className="payment-result-btn" onClick={handleDemoPay} style={{ flex: 1, background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', fontWeight: 700 }}>
+                <Zap size={18} /> ⚡ Demo Thanh Toán
+              </button>
+            </div>
           ) : (
             <button type="button" className="payment-result-btn payment-result-btn--primary" onClick={() => onNavigate('history')}>
               <ReceiptText size={18} /> Xem đơn hàng
@@ -78,7 +93,7 @@ const PaymentResultView = ({ orderCode, onNavigate }) => {
         </div>
 
         <p className="payment-result-help">
-          Nếu tiền đã bị trừ nhưng trạng thái chưa cập nhật, vui lòng đợi vài phút rồi kiểm tra lại.
+          Bạn có thể nhấn nút "⚡ Demo Thanh Toán" để giả lập giao dịch thành công ngay lập tức phục vụ báo cáo / thuyết trình.
         </p>
       </div>
     </section>
