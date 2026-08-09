@@ -42,16 +42,10 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
 
     initSession();
 
-    // Setup SignalR Connection with helper getAuthToken() from api.js
-    const token = api.getAuthToken();
-    if (!token) {
-      console.warn('SignalR Pharmacy Chat: Chưa có token xác thực, tạm dừng kết nối SignalR.');
-      return;
-    }
-
+    // Xác thực qua httpOnly cookie (access_token) được trình duyệt tự đính kèm khi withCredentials.
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${import.meta.env.VITE_API_URL ?? ''}/hubs/pharmacy-chat`, {
-        accessTokenFactory: () => api.getAuthToken()
+        withCredentials: true
       })
       .withAutomaticReconnect()
       .build();

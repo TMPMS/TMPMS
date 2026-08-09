@@ -124,9 +124,11 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
 
   const filteredSuggestions = useMemo(() => {
     if (!searchText) return [];
-    return allMedicines.filter(m => 
-      m.name.toLowerCase().includes(searchText.toLowerCase())
-    ).slice(0, 5);
+    const words = searchText.toLowerCase().split(' ').filter(Boolean);
+    return allMedicines.filter(m => {
+      const name = m.name.toLowerCase();
+      return words.every(w => name.includes(w));
+    }).slice(0, 5);
   }, [searchText, allMedicines]);
 
   const handlePrescriptionClick = () => {
