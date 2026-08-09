@@ -27,10 +27,24 @@ const ORDER_FILTERS = [
 
 // Tách riêng + memo hóa để danh sách hàng trăm sản phẩm không re-render mỗi khi gõ phím
 // trong form thêm/sửa sản phẩm bên cạnh (2 khối này cùng nằm trong AdminView).
-const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMedicineId, onEdit, onDelete }) {
+const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMedicineId, onEdit, onDelete, onDeleteMultiple }) {
   const [filterSearch, setFilterSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterLowStock, setFilterLowStock] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [brokenImgIds, setBrokenImgIds] = useState(() => new Set());
+
+  const toggleSelected = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const markImageBroken = (id) => {
+    setBrokenImgIds(prev => (prev.has(id) ? prev : new Set(prev).add(id)));
+  };
 
   const origins = useMemo(() => {
     const set = new Set();
@@ -62,7 +76,36 @@ const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMe
     <div className="admin-card products-list-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <h3 className="card-title" style={{ margin: 0 }}>📋 Danh sách Dược phẩm ({filteredMedicines.length}/{medicines.length})</h3>
+        {brokenImgIds.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set(filteredMedicines.filter(m => brokenImgIds.has(m.id)).map(m => m.id)))}
+            style={{ padding: '6px 10px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid #fca5a5', background: '#fee2e2', color: '#991b1b', cursor: 'pointer' }}
+          >
+            🖼️ Chọn tất cả ảnh lỗi ({brokenImgIds.size})
+          </button>
+        )}
       </div>
+
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '8px 12px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>Đã chọn {selectedIds.size} sản phẩm</span>
+          <button
+            type="button"
+            onClick={() => onDeleteMultiple(Array.from(selectedIds), () => setSelectedIds(new Set()))}
+            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, borderRadius: 6, border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer' }}
+          >
+            🗑️ Xóa mục đã chọn
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', color: '#475569', cursor: 'pointer' }}
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      )}
 
       {/* Admin Filter Controls */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
@@ -103,8 +146,15 @@ const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMe
         )}
         {filteredMedicines.map(m => (
           <div key={m.id} className={`medicine-crud-row ${editingMedicineId === m.id ? 'editing' : ''}`}>
+            <input
+              type="checkbox"
+              checked={selectedIds.has(m.id)}
+              onChange={() => toggleSelected(m.id)}
+              style={{ marginRight: 4, width: 16, height: 16, cursor: 'pointer', alignSelf: 'center' }}
+              title="Chọn để xóa hàng loạt"
+            />
             <div className="medicine-crud-img">
-              <img src={api.formatImageUrl(m.image_url)} alt={m.name} onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_MED_IMG; }} />
+              <img src={api.formatImageUrl(m.image_url)} alt={m.name} onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_MED_IMG; markImageBroken(m.id); }} />
             </div>
             <div className="medicine-crud-info">
               <strong>{m.name}</strong>
@@ -1105,6 +1155,33 @@ const AdminView = () => {
     } catch (err) {
       setError(err.message || 'Lỗi khi xóa vị thuốc.');
     }
+  }, [hasAccess, showSuccess]);
+
+  const handleDeleteMultipleMedicines = useCallback(async (ids, onDone) => {
+    if (!hasAccess([1])) {
+      setError('Chỉ Admin có quyền xóa thuốc.');
+      return;
+    }
+    if (!ids || ids.length === 0) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${ids.length} sản phẩm đã chọn khỏi hệ thống? (sản phẩm đã có đơn hàng/lô nhập sẽ chỉ bị ẩn, không mất dữ liệu)`)) return;
+
+    let okCount = 0;
+    const failed = [];
+    for (const id of ids) {
+      try {
+        await api.deleteMedicine(id);
+        okCount++;
+      } catch (err) {
+        failed.push(id);
+      }
+    }
+    setMedicines(prev => prev.filter(m => !ids.includes(m.id) || failed.includes(m.id)));
+    if (failed.length === 0) {
+      showSuccess(`Đã xóa/ẩn thành công ${okCount} sản phẩm.`);
+    } else {
+      setError(`Xóa được ${okCount}/${ids.length}. ${failed.length} sản phẩm lỗi (id: ${failed.join(', ')}).`);
+    }
+    if (onDone) onDone();
   }, [hasAccess, showSuccess]);
 
   // ---- Excel Bulk Import Handlers ----
@@ -3575,6 +3652,7 @@ const AdminView = () => {
                 editingMedicineId={editingMedicineId}
                 onEdit={handleEditMedicineClick}
                 onDelete={handleDeleteMedicine}
+                onDeleteMultiple={handleDeleteMultipleMedicines}
               />
             </div>
           )}
