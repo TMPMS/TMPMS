@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { askAiChatbot } from '../../services/api';
+import { askAiChatbot, formatImageUrl } from '../../services/api';
 import './AIChatbot.css';
 
 const AIChatbot = () => {
@@ -144,7 +144,7 @@ const AIChatbot = () => {
                     {/* Embedded Product Suggestion */}
                     {msg.product && (
                       <div className="msg-product-card">
-                        <img src={msg.product.image} alt={msg.product.name} />
+                        <img src={formatImageUrl(msg.product.image)} alt={msg.product.name} />
                         <div className="msg-prod-details">
                           <h5>{msg.product.name}</h5>
                           <span className="price">{msg.product.price != null ? `${msg.product.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}</span>
