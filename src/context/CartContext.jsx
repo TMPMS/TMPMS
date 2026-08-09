@@ -33,7 +33,7 @@ export const CartProvider = ({ children }) => {
         }
 
         // Update user object to persist resolved cartId.
-        // Merge into the LATEST stored user (do not clobber a just-refreshed token).
+        // Merge into the LATEST stored user so we don't clobber other fields written since load.
         const storedRaw = localStorage.getItem('user');
         const stored = storedRaw ? JSON.parse(storedRaw) : currentUser;
         stored.cart_id = cartId;
@@ -54,7 +54,7 @@ export const CartProvider = ({ children }) => {
           id: item.medicine.id,
           name: item.medicine.name,
           price: item.medicine.price,
-          imageUrl: item.medicine.image_url || item.medicine.imageUrl,
+          imageUrl: api.formatImageUrl(item.medicine.image_url || item.medicine.imageUrl),
           quantity: item.quantity,
           requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
           allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,
@@ -109,7 +109,7 @@ export const CartProvider = ({ children }) => {
           id: item.medicine.id,
           name: item.medicine.name,
           price: item.medicine.price,
-          imageUrl: item.medicine.image_url || item.medicine.imageUrl,
+          imageUrl: api.formatImageUrl(item.medicine.image_url || item.medicine.imageUrl),
           quantity: item.quantity,
           requiresPrescription: item.medicine.requiresPrescription !== undefined ? item.medicine.requiresPrescription : item.medicine.requires_prescription,
           allowedQuantity: item.allowedQuantity !== undefined ? item.allowedQuantity : null,

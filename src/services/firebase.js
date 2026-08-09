@@ -1,14 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
-// CẤU HÌNH FIREBASE PROJECT TỰ ĐỘNG THIẾT LẬP
+// Cấu hình Firebase project — không phải bí mật (Firebase web API key được thiết kế để
+// public, giới hạn quyền truy cập qua Firebase Security Rules/domain restriction chứ
+// không phải qua việc giữ kín key), nhưng đưa vào biến môi trường cho nhất quán với
+// phần còn lại của app và dễ đổi project khác.
 const firebaseConfig = {
-  apiKey: "AIzaSyAnCJlD11MYCNcYfX4xYuLWb3CocUccoQI",
-  authDomain: "tmpms-longchau.firebaseapp.com",
-  projectId: "tmpms-longchau",
-  storageBucket: "tmpms-longchau.firebasestorage.app",
-  messagingSenderId: "159926690260",
-  appId: "1:159926690260:web:ca175fc4f50cad2c7ab641"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "AIzaSyAnCJlD11MYCNcYfX4xYuLWb3CocUccoQI",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "tmpms-longchau.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "tmpms-longchau",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "tmpms-longchau.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "159926690260",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "1:159926690260:web:ca175fc4f50cad2c7ab641"
 };
 
 // Kiểm tra xem người dùng đã cấu hình Firebase thực tế chưa

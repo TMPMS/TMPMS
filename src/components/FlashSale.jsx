@@ -32,6 +32,10 @@ const maskPrice = (price) => {
 
 const FlashSale = ({ onProductClick }) => {
   const [products, setProducts] = useState(FALLBACK_FLASH_PRODUCTS);
+  // Thẻ mẫu (FALLBACK_FLASH_PRODUCTS) dùng id tự đặt, có thể trùng ngẫu nhiên với id thuốc thật
+  // trong DB — không cho bấm vào/thêm giỏ khi đang hiển thị thẻ mẫu, tránh trỏ nhầm sang sản phẩm
+  // thật khác hoàn toàn (sai tên, sai ảnh) chỉ vì id trùng.
+  const [isFallback, setIsFallback] = useState(true);
 
   // Sản phẩm Flash Sale = thuốc/dược liệu có lô sắp/đã hết hạn được Dược sĩ đưa vào giảm giá,
   // lấy trực tiếp từ tồn kho thật (không còn danh sách ID cứng).
@@ -54,7 +58,10 @@ const FlashSale = ({ onProductClick }) => {
             originColor: originColorFor(c.origin),
             daysUntilExpiry: c.daysUntilExpiry,
           }));
-        if (onSale.length > 0) setProducts(onSale);
+        if (onSale.length > 0) {
+          setProducts(onSale);
+          setIsFallback(false);
+        }
       })
       .catch(() => {});
     return () => { mounted = false; };
@@ -102,19 +109,19 @@ const FlashSale = ({ onProductClick }) => {
                   <div className="fs-discount-badge">-{p.discount}%</div>
 
                   {/* Image */}
-                  <div 
+                  <div
                     className="fs-img-wrap"
-                    onClick={onProductClick ? () => onProductClick(p) : undefined}
-                    style={onProductClick ? { cursor: 'pointer' } : {}}
+                    onClick={onProductClick && !isFallback ? () => onProductClick(p) : undefined}
+                    style={onProductClick && !isFallback ? { cursor: 'pointer' } : {}}
                   >
                     <img src={formatImageUrl(p.image)} alt={p.name} onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_MED_IMG; }} />
                   </div>
 
                   {/* Name */}
-                  <p 
+                  <p
                     className="fs-name"
-                    onClick={onProductClick ? () => onProductClick(p) : undefined}
-                    style={onProductClick ? { cursor: 'pointer' } : {}}
+                    onClick={onProductClick && !isFallback ? () => onProductClick(p) : undefined}
+                    style={onProductClick && !isFallback ? { cursor: 'pointer' } : {}}
                   >
                     {p.name}
                   </p>
@@ -129,12 +136,14 @@ const FlashSale = ({ onProductClick }) => {
                   {/* Hot deal pill */}
                   <div className="fs-hot-pill">🔥 Ưu đãi cực sốc</div>
 
-                  {/* CTA */}
-                  <button 
+                  {/* CTA — thẻ mẫu (isFallback) không cho bấm để tránh trỏ nhầm sang sản phẩm thật
+                      khác hoàn toàn chỉ vì id tự đặt trùng với id thật. */}
+                  <button
                     className="fs-cta"
-                    onClick={onProductClick ? () => onProductClick(p) : undefined}
+                    disabled={isFallback}
+                    onClick={!isFallback ? () => onProductClick?.(p) : undefined}
                   >
-                    Xem chi tiết
+                    {isFallback ? 'Sắp có ưu đãi' : 'Xem chi tiết'}
                   </button>
                 </div>
               </SwiperSlide>

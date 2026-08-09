@@ -238,7 +238,7 @@ const HistoryView = () => {
                 {order.items && order.items.map((item) => (
                   <div key={item.id} className="order-item-row">
                     <img
-                      src={item.imageUrl}
+                      src={api.formatImageUrl(item.imageUrl)}
                       alt={item.medicineName}
                       className="order-item-pic"
                       onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }}

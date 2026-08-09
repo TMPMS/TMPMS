@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import './App.css';
 import Header from './components/layout/Header';
 import HeroBanner from './components/HeroBanner';
@@ -17,7 +17,7 @@ import DongYSection from './components/DongYSection';
 
 // New Views
 import HistoryView from './pages/HistoryView';
-import AdminView from './pages/AdminView';
+const AdminView = lazy(() => import('./pages/AdminView'));
 import SuppliersView from './pages/SuppliersView';
 import SelfDiagnosis from './pages/SelfDiagnosis';
 import PatientPortal from './pages/PatientPortal';
@@ -193,7 +193,11 @@ function App() {
       case 'history':
         return <HistoryView />;
       case 'admin':
-        return <AdminView />;
+        return (
+          <Suspense fallback={<div style={{ padding: '80px 0', textAlign: 'center', color: '#0d9488', fontWeight: 600 }}>Đang tải bảng quản trị...</div>}>
+            <AdminView />
+          </Suspense>
+        );
       case 'suppliers':
         return <SuppliersView />;
       case 'store-finder':

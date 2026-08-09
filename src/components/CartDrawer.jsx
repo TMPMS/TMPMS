@@ -841,7 +841,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                 const otcAtLimit = item.stockQuantity != null && item.quantity >= item.stockQuantity;
                 return (
                 <div key={item.id} className="cart-item-card">
-                  <img src={api.formatImageUrl(item.imageUrl)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
+                  <img src={api.formatImageUrl(item.imageUrl || item.image)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                   <div className="cart-item-info">
                     <span className="cart-item-name">{item.name}</span>
                     <span className="cart-item-price">{formatPrice(item.price)}</span>
@@ -882,7 +882,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                     const atLimit = item.allowedQuantity != null && item.quantity >= item.allowedQuantity;
                     return (
                       <div key={item.id} className="cart-item-card">
-                        <img src={api.formatImageUrl(item.imageUrl)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
+                        <img src={api.formatImageUrl(item.imageUrl || item.image)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                         <div className="cart-item-info">
                           <span className="cart-item-name">{item.name}</span>
                           <span className="cart-item-price">{formatPrice(item.price)}</span>
