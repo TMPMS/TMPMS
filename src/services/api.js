@@ -931,7 +931,7 @@ function mapSupplierPayload(supplierData) {
 }
 
 export async function createSupplier(supplierData) {
-  const res = await requestWithAuth(`${API_URL}/api/Supplier`, {
+  const res = await requestWithAuth(`${API_URL}/Supplier`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(mapSupplierPayload(supplierData)),
@@ -944,7 +944,7 @@ export async function createSupplier(supplierData) {
 }
 
 export async function updateSupplier(id, supplierData) {
-  const res = await requestWithAuth(`${API_URL}/api/Supplier/${id}`, {
+  const res = await requestWithAuth(`${API_URL}/Supplier/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(mapSupplierPayload(supplierData)),
@@ -957,7 +957,7 @@ export async function updateSupplier(id, supplierData) {
 }
 
 export async function deleteSupplier(id) {
-  const res = await requestWithAuth(`${API_URL}/api/Supplier/${id}`, {
+  const res = await requestWithAuth(`${API_URL}/Supplier/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -989,7 +989,7 @@ function mapNewsPayload(articleData) {
 }
 
 export async function createNewsArticle(articleData) {
-  const res = await requestWithAuth(`${API_URL}/api/News`, {
+  const res = await requestWithAuth(`${API_URL}/News`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(mapNewsPayload(articleData)),
@@ -1002,7 +1002,7 @@ export async function createNewsArticle(articleData) {
 }
 
 export async function updateNewsArticle(id, articleData) {
-  const res = await requestWithAuth(`${API_URL}/api/News/${id}`, {
+  const res = await requestWithAuth(`${API_URL}/News/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(mapNewsPayload(articleData)),
@@ -1015,7 +1015,7 @@ export async function updateNewsArticle(id, articleData) {
 }
 
 export async function deleteNewsArticle(id) {
-  const res = await requestWithAuth(`${API_URL}/api/News/${id}`, {
+  const res = await requestWithAuth(`${API_URL}/News/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -1043,7 +1043,7 @@ export async function createStockBatch(batchData) {
     storageCondition: batchData.storageCondition || null,
     qcStatus: batchData.qcStatus || 'Pass',
   };
-  const res = await requestWithAuth(`${API_URL}/api/inventory/batches`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/batches`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -1057,7 +1057,7 @@ export async function createStockBatch(batchData) {
 
 export async function fetchBatchesByMedicine(medicineId, warehouseId = null) {
   const qs = warehouseId ? `?warehouseId=${warehouseId}` : '';
-  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/medicine/${medicineId}${qs}`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/batches/medicine/${medicineId}${qs}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải danh sách lô hàng');
@@ -1065,7 +1065,7 @@ export async function fetchBatchesByMedicine(medicineId, warehouseId = null) {
 }
 
 export async function fetchBatchesByWarehouse(warehouseId) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/warehouse/${warehouseId}`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/batches/warehouse/${warehouseId}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải danh sách lô hàng');
@@ -1073,7 +1073,7 @@ export async function fetchBatchesByWarehouse(warehouseId) {
 }
 
 export async function disposeBatch(batchId, quantity, reason) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/${batchId}/dispose`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/batches/${batchId}/dispose`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ quantity: quantity ? parseInt(quantity) : null, reason }),
@@ -1086,7 +1086,7 @@ export async function disposeBatch(batchId, quantity, reason) {
 }
 
 export async function adjustBatch(batchId, quantityRemaining, reason) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/batches/${batchId}/adjust`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/batches/${batchId}/adjust`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify({ quantityRemaining: parseInt(quantityRemaining), reason }),
@@ -1099,7 +1099,7 @@ export async function adjustBatch(batchId, quantityRemaining, reason) {
 }
 
 export async function fetchExpiryAlerts(daysAhead = 30) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/alerts/expiry?daysAhead=${daysAhead}`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/alerts/expiry?daysAhead=${daysAhead}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải cảnh báo hạn dùng');
@@ -1109,13 +1109,13 @@ export async function fetchExpiryAlerts(daysAhead = 30) {
 // ==== Flash Sale hàng gần hết hạn ====
 
 export async function fetchFlashSaleCandidates(daysThreshold = 30) {
-  const res = await fetch(`${API_URL}/api/inventory/flash-sale/candidates?daysThreshold=${daysThreshold}`);
+  const res = await fetch(`${API_URL}/inventory/flash-sale/candidates?daysThreshold=${daysThreshold}`);
   if (!res.ok) throw new Error('Không thể tải danh sách Flash Sale');
   return res.json();
 }
 
 export async function applyFlashSale(medicineId, discountPercent = null) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/${medicineId}/apply`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/flash-sale/${medicineId}/apply`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ discountPercent }),
@@ -1128,7 +1128,7 @@ export async function applyFlashSale(medicineId, discountPercent = null) {
 }
 
 export async function removeFlashSale(medicineId) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/${medicineId}/remove`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/flash-sale/${medicineId}/remove`, {
     method: 'POST',
     headers: getAuthHeaders(),
   });
@@ -1140,7 +1140,7 @@ export async function removeFlashSale(medicineId) {
 }
 
 export async function fetchFlashSaleList(activeOnly = true) {
-  const res = await requestWithAuth(`${API_URL}/api/inventory/flash-sale/list?activeOnly=${activeOnly}`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/flash-sale/list?activeOnly=${activeOnly}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải bảng quản lý Flash Sale');
@@ -1151,7 +1151,7 @@ export async function fetchBatchProfitReport(warehouseId = null, medicineId = nu
   const params = new URLSearchParams();
   if (warehouseId) params.set('warehouseId', warehouseId);
   if (medicineId) params.set('medicineId', medicineId);
-  const res = await requestWithAuth(`${API_URL}/api/inventory/reports/profit?${params.toString()}`, {
+  const res = await requestWithAuth(`${API_URL}/inventory/reports/profit?${params.toString()}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải báo cáo lãi gộp');
@@ -1208,7 +1208,7 @@ export async function updateUserRole(userId, roleInput) {
 }
 
 export async function toggleUserStatus(userId, isActive) {
-  const endpoint = isActive ? `/api/users/unlock/${userId}` : `/api/users/lock/${userId}`;
+  const endpoint = isActive ? `/users/unlock/${userId}` : `/users/lock/${userId}`;
   const res = await requestWithAuth(`${API_URL}${endpoint}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
