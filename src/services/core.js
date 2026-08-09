@@ -50,6 +50,9 @@ export async function requestWithAuth(url, options = {}) {
 export function formatImageUrl(url) {
   if (!url) return 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500';
   if (url.startsWith('/uploads/')) {
+    // KHÔNG bỏ /api ở đây: backend serve /uploads dưới prefix /api (xem Program.cs,
+    // StaticFileOptions RequestPath = "/api") vì reverse proxy production chỉ forward
+    // /api/* sang backend. Bỏ /api sẽ làm request rơi vào SPA fallback và ảnh 404.
     return `${API_URL}${url}`;
   }
   return url;
