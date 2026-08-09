@@ -213,7 +213,7 @@ export async function fetchCategories() {
 export function formatImageUrl(url) {
   if (!url) return 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500';
   if (url.startsWith('/uploads/')) {
-    return `${API_URL}${url}`;
+    return `${API_URL.replace(/\/api\/?$/, '')}${url}`;
   }
   return url;
 }
