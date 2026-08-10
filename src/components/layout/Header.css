@@ -334,6 +334,74 @@
   }
 }
 
+/* ============ RESPONSIVE / MOBILE ============ */
+@media (max-width: 768px) {
+  .main-header {
+    height: auto;
+    padding: 10px 0;
+  }
+  .main-header-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .logo-img { height: 38px; }
+
+  /* Search bar takes its own full-width row under logo + actions */
+  .search-wrap {
+    order: 3;
+    flex-basis: 100%;
+    width: 100%;
+  }
+  .search-bar { height: 40px; }
+  .quick-searches { display: none; }
+
+  /* Icon-only compact action buttons */
+  .header-actions { gap: 6px; }
+  .header-action-btn {
+    padding: 8px;
+    gap: 0;
+  }
+  .header-action-btn .action-line1,
+  .header-action-btn .action-line2 {
+    display: none;
+  }
+  .user-menu-container .header-action-btn > div:last-child {
+    display: none;
+  }
+
+  .search-suggestions-popover {
+    left: -12px;
+    right: -12px;
+    border-radius: 0;
+  }
+
+  /* Category bar becomes a horizontally-scrollable strip */
+  .cat-nav { height: 42px; }
+  .cat-nav-inner {
+    padding: 0 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cat-nav-inner::-webkit-scrollbar { display: none; }
+  .cat-nav-all { padding: 0 10px; }
+  .cat-nav-links { flex: none; }
+  .cat-nav-link { flex-shrink: 0; }
+  .cat-nav-link:last-child { margin-left: 8px !important; }
+
+  .mega-dropdown { width: 220px; }
+  .auth-modal { padding: 22px 18px 18px; }
+  .search-modal { padding: 22px 16px; }
+}
+
+@media (max-width: 420px) {
+  .logo-img { height: 32px; }
+  .header-actions { gap: 4px; }
+  .header-action-btn { padding: 7px; }
+}
+
 
 /* Sub dropdown */
 .cat-dropdown {

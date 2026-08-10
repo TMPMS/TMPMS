@@ -86,3 +86,12 @@
   padding: 8px;
   border-top: 1px solid #e5e7eb;
 }
+
+@media (max-width: 640px) {
+  .brands-section { padding: 14px; border-radius: 12px; }
+  .brands-title { font-size: 16px; }
+  .brand-img-placeholder { height: 90px; padding: 10px; }
+  .brand-name-text { font-size: 15px; }
+  .brands-swiper .swiper-button-next,
+  .brands-swiper .swiper-button-prev { display: none; }
+}

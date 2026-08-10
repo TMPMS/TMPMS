@@ -315,3 +315,10 @@
   justify-content: center;
   color: #94a3b8;
 }
+
+@media (max-width: 860px) {
+  .pharmacy-dashboard-container { flex-direction: column; height: auto; max-height: none; }
+  .pharmacy-dash-sidebar { width: 100%; max-height: 280px; border-right: none; border-bottom: 1px solid #e2e8f0; }
+  .pharmacy-dash-main { min-height: 420px; }
+  .dash-msg-row { max-width: 88%; }
+}

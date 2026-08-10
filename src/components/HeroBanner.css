@@ -232,3 +232,48 @@
 .hero-side-banner:hover .side-shine {
   left: 120%;
 }
+
+/* ============ RESPONSIVE / MOBILE ============ */
+@media (max-width: 768px) {
+  .hero-banner {
+    flex-direction: column;
+    height: auto;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .hero-main {
+    flex: none;
+    width: 100%;
+  }
+  .hero-slide,
+  .hero-swiper {
+    height: 220px;
+  }
+  .hero-slide {
+    padding: 20px 22px;
+  }
+  .hero-slide-content { max-width: 80%; }
+  .hero-tag { font-size: 11px; padding: 3px 10px; margin-bottom: 8px; }
+  .hero-title { font-size: 19px; margin-bottom: 8px; }
+  .hero-sub { font-size: 12.5px; margin-bottom: 14px; max-width: 100%; }
+  .hero-btn { padding: 9px 18px; font-size: 12.5px; }
+  .hero-nav-btn { width: 32px; height: 32px; font-size: 18px; }
+  .hero-herb-1, .hero-herb-2, .hero-herb-3 { font-size: 22px !important; }
+
+  .hero-side {
+    flex: none;
+    width: 100%;
+    flex-direction: row;
+  }
+  .hero-side-banner {
+    min-height: 100px;
+    padding: 12px 14px;
+  }
+  .side-sub { font-size: 9px; }
+  .side-label { font-size: 12px; margin-bottom: 4px; }
+  .side-link { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .hero-side { flex-direction: column; }
+}

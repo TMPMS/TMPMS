@@ -47,3 +47,18 @@
   text-align: center;
   line-height: 1.35;
 }
+
+@media (max-width: 700px) {
+  .quick-links-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 4px;
+    padding: 14px 10px;
+  }
+  .quick-link-icon { width: 44px; height: 44px; font-size: 20px; }
+  .quick-link-label { font-size: 11px; }
+}
+
+@media (max-width: 420px) {
+  .quick-links-bar { grid-template-columns: repeat(3, 1fr); }
+}

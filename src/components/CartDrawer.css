@@ -1123,3 +1123,10 @@ body.cart-drawer-open .pharmacy-chat-widget {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .cart-drawer-header { padding: 16px 16px; }
+  .cart-drawer-body { padding: 16px; }
+  .cart-drawer-footer { padding: 16px 16px 20px; }
+  .checkout-field-row { grid-template-columns: 1fr; }
+}

@@ -199,3 +199,13 @@
 @keyframes hql-spin {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 700px) {
+  .hql-container { padding: 16px 12px 40px; }
+  .hql-hero-banner { padding: 22px 18px; border-radius: 16px; }
+  .hql-hero-content h1 { font-size: 21px; }
+  .hql-hero-content p { font-size: 13.5px; }
+  .hql-quiz-grid { grid-template-columns: 1fr; gap: 14px; }
+  .hql-quiz-card { padding: 18px; }
+  .hql-section-title { font-size: 18px; }
+}

@@ -48,7 +48,19 @@ const Brands = ({ onSelectSupplier }) => {
           <span className="brands-shield" title="Thương hiệu uy tín">🛡️</span>
         </div>
       </div>
-      <Swiper modules={[Navigation]} spaceBetween={14} slidesPerView={6} navigation className="brands-swiper">
+      <Swiper
+        modules={[Navigation]}
+        spaceBetween={10}
+        slidesPerView={2.4}
+        breakpoints={{
+          480: { slidesPerView: 3, spaceBetween: 10 },
+          640: { slidesPerView: 4, spaceBetween: 12 },
+          900: { slidesPerView: 5, spaceBetween: 14 },
+          1180: { slidesPerView: 6, spaceBetween: 14 },
+        }}
+        navigation
+        className="brands-swiper"
+      >
         {brands.map((b, i) => {
           const id = b.id ?? b.Id;
           const name = b.companyName ?? b.CompanyName ?? b.name;

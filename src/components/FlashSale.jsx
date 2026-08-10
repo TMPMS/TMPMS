@@ -96,7 +96,19 @@ const FlashSale = ({ onProductClick }) => {
 
         {/* Product Swiper */}
         <div className="flashsale-products">
-          <Swiper modules={[Navigation]} spaceBetween={12} slidesPerView={5} navigation className="fs-swiper">
+          <Swiper
+            modules={[Navigation]}
+            spaceBetween={10}
+            slidesPerView={2.2}
+            breakpoints={{
+              480: { slidesPerView: 2.6, spaceBetween: 10 },
+              640: { slidesPerView: 3.2, spaceBetween: 12 },
+              900: { slidesPerView: 4, spaceBetween: 12 },
+              1180: { slidesPerView: 5, spaceBetween: 12 },
+            }}
+            navigation
+            className="fs-swiper"
+          >
             {products.map(p => (
               <SwiperSlide key={p.id}>
                 <div className="fs-card">

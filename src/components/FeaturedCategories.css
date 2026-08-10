@@ -145,5 +145,13 @@
 }
 
 @media (max-width: 600px) {
-  .feat-cats-grid { grid-template-columns: repeat(4, 1fr); }
+  .feat-cats-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .feat-cat-icon-wrap { width: 44px; height: 44px; }
+  .feat-cat-icon { font-size: 21px; }
+  .feat-cat-label { font-size: 10.5px; }
+  .feat-cats-title { font-size: 16px; }
+}
+
+@media (max-width: 380px) {
+  .feat-cats-grid { grid-template-columns: repeat(3, 1fr); }
 }

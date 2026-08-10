@@ -508,3 +508,23 @@
   color: #94a3b8;
   padding: 24px 0;
 }
+
+/* ============ RESPONSIVE / MOBILE ============ */
+@media (max-width: 900px) {
+  .pd-container { padding: 16px 0; }
+  .pd-card {
+    flex-direction: column;
+    padding: 18px;
+    gap: 20px;
+  }
+  .pd-left { max-width: 100%; }
+  .pd-image-wrapper { max-width: 320px; margin: 0 auto; }
+  .pd-name { font-size: 19px; }
+  .pd-price { font-size: 22px; }
+  .pd-meta-grid { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; }
+  .pd-action-row { flex-wrap: wrap; gap: 12px; }
+  .add-to-cart-btn { flex: 1 1 100%; padding: 0 16px; }
+  .pd-section { padding: 18px; }
+  .reviews-summary-row { flex-direction: column; gap: 16px; padding: 16px; }
+  .summary-left { border-right: none; padding-right: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; width: 100%; }
+}

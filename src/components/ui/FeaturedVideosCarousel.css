@@ -324,3 +324,12 @@
   margin: 8px 0 8px;
   line-height: 1.5;
 }
+
+@media (max-width: 700px) {
+  .health-video-section { margin: 22px 0; padding: 0; }
+  .hv-title { font-size: 16px; }
+  .hv-arrow { display: none; }
+  .hv-card { flex: 0 0 160px; }
+  .hv-thumb-wrap { height: 104px; }
+  .hv-lightbox-video { height: 200px; }
+}
