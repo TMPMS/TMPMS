@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ~/home/deploy/deploy
+            cd /home/deploy/deploy
             docker compose pull frontend
             docker compose up -d frontend
             docker image prune -f
