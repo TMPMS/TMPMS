@@ -390,3 +390,14 @@
   margin: 6px 0 0;
   line-height: 1.4;
 }
+
+/* ============ RESPONSIVE / MOBILE ============ */
+@media (max-width: 860px) {
+  .tracking-modal-backdrop { padding: 0; }
+  .tracking-modal-card { height: 100%; max-height: 100vh; border-radius: 0; }
+  .tracking-modal-body { flex-direction: column; overflow-y: auto; }
+  .map-wrapper { flex: none; height: 260px; }
+  .tracking-info-panel { flex: none; border-left: none; border-top: 1px solid #e2e8f0; }
+  .realtime-status-pill { left: 12px; font-size: 11px; padding: 6px 10px; }
+  .step-node { width: 58px; }
+}

@@ -334,3 +334,15 @@ button:disabled {
 .hqp-btn-booking:hover {
   background: #047857;
 }
+
+@media (max-width: 700px) {
+  .hqp-container { padding: 16px 12px 40px; }
+  .hqp-question-card { padding: 20px; }
+  .hqp-question-title { font-size: 17px; }
+  .hqp-option-item { padding: 12px 14px; }
+  .hqp-result-card { padding: 22px; }
+  .hqp-result-header h2 { font-size: 21px; }
+  .hqp-wizard-footer { flex-wrap: wrap; gap: 10px; }
+  .hqp-result-actions { flex-direction: column; }
+  .hqp-result-actions button { width: 100%; justify-content: center; }
+}

@@ -263,4 +263,9 @@
 @media (max-width: 600px) {
   .ds-grid { grid-template-columns: repeat(2, 1fr); }
   .ds-title { font-size: 20px; }
+  .dongy-section-inner { padding: 18px 16px 22px; }
+  .ds-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .ds-benefits { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ds-tabs { gap: 6px; }
+  .ds-tab { padding: 6px 14px; font-size: 12px; }
 }

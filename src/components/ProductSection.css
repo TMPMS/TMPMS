@@ -226,3 +226,11 @@
   transition: background 0.2s, transform 0.15s;
 }
 .pc-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+@media (max-width: 640px) {
+  .ps-section { padding: 14px; border-radius: 12px; }
+  .ps-title { font-size: 16px; }
+  .ps-swiper .swiper-button-next,
+  .ps-swiper .swiper-button-prev { display: none; }
+  .pc-img-wrap { height: 110px; }
+}

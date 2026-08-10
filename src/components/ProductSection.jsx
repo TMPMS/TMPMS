@@ -89,7 +89,19 @@ const ProductSection = ({ title, products, viewAllLink = '#', bgColor, onProduct
       <a href={viewAllLink} className="ps-view-all">Xem tất cả →</a>
     </div>
     <div className="ps-swiper-wrap">
-      <Swiper modules={[Navigation]} spaceBetween={14} slidesPerView={5} navigation className="ps-swiper">
+      <Swiper
+        modules={[Navigation]}
+        spaceBetween={10}
+        slidesPerView={2.2}
+        breakpoints={{
+          480: { slidesPerView: 2.6, spaceBetween: 10 },
+          640: { slidesPerView: 3.2, spaceBetween: 12 },
+          900: { slidesPerView: 4, spaceBetween: 14 },
+          1180: { slidesPerView: 5, spaceBetween: 14 },
+        }}
+        navigation
+        className="ps-swiper"
+      >
         {products.map(p => (
           <SwiperSlide key={p.id} style={{ height: 'auto' }}>
             <ProductCard product={p} onProductClick={onProductClick} />

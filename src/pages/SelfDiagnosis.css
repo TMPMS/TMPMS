@@ -573,4 +573,11 @@
 @media (max-width: 600px) {
   .booking-inputs .inputs-row { flex-direction: column; }
   .booking-input, .confirm-booking-btn { width: 100%; }
+  .self-diagnosis-container { margin: 16px auto; }
+  .diag-quiz-card, .diag-result-card { padding: 20px; border-radius: 18px; }
+  .quiz-header h2 { font-size: 18px; }
+  .wizard-question-text { font-size: 15.5px; }
+  .wizard-option-btn { padding: 13px 16px; }
+  .result-header h3 { font-size: 17px; }
+  .syndrome-title-box { flex-direction: column; }
 }

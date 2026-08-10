@@ -171,3 +171,13 @@
 }
 .hn-reader-title { margin: 10px 0 6px; font-size: 20px; }
 .hn-reader-body { margin-top: 14px; line-height: 1.7; color: #334155; white-space: pre-line; }
+
+@media (max-width: 700px) {
+  .hn-section { padding: 14px; border-radius: 12px; }
+  .hn-title { font-size: 16px; }
+  .hn-tabs { flex-basis: 100%; overflow-x: auto; scrollbar-width: none; }
+  .hn-tabs::-webkit-scrollbar { display: none; }
+  .hn-content { grid-template-columns: 1fr; gap: 16px; }
+  .hn-featured-img { height: 170px; }
+  .hn-reader { padding: 20px 16px; }
+}
