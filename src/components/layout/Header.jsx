@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import CartDrawer from '../CartDrawer';
 import UploadPrescriptionModal from '../ui/UploadPrescriptionModal';
 import SpinWheelModal from '../SpinWheelModal';
-import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG, requestPasswordReset, resetPassword, fetchWheelStatus, searchMedicineByImage } from '../../services/api';
+import { fetchMedicines, formatImageUrl, FALLBACK_MED_IMG, requestPasswordReset, resetPassword, sendOtp, fetchWheelStatus, searchMedicineByImage } from '../../services/api';
 import './Header.css';
 
 const USERNAME_PATTERN = /^[A-Za-z]+$/;
@@ -28,12 +28,13 @@ const categories = [
 
 const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => {
   const { cartCount } = useCart();
-  const { user, login, register, logout, loginWithGoogle } = useAuth();
-  
+  const { user, login, register, logout, loginWithGoogle, loginWithOtp } = useAuth();
+
   const [activeMenu, setActiveMenu] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // login | register | forgot | reset
+  const [authMode, setAuthMode] = useState('login'); // login | register | forgot | reset | otp-login
+  const [otpSent, setOtpSent] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   // Auth Form State
@@ -332,6 +333,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     setOtpCode('');
     setConfirmPassword('');
     setResendSeconds(0);
+    setOtpSent(false);
     setIsAuthModalOpen(true);
   };
 
@@ -368,6 +370,22 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         setAuthMode('reset');
         setResendSeconds(60);
         setAuthError('Mã xác nhận đã được gửi nếu email tồn tại trong hệ thống.');
+      } else if (authMode === 'otp-login') {
+        if (!/^0\d{9}$/.test(phone)) {
+          throw new Error('Số điện thoại không hợp lệ. Vui lòng nhập đúng số điện thoại Việt Nam.');
+        }
+        if (!otpSent) {
+          await sendOtp(phone);
+          setOtpSent(true);
+          setResendSeconds(60);
+          setAuthError('Mã OTP đã được gửi qua SMS.');
+        } else {
+          const loggedInUser = await loginWithOtp(phone, otpCode);
+          setIsAuthModalOpen(false);
+          if ([1, 3, 4].includes(loggedInUser.role_id) && onNavigate) {
+            onNavigate('admin');
+          }
+        }
       } else {
         if (!PASSWORD_PATTERN.test(password)) {
           throw new Error('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
@@ -396,6 +414,21 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
       setAuthError('Mã xác nhận mới đã được gửi và có hiệu lực trong 2 phút.');
     } catch (err) {
       setAuthError(err.message || 'Không thể gửi lại mã xác nhận.');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleResendLoginOtp = async () => {
+    if (resendSeconds > 0 || authSubmitting) return;
+    setAuthSubmitting(true);
+    setAuthError('');
+    try {
+      await sendOtp(phone);
+      setResendSeconds(60);
+      setAuthError('Mã OTP mới đã được gửi qua SMS.');
+    } catch (err) {
+      setAuthError(err.message || 'Không thể gửi lại mã OTP.');
     } finally {
       setAuthSubmitting(false);
     }
@@ -672,7 +705,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
           <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
             <button className="auth-modal-close" onClick={() => setIsAuthModalOpen(false)}>×</button>
             <h3 className="auth-modal-title">
-              {authMode === 'login' ? 'Đăng nhập tài khoản' : authMode === 'register' ? 'Đăng ký tài khoản' : authMode === 'forgot' ? 'Quên mật khẩu' : 'Đặt lại mật khẩu'}
+              {authMode === 'login' ? 'Đăng nhập tài khoản' : authMode === 'register' ? 'Đăng ký tài khoản' : authMode === 'otp-login' ? 'Đăng nhập bằng OTP' : authMode === 'forgot' ? 'Quên mật khẩu' : 'Đặt lại mật khẩu'}
             </h3>
             
             {authError && <div className="auth-error">{authError}</div>}
@@ -740,6 +773,36 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 </div>
               )}
 
+              {authMode === 'otp-login' && <>
+                <div className="auth-input-group">
+                  <label className="auth-input-label">Số điện thoại</label>
+                  <input
+                    type="tel"
+                    className="auth-input"
+                    required
+                    disabled={otpSent}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    pattern="0[0-9]{9}"
+                    inputMode="numeric"
+                    title="Số điện thoại gồm 10 chữ số và bắt đầu bằng số 0."
+                    placeholder="Ví dụ: 0912345678"
+                  />
+                </div>
+                {otpSent && (
+                  <div className="auth-input-group">
+                    <label className="auth-input-label">Mã OTP</label>
+                    <input className="auth-input" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))} placeholder="Nhập mã gồm 6 số" />
+                    <div className="auth-otp-actions">
+                      <span className="auth-field-hint">Mã có hiệu lực trong 3 phút, gửi qua SMS.</span>
+                      <button type="button" className="auth-resend-link" disabled={resendSeconds > 0 || authSubmitting} onClick={handleResendLoginOtp}>
+                        {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : 'Gửi lại mã'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>}
+
               {authMode === 'reset' && <>
                 <div className="auth-input-group">
                   <label className="auth-input-label">Mã xác nhận</label>
@@ -758,11 +821,20 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               </>}
 
               {authMode === 'login' && (
-                <button type="button" className="auth-forgot-link" onClick={() => { setAuthMode('forgot'); setAuthError(''); setEmail(''); }}>Quên mật khẩu?</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button type="button" className="auth-forgot-link" onClick={() => { setAuthMode('forgot'); setAuthError(''); setEmail(''); }}>Quên mật khẩu?</button>
+                  <button type="button" className="auth-forgot-link" onClick={() => openAuthModal('otp-login')}>Đăng nhập bằng OTP</button>
+                </div>
               )}
 
               <button type="submit" className="auth-submit-btn" disabled={authSubmitting}>
-                {authSubmitting ? 'Đang xử lý...' : authMode === 'login' ? 'Đăng nhập' : authMode === 'register' ? 'Đăng ký' : authMode === 'forgot' ? 'Gửi mã xác nhận' : 'Đặt lại mật khẩu'}
+                {authSubmitting
+                  ? 'Đang xử lý...'
+                  : authMode === 'login' ? 'Đăng nhập'
+                  : authMode === 'register' ? 'Đăng ký'
+                  : authMode === 'forgot' ? 'Gửi mã xác nhận'
+                  : authMode === 'otp-login' ? (otpSent ? 'Đăng nhập' : 'Gửi mã OTP')
+                  : 'Đặt lại mật khẩu'}
               </button>
             </form>
 

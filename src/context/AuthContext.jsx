@@ -82,6 +82,13 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const loginWithOtp = async (phone, code) => {
+    const data = await api.loginUserByOtp(phone, code);
+    setUser(data);
+    persistUser(data);
+    return data;
+  };
+
   const register = async (username, email, password, phone) => {
     const data = await api.registerUser(username, email, password, phone);
     return data;
@@ -94,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle, loginWithOtp }}>
       {children}
     </AuthContext.Provider>
   );
