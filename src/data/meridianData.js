@@ -79,7 +79,7 @@ export const HERBAL_MERIDIAN_MAPPING = [
         code: 'ST36',
         location: 'Dưới lõm ngoài xương bánh chè 3 thốn',
         benefit: 'Đại bổ nguyên khí, tăng cường tiêu hóa & hệ miễn dịch toàn thân.',
-        position: [0.32, -0.65, 0.15]
+        position: [0.32, -0.94, 0.15]
       }
     ]
   },
@@ -94,14 +94,14 @@ export const HERBAL_MERIDIAN_MAPPING = [
         code: 'LR3',
         location: 'Kẽ giữa ngón chân 1 và 2 đo lên 1.5 thốn',
         benefit: 'Sơ can lý khí, bình can tiềm dương, giảm căng thẳng.',
-        position: [0.18, -1.35, 0.28]
+        position: [0.18, -1.72, 0.28]
       },
       {
         name: 'Tam Âm Giao (SP6)',
         code: 'SP6',
         location: 'Trên đỉnh mắt cá trong 3 thốn',
         benefit: 'Bổ 3 kinh âm (Tỳ - Can - Thận), dưỡng huyết điều kinh.',
-        position: [0.22, -1.05, 0.12]
+        position: [0.22, -1.48, 0.12]
       },
       {
         name: 'Quan Nguyên (CV4)',
@@ -123,7 +123,7 @@ export const HERBAL_MERIDIAN_MAPPING = [
         code: 'SP10',
         location: 'Bờ trên trong xương bánh chè đo lên 2 thốn',
         benefit: 'Tụ huyết tư âm, thanh nhiệt hoạt huyết, trị ban ngứa.',
-        position: [0.25, -0.42, 0.2]
+        position: [0.25, -0.67, 0.2]
       },
       {
         name: 'Nội Quan (PC6)',
@@ -169,14 +169,14 @@ export const DEFAULT_HERBAL_MERIDIAN = {
       code: 'ST36',
       location: 'Dưới lõm ngoài xương bánh chè 3 thốn',
       benefit: 'Đại bổ nguyên khí, tăng cường tiêu hóa & miễn dịch.',
-      position: [0.32, -0.65, 0.15]
+      position: [0.32, -0.94, 0.15]
     },
     {
       name: 'Tam Âm Giao (SP6)',
       code: 'SP6',
       location: 'Trên đỉnh mắt cá trong 3 thốn',
       benefit: 'Bổ Tỳ Can Thận, dưỡng huyết bổ khí.',
-      position: [0.22, -1.05, 0.12]
+      position: [0.22, -1.48, 0.12]
     }
   ]
 };
