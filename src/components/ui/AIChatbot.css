@@ -391,6 +391,46 @@
   background: #0f766e;
 }
 
+.ai-mic-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.ai-mic-btn:hover {
+  background: #e2e8f0;
+}
+
+.ai-mic-btn.listening {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  animation: ai-mic-pulse 1.2s infinite;
+}
+
+@keyframes ai-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+}
+
+.ai-voice-error {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: #dc2626;
+  background: #fef2f2;
+  border-top: 1px solid #fecaca;
+}
+
 @keyframes upmScaleUp {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }

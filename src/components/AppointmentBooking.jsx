@@ -9,17 +9,19 @@ const LOCATIONS = ['Nhà thuốc TMPMS - Quận 1', 'Nhà thuốc TMPMS - Cầu 
 const pad = n => String(n).padStart(2, '0');
 const dateInput = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-export default function AppointmentBooking({ appointments = [], onBooked, onBack }) {
-  const [step, setStep] = useState(1);
-  const [symptoms, setSymptoms] = useState('');
+export default function AppointmentBooking({ appointments = [], onBooked, onBack, initialHold = null }) {
+  // Trợ lý AI đã giữ chỗ 1 khung giờ cụ thể trước khi vào trang này (vd "đặt lịch lúc 9h mai") —
+  // vào thẳng bước 3 (xác nhận + đặt cọc) với chỗ đã giữ sẵn, khỏi bắt khách chọn lại ngày/giờ.
+  const [step, setStep] = useState(initialHold ? 3 : 1);
+  const [symptoms, setSymptoms] = useState(initialHold?.symptomHint || '');
   const [note, setNote] = useState('');
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
-  const [location, setLocation] = useState(LOCATIONS[0]);
+  const [location, setLocation] = useState(initialHold?.location || LOCATIONS[0]);
   const [date, setDate] = useState(dateInput(new Date()));
   const [slots, setSlots] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [hold, setHold] = useState(null);
+  const [selected, setSelected] = useState(initialHold?.appointmentDate || null);
+  const [hold, setHold] = useState(initialHold ? { token: initialHold.token, expiresAt: initialHold.expiresAt, depositAmount: initialHold.depositAmount } : null);
   const [policy, setPolicy] = useState(false);
   const [method, setMethod] = useState('PayOS');
   const [busy, setBusy] = useState(false);
@@ -93,18 +95,23 @@ export default function AppointmentBooking({ appointments = [], onBooked, onBack
       <div className="booking-actions"><button className="secondary" onClick={() => setStep(1)}>Quay lại</button><button onClick={holdSlot} disabled={busy || !selected}>Giữ khung giờ</button></div>
     </section>}
     {step === 3 && <section>
-      <h3>Xác nhận và đặt cọc</h3><div className="booking-summary"><p><b>Triệu chứng:</b> {symptoms}</p><p><b>Thời gian:</b> {formatDateTimeVN(selected)}</p><p><b>Địa điểm:</b> {location}</p><p><b>Tiền cọc:</b> {Number(hold?.depositAmount || 0).toLocaleString('vi-VN')}đ</p></div>
+      <h3>Xác nhận và đặt cọc</h3>
+      <div className="booking-summary">
+        <label>Triệu chứng *</label>
+        <textarea rows="2" maxLength="500" value={symptoms} onChange={e => setSymptoms(e.target.value)} placeholder="Mô tả ngắn gọn triệu chứng/lý do khám…" />
+        <p><b>Thời gian:</b> {formatDateTimeVN(selected)}</p><p><b>Địa điểm:</b> {location}</p><p><b>Tiền cọc:</b> {Number(hold?.depositAmount || 0).toLocaleString('vi-VN')}đ</p>
+      </div>
       <div className="booking-policy"><b>Chính sách đổi, hủy và hoàn tiền</b><p>Hủy trước ít nhất 24 giờ: hoàn 100%. Hủy trong vòng 24 giờ: hoàn 50%. Không đến hoặc muộn quá 15 phút: không hoàn tiền. Nhà thuốc từ chối: hoàn 100%.</p><label><input type="checkbox" checked={policy} onChange={e => setPolicy(e.target.checked)}/> Tôi đã đọc và đồng ý chính sách</label></div>
       <label>Phương thức thanh toán<select value={method} onChange={e => setMethod(e.target.value)}><option value="PayOS">PayOS / Chuyển khoản ngân hàng</option></select></label>
       <div className="booking-actions" style={{ flexDirection: 'column', gap: '10px', width: '100%' }}>
         <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
           <button className="secondary" style={{ flex: 1 }} onClick={() => setStep(2)}>Chọn giờ khác</button>
-          <button style={{ flex: 2 }} onClick={checkout} disabled={busy || !policy}><ShieldCheck size={16}/>{busy ? 'Đang xử lý…' : 'Quét mã VietQR PayOS'}</button>
+          <button style={{ flex: 2 }} onClick={checkout} disabled={busy || !policy || !symptoms.trim()}><ShieldCheck size={16}/>{busy ? 'Đang xử lý…' : 'Quét mã VietQR PayOS'}</button>
         </div>
         <button
           type="button"
           onClick={demoCheckout}
-          disabled={busy || !policy}
+          disabled={busy || !policy || !symptoms.trim()}
           style={{
             background: 'linear-gradient(135deg, #10b981, #059669)',
             color: '#ffffff',

@@ -57,11 +57,18 @@ const PatientPortal = ({ onBack }) => {
   }, [user]);
 
   // Khi được điều hướng tới đây từ lời mời "đặt lịch khám để được kê đơn" (thuốc kê đơn
-  // chưa có đơn thuốc được duyệt), tự động mở thẳng tab đặt lịch thay vì tab tổng quan.
+  // chưa có đơn thuốc được duyệt) — hoặc từ Trợ lý AI sau khi đã giữ chỗ 1 khung giờ cụ thể
+  // (vd "đặt lịch lúc 9h mai") — tự động mở thẳng tab đặt lịch thay vì tab tổng quan.
+  const [aiHold, setAiHold] = useState(null);
   useEffect(() => {
     if (sessionStorage.getItem('pp_open_booking') === '1') {
       sessionStorage.removeItem('pp_open_booking');
       setActiveTab('diagnose');
+      const holdJson = sessionStorage.getItem('pp_ai_hold');
+      if (holdJson) {
+        sessionStorage.removeItem('pp_ai_hold');
+        try { setAiHold(JSON.parse(holdJson)); } catch { /* ignore malformed */ }
+      }
     }
   }, []);
 
@@ -268,7 +275,7 @@ const PatientPortal = ({ onBack }) => {
 
           {/* TAB: DIRECT APPOINTMENT BOOKING */}
           {activeTab === 'diagnose' && (
-            <AppointmentBooking appointments={myAppointments} onBack={() => setActiveTab('appointments')} onBooked={handleAppointmentBooked} />
+            <AppointmentBooking appointments={myAppointments} onBack={() => setActiveTab('appointments')} onBooked={handleAppointmentBooked} initialHold={aiHold} />
           )}
 
           {/* TAB: MY APPOINTMENTS */}
