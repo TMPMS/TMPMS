@@ -106,6 +106,13 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (patch) => {
     setUser(prev => {
       if (!prev) return prev;
+      // Bỏ qua nếu giá trị không đổi — nếu không, mỗi lần gọi sẽ tạo object user mới (dù nội dung
+      // giống hệt), khiến các useEffect phụ thuộc vào `user` (CartContext.loadCart,
+      // PatientPortal.loadPatientData, ...) chạy lại vô hạn: loadCart gọi updateUser({cart_id}) mỗi
+      // lần chạy -> user đổi reference -> loadCart (phụ thuộc [user]) bị tạo lại -> effect chạy lại
+      // -> gọi updateUser lần nữa -> lặp mãi, gây nhấp nháy "Đang liên kết hồ sơ bệnh án...".
+      const noChange = Object.keys(patch).every(k => prev[k] === patch[k]);
+      if (noChange) return prev;
       const next = { ...prev, ...patch };
       persistUser(next);
       return next;
