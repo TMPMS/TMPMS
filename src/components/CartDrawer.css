@@ -29,6 +29,16 @@ body.cart-drawer-open .pharmacy-chat-widget {
   flex-direction: column;
   animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  transition: width 0.25s ease;
+}
+
+/* Form thanh toán có nhiều mục (giao hàng, địa chỉ, 2 loại voucher, thanh toán, tổng tiền) —
+   420px quá chật trên desktop, dễ gây cảm giác dồn nén. Nới rộng riêng khi vào bước checkout,
+   chỉ áp dụng ở màn hình đủ rộng để không phá layout mobile. */
+@media (min-width: 768px) {
+  .cart-drawer.checkout-mode {
+    width: 560px;
+  }
 }
 
 @keyframes fadeIn {

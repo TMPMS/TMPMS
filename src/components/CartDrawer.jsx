@@ -463,7 +463,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
 
   return (
     <div className="cart-drawer-overlay" onClick={onClose}>
-      <div className="cart-drawer" onClick={(e) => e.stopPropagation()}>
+      <div className={`cart-drawer${checkoutMode ? ' checkout-mode' : ''}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="cart-drawer-header">
           <div className="cart-header-title">
