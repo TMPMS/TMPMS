@@ -28,22 +28,22 @@ const districtsMap = {
 
 const defaultStoreList = [
   // Hà Nội
-  { id: 1, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc FPT Long Châu 102 Cầu Giấy', address: '102 Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 21.036214, longitude: 105.795412 },
-  { id: 2, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc FPT Long Châu 24 Xuân Thủy', address: '24 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 21.036812, longitude: 105.786521 },
-  { id: 3, provinceId: 'hn', districtId: 'dd', name: 'Nhà thuốc FPT Long Châu 54 Chùa Bộc', address: '54 Chùa Bộc, Quang Trung, Đống Đa, Hà Nội', phone: '1800 6928', hours: '06:30 - 22:30', latitude: 21.007621, longitude: 105.828412 },
-  { id: 4, provinceId: 'hn', districtId: 'hk', name: 'Nhà thuốc FPT Long Châu 9 Hai Bà Trưng', address: '9 Hai Bà Trưng, Tràng Tiền, Hoàn Kiếm, Hà Nội', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 21.023512, longitude: 105.852412 },
-  
-  // TP. HCM
-  { id: 5, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc FPT Long Châu 12 Nguyễn Huệ', address: '12 Nguyễn Huệ, Bến Nghé, Quận 1, Hồ Chí Minh', phone: '1800 6928', hours: '24/7 (Mở cả đêm)', latitude: 10.774512, longitude: 106.704212 },
-  { id: 6, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc FPT Long Châu 85 Trần Hưng Đạo', address: '85 Trần Hưng Đạo, Cô Giang, Quận 1, Hồ Chí Minh', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 10.767512, longitude: 106.692412 },
+  { id: 1, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc TMPMS 102 Cầu Giấy', address: '102 Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.036214, longitude: 105.795412 },
+  { id: 2, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc TMPMS 24 Xuân Thủy', address: '24 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.036812, longitude: 105.786521 },
+  { id: 3, provinceId: 'hn', districtId: 'dd', name: 'Nhà thuốc TMPMS 54 Chùa Bộc', address: '54 Chùa Bộc, Quang Trung, Đống Đa, Hà Nội', phone: '0862 544 627', hours: '06:30 - 22:30', latitude: 21.007621, longitude: 105.828412 },
+  { id: 4, provinceId: 'hn', districtId: 'hk', name: 'Nhà thuốc TMPMS 9 Hai Bà Trưng', address: '9 Hai Bà Trưng, Tràng Tiền, Hoàn Kiếm, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.023512, longitude: 105.852412 },
 
-  // Đà Nẵng (Dữ liệu thật với tọa độ chính xác)
-  { id: 9, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc FPT Long Châu 52 Nguyễn Văn Linh', address: '52 Nguyễn Văn Linh, Phường Nam Dương, Quận Hải Châu, Đà Nẵng', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 16.060783, longitude: 108.217316 },
-  { id: 10, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc FPT Long Châu 112 Điện Biên Phủ', address: '112 Điện Biên Phủ, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 16.065842, longitude: 108.204561 },
-  { id: 11, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc Pharmacity 340 Hùng Vương', address: '340 Hùng Vương, Phường Vĩnh Trung, Quận Thanh Khê, Đà Nẵng', phone: '1800 6821', hours: '06:00 - 23:30', latitude: 16.067341, longitude: 108.212450 },
-  { id: 12, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc An Khang 456 Lê Duẩn', address: '456 Lê Duẩn, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '1900 1572', hours: '06:30 - 22:00', latitude: 16.068912, longitude: 108.208123 },
-  { id: 13, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc Phước Thọ (Đông Y & Tây Y)', address: '188 Đường 3 Tháng 2, Phường Thuận Phước, Quận Hải Châu, Đà Nẵng', phone: '0236 3822 559', hours: '07:00 - 21:30', latitude: 16.084530, longitude: 108.219842 },
-  { id: 14, provinceId: 'dn', districtId: 'nhs', name: 'Nhà thuốc FPT Long Châu 235 Ngũ Hành Sơn', address: '235 Ngũ Hành Sơn, Phường Mỹ An, Quận Ngũ Hành Sơn, Đà Nẵng', phone: '1800 6928', hours: '07:00 - 22:00', latitude: 16.046124, longitude: 108.240518 }
+  // TP. HCM
+  { id: 5, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc TMPMS 12 Nguyễn Huệ', address: '12 Nguyễn Huệ, Bến Nghé, Quận 1, Hồ Chí Minh', phone: '0862 544 627', hours: '24/7 (Mở cả đêm)', latitude: 10.774512, longitude: 106.704212 },
+  { id: 6, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc TMPMS 85 Trần Hưng Đạo', address: '85 Trần Hưng Đạo, Cô Giang, Quận 1, Hồ Chí Minh', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 10.767512, longitude: 106.692412 },
+
+  // Đà Nẵng
+  { id: 9, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc TMPMS 52 Nguyễn Văn Linh', address: '52 Nguyễn Văn Linh, Phường Nam Dương, Quận Hải Châu, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.060783, longitude: 108.217316 },
+  { id: 10, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 112 Điện Biên Phủ', address: '112 Điện Biên Phủ, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.065842, longitude: 108.204561 },
+  { id: 11, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 340 Hùng Vương', address: '340 Hùng Vương, Phường Vĩnh Trung, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '06:00 - 23:30', latitude: 16.067341, longitude: 108.212450 },
+  { id: 12, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 456 Lê Duẩn', address: '456 Lê Duẩn, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '06:30 - 22:00', latitude: 16.068912, longitude: 108.208123 },
+  { id: 13, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc TMPMS 188 Đường 3 Tháng 2 (Đông Y & Tây Y)', address: '188 Đường 3 Tháng 2, Phường Thuận Phước, Quận Hải Châu, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 21:30', latitude: 16.084530, longitude: 108.219842 },
+  { id: 14, provinceId: 'dn', districtId: 'nhs', name: 'Nhà thuốc TMPMS 235 Ngũ Hành Sơn', address: '235 Ngũ Hành Sơn, Phường Mỹ An, Quận Ngũ Hành Sơn, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.046124, longitude: 108.240518 }
 ];
 
 const StoreFinderView = ({ onBack }) => {

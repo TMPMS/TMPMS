@@ -29,7 +29,9 @@ const FeaturedCategories = ({ onSelectCategory, onNavigate }) => {
 
   useEffect(() => {
     fetchCategories().then(data => {
-      if (Array.isArray(data)) setCats(data);
+      // Chỉ hiện danh mục đã có sản phẩm — danh mục rỗng (vd mục điều hướng nội dung bị
+      // tạo nhầm thành Category) bấm vào chỉ ra trang trống, không nên hiện ở đây.
+      if (Array.isArray(data)) setCats(data.filter(c => (c.productCount ?? c.ProductCount ?? 0) > 0));
     }).catch(() => setCats([]));
   }, []);
 

@@ -49,19 +49,20 @@ const Footer = () => (
         <div className="footer-col">
           <h4 className="footer-col-title">TỔNG ĐÀI</h4>
           <ul className="footer-hotlines">
-            <li><span className="hotline-label">Mua hàng & CSKH:</span><a href="tel:18006928" className="hotline-num">1800 6928</a></li>
-            <li><span className="hotline-label">Châm cứu trị liệu:</span><a href="tel:18006928" className="hotline-num">1800 6928</a></li>
-            <li><span className="hotline-label">Góp ý & Khiếu nại:</span><a href="tel:18006928" className="hotline-num">1800 6928</a></li>
+            <li><span className="hotline-label">Mua hàng & CSKH:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
+            <li><span className="hotline-label">Châm cứu trị liệu:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
+            <li><span className="hotline-label">Góp ý & Khiếu nại:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
           </ul>
-          <p className="hotline-note">(Miễn phí, 8:00 – 22:00 kể cả lễ)</p>
+          <p className="hotline-note">(8:00 – 22:00 kể cả lễ)</p>
           <p className="footer-address">🏢 Số 1 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. HCM</p>
+          <p className="footer-address">✉️ <a href="mailto:ng.tammail@gmail.com">ng.tammail@gmail.com</a></p>
         </div>
 
         {/* Column 5 */}
         <div className="footer-col">
           <h4 className="footer-col-title">KẾT NỐI VỚI CHÚNG TÔI</h4>
           <div className="footer-socials">
-            <a href="#" className="social-btn fb">f Facebook</a>
+            <a href="https://www.facebook.com/profile.php?id=61592828656029" target="_blank" rel="noopener noreferrer" className="social-btn fb">f Facebook</a>
             <a href="#" className="social-btn zalo">Zalo</a>
             <a href="#" className="social-btn yt">▶ YouTube</a>
           </div>
