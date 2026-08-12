@@ -378,7 +378,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
           await sendOtp(phone);
           setOtpSent(true);
           setResendSeconds(60);
-          setAuthError('Mã OTP đã được gửi qua SMS.');
+          setAuthError('Mã OTP đã được gửi qua Zalo.');
         } else {
           const loggedInUser = await loginWithOtp(phone, otpCode);
           setIsAuthModalOpen(false);
@@ -426,7 +426,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     try {
       await sendOtp(phone);
       setResendSeconds(60);
-      setAuthError('Mã OTP mới đã được gửi qua SMS.');
+      setAuthError('Mã OTP mới đã được gửi qua Zalo.');
     } catch (err) {
       setAuthError(err.message || 'Không thể gửi lại mã OTP.');
     } finally {
@@ -794,7 +794,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                     <label className="auth-input-label">Mã OTP</label>
                     <input className="auth-input" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))} placeholder="Nhập mã gồm 6 số" />
                     <div className="auth-otp-actions">
-                      <span className="auth-field-hint">Mã có hiệu lực trong 3 phút, gửi qua SMS.</span>
+                      <span className="auth-field-hint">Mã có hiệu lực trong 3 phút, gửi qua Zalo.</span>
                       <button type="button" className="auth-resend-link" disabled={resendSeconds > 0 || authSubmitting} onClick={handleResendLoginOtp}>
                         {resendSeconds > 0 ? `Gửi lại sau ${resendSeconds}s` : 'Gửi lại mã'}
                       </button>
