@@ -607,11 +607,11 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               onClick={handlePrescriptionClick}
               style={{ cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}
             >
-              <div className="cart-icon-wrap" style={{ background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="cart-icon-wrap" style={{ background: '#f0fdfa', color: '#0f766e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <FileText size={22} />
               </div>
               <div>
-                <span className="action-line1" style={{ color: '#1d4ed8', fontWeight: 'bold' }}>Gửi toa thuốc</span>
+                <span className="action-line1" style={{ color: '#0f766e', fontWeight: 'bold' }}>Gửi toa thuốc</span>
                 <span className="action-line2">Dược sĩ bốc thuốc</span>
               </div>
             </button>
