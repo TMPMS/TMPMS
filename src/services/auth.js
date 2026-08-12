@@ -229,6 +229,15 @@ export async function toggleUserStatus(userId, isActive) {
   return res.json();
 }
 
+export async function deleteUser(userId) {
+  const res = await requestWithAuth(`${API_URL}/users/delete/${userId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể xóa người dùng');
+  return res.json();
+}
+
 // ============ PROFILE APIs ============
 
 function getUserIdHeader() {

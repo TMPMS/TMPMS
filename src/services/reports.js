@@ -56,6 +56,33 @@ export async function fetchReportStaffRevenue(from, to) {
 }
 
 
+export async function fetchReportAppointmentStatus() {
+  const res = await requestWithAuth(`${API_URL}/Report/appointment-status`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải phân bố trạng thái lịch hẹn');
+  return res.json();
+}
+
+
+export async function fetchReportPrescriptionStatus() {
+  const res = await requestWithAuth(`${API_URL}/Report/prescription-status`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải phân bố trạng thái đơn thuốc');
+  return res.json();
+}
+
+
+export async function fetchReportUserGrowth(from, to, groupBy = 'Day') {
+  const res = await requestWithAuth(`${API_URL}/Report/user-growth?from=${from}&to=${to}&groupBy=${groupBy}`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải thống kê người dùng mới');
+  return res.json();
+}
+
+
 export async function exportReportRevenueExcel(from, to, groupBy = 'Day') {
   const res = await requestWithAuth(`${API_URL}/Report/revenue/export-excel?from=${from}&to=${to}&groupBy=${groupBy}`, {
     headers: getAuthHeaders()

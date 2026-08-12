@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
-import { BarChart2, Users, Calendar, Package, Download, Tag, UserCog } from 'lucide-react';
+import { BarChart2, Users, Calendar, Package, Download, Tag, UserCog, FileText } from 'lucide-react';
 import { formatPrice } from './shared/adminFormat';
 
 // Báo cáo & Thống kê — tách từ AdminView.jsx (tab "stats").
@@ -18,6 +18,9 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
   const [statsDateTo, setStatsDateTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [customRevenueTrend, setCustomRevenueTrend] = useState(null);
   const [statsRangeLoading, setStatsRangeLoading] = useState(false);
+  const [appointmentStatusData, setAppointmentStatusData] = useState([]);
+  const [prescriptionStatusData, setPrescriptionStatusData] = useState([]);
+  const [userGrowthData, setUserGrowthData] = useState([]);
 
   const loadTabData = async () => {
     setLoading(true);
@@ -25,7 +28,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
     try {
       const last30From = new Date(Date.now() - 30 * 86400000).toISOString();
       const last30To = new Date().toISOString();
-      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData] = await Promise.all([
+      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData, apptStatusData, presStatusData, growthData] = await Promise.all([
         api.fetchAdminOrders().catch(() => []),
         api.fetchPatients().catch(() => []),
         api.fetchAppointments().catch(() => []),
@@ -34,6 +37,9 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
         api.fetchReportOrderStatus().catch(() => []),
         api.fetchReportCategoryRevenue(last30From, last30To).catch(() => []),
         api.fetchReportStaffRevenue(last30From, last30To).catch(() => []),
+        api.fetchReportAppointmentStatus().catch(() => []),
+        api.fetchReportPrescriptionStatus().catch(() => []),
+        api.fetchReportUserGrowth(last30From, last30To, 'Day').catch(() => []),
       ]);
       setOrders(ordersData);
       setPatients(patientsData);
@@ -43,6 +49,9 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
       setOrderStatusData(statusData);
       setCategoryRevenueData(catRevData);
       setStaffRevenueData(staffRevData);
+      setAppointmentStatusData(apptStatusData);
+      setPrescriptionStatusData(presStatusData);
+      setUserGrowthData(growthData);
     } catch (err) {
       console.error(err);
       setError('Lỗi tải dữ liệu. Vui lòng thử lại.');
@@ -336,6 +345,78 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                     <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Chưa có dữ liệu doanh thu theo nhân viên trong khoảng thời gian này (đơn cần được giao thành công để ghi nhận nhân viên xử lý).</p>
                   )}
                 </div>
+              </div>
+
+              {/* Appointment & Prescription Status Breakdown + User Growth */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+                <div className="admin-card">
+                  <h4 style={{ margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 15 }}>
+                    <Calendar size={16} /> Phân bố Trạng thái Lịch hẹn
+                  </h4>
+                  {appointmentStatusData.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {appointmentStatusData.map((s, i) => (
+                        <div key={s.status || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{s.status}</span>
+                          <strong style={{ fontSize: 14, color: '#0f766e' }}>{s.count} lịch</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Chưa có dữ liệu lịch hẹn.</p>
+                  )}
+                </div>
+
+                <div className="admin-card">
+                  <h4 style={{ margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 15 }}>
+                    <FileText size={16} /> Phân bố Trạng thái Đơn thuốc
+                  </h4>
+                  {prescriptionStatusData.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {prescriptionStatusData.map((s, i) => (
+                        <div key={s.status || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{s.status}</span>
+                          <strong style={{ fontSize: 14, color: '#0f766e' }}>{s.count} đơn</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Chưa có dữ liệu đơn thuốc.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-card" style={{ marginBottom: 20 }}>
+                <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
+                  <Users size={18} /> 📈 Người dùng mới đăng ký (30 Ngày gần nhất)
+                </h4>
+                {userGrowthData.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 160, padding: '20px 10px 10px', borderBottom: '1px solid #e2e8f0', overflowX: 'auto' }}>
+                    {userGrowthData.map((pt, idx) => {
+                      const maxUsers = Math.max(...userGrowthData.map(p => p.newUsers || 1));
+                      const barHeight = maxUsers > 0 ? Math.max(15, Math.round((pt.newUsers / maxUsers) * 120)) : 15;
+                      return (
+                        <div key={idx} style={{ flex: 1, minWidth: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} title={`${pt.period}: ${pt.newUsers} người dùng mới`}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#0f766e' }}>
+                            {pt.newUsers > 0 ? pt.newUsers : ''}
+                          </span>
+                          <div style={{
+                            width: '100%',
+                            height: `${barHeight}px`,
+                            background: 'linear-gradient(180deg, #6366f1 0%, #818cf8 100%)',
+                            borderRadius: '4px 4px 0 0',
+                            transition: 'height 0.3s ease'
+                          }} />
+                          <span style={{ fontSize: 10, color: '#64748b', whiteSpace: 'nowrap' }}>
+                            {pt.period ? pt.period.slice(-5) : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 13, color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Chưa có người dùng mới đăng ký trong khoảng thời gian này.</p>
+                )}
               </div>
 
               {/* Detail graphs placeholder & Lists */}

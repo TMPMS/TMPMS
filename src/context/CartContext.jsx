@@ -92,6 +92,13 @@ export const CartProvider = ({ children }) => {
   // Trả về true nếu thêm thành công, false nếu thất bại (kể cả khi bị chặn vì cần đơn thuốc),
   // để nơi gọi (ProductCard, trang chi tiết sản phẩm...) biết có nên báo "thành công" hay không.
   const addToCart = useCallback(async (product) => {
+    // Tài khoản Admin/Nhân viên Nhà thuốc không được tự mua hàng (chỉ được tạo đơn hộ khách qua
+    // kênh riêng ở trang quản trị) — chặn ngay từ bước thêm giỏ hàng.
+    if (user && (user.role_id === 1 || user.role_id === 3)) {
+      setToast({ visible: true, message: 'Tài khoản Admin/Nhân viên Nhà thuốc không thể tự mua hàng.', type: 'error' });
+      return false;
+    }
+
     let showToastMessage = `Đã thêm ${product.name} vào giỏ hàng`;
     let toastType = 'success';
     let success = true;

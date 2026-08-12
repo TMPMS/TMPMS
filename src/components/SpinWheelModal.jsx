@@ -144,7 +144,11 @@ const SpinWheelModal = ({ isOpen, onClose }) => {
             {error && <div className="wheel-error">{error}</div>}
 
             {!status?.canSpinToday && !spinning && (
-              <p className="wheel-hint">Bạn đã quay hôm nay rồi, quay lại vào ngày mai nhé!</p>
+              <p className="wheel-hint">
+                {status?.blocked
+                  ? 'Tài khoản Admin/Nhân viên Nhà thuốc không thể quay vòng quay may mắn.'
+                  : 'Bạn đã quay hôm nay rồi, quay lại vào ngày mai nhé!'}
+              </p>
             )}
 
             {lastWonVoucher && !spinning && (

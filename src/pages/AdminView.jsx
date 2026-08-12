@@ -65,12 +65,17 @@ const AdminView = () => {
     setTimeout(() => setSuccess(''), 3000);
   }, []);
 
-  // Roles Authorization - Admin (role_id === 1) luôn có toàn quyền truy cập tất cả chức năng
+  // Roles Authorization - Admin (role_id === 1) luôn có toàn quyền truy cập tất cả chức năng,
+  // TRỪ 4 tab nghiệp vụ lâm sàng/CSKH (Hồ sơ Bệnh nhân, Lịch hẹn Khám, Chẩn đoán & Kê đơn,
+  // Tư vấn trực tuyến) — các tab này chỉ dành cho Pharmacy (3), Admin không thao tác nghiệp vụ.
   const hasAccess = useCallback((allowedRoles) => {
     if (!loggedInUser) return false;
     if (loggedInUser.role_id === 1) return true;
     return allowedRoles.includes(loggedInUser.role_id);
   }, [loggedInUser]);
+
+  // Dùng riêng cho 4 tab lâm sàng/CSKH: không áp dụng bypass "Admin luôn có quyền" ở trên.
+  const isPharmacyOnly = loggedInUser?.role_id === 3;
 
   return (
     <div className="admin-container">
@@ -101,17 +106,17 @@ const AdminView = () => {
               <ShoppingCart size={16} /> Đơn hàng
             </button>
           )}
-          {hasAccess([1, 3]) && (
+          {isPharmacyOnly && (
             <button className={`admin-tab-btn ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>
               <Users size={16} /> Hồ sơ Bệnh nhân
             </button>
           )}
-          {hasAccess([1, 3]) && (
+          {isPharmacyOnly && (
             <button className={`admin-tab-btn ${activeTab === 'appointments' ? 'active' : ''}`} onClick={() => setActiveTab('appointments')}>
               <Calendar size={16} /> Lịch hẹn Khám
             </button>
           )}
-          {hasAccess([1, 3]) && (
+          {isPharmacyOnly && (
             <button className={`admin-tab-btn ${activeTab === 'prescriptions' ? 'active' : ''}`} onClick={() => setActiveTab('prescriptions')}>
               <FileText size={16} /> Chẩn đoán & Kê đơn
             </button>
@@ -126,7 +131,7 @@ const AdminView = () => {
               <BarChart2 size={16} /> Báo cáo & Thống kê
             </button>
           )}
-          {hasAccess([1, 3]) && (
+          {isPharmacyOnly && (
             <button className={`admin-tab-btn ${activeTab === 'pharmacy-chat' ? 'active' : ''}`} onClick={() => setActiveTab('pharmacy-chat')}>
               <MessageSquare size={16} /> Tư vấn trực tuyến
             </button>
@@ -165,7 +170,7 @@ const AdminView = () => {
             <OrdersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
           )}
 
-          {activeTab === 'patients' && (
+          {activeTab === 'patients' && isPharmacyOnly && (
             <PatientsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
@@ -175,7 +180,7 @@ const AdminView = () => {
             />
           )}
 
-          {activeTab === 'appointments' && (
+          {activeTab === 'appointments' && isPharmacyOnly && (
             <AppointmentsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
@@ -185,7 +190,7 @@ const AdminView = () => {
             />
           )}
 
-          {activeTab === 'prescriptions' && (
+          {activeTab === 'prescriptions' && isPharmacyOnly && (
             <PrescriptionsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
@@ -223,7 +228,7 @@ const AdminView = () => {
           )}
 
           {/* TAB: PHARMACY LIVE CHAT */}
-          {activeTab === 'pharmacy-chat' && (
+          {activeTab === 'pharmacy-chat' && isPharmacyOnly && (
             <PharmacyChatDashboard loggedInUser={loggedInUser} />
           )}
         </Suspense>

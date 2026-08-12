@@ -693,6 +693,19 @@
 .user-status-btn.active { background-color: #d1fae5; color: #065f46; }
 .user-status-btn.blocked { background-color: #fee2e2; color: #b91c1c; }
 
+.user-delete-btn {
+  border: 1px solid #fecaca;
+  background-color: #fff;
+  color: #dc2626;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.user-delete-btn:hover { background-color: #dc2626; color: #fff; }
+
 .role-assign-select {
   border: 1px solid #cbd5e1;
   border-radius: 6px;

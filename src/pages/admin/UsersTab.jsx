@@ -52,6 +52,21 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
     }
   };
 
+  const handleUserDelete = async (userId, username) => {
+    if (!hasAccess([1])) {
+      setError('Chỉ Quản trị viên hệ thống (Admin) có quyền xóa tài khoản.');
+      return;
+    }
+    if (!window.confirm(`Xóa vĩnh viễn tài khoản "${username}"? Hành động này không thể hoàn tác.`)) return;
+    try {
+      await api.deleteUser(userId);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      showSuccess('Đã xóa người dùng thành công!');
+    } catch (err) {
+      setError('Lỗi khi xóa người dùng.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-loading">
@@ -79,6 +94,7 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
                         <th>Ngày tạo</th>
                         <th>Trạng thái hoạt động</th>
                         <th>Phân quyền lại</th>
+                        <th>Hành động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -116,6 +132,14 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
                               <option value="Accountant">Kế toán (Accountant)</option>
                               <option value="Warehouse">Thủ kho (Warehouse)</option>
                             </select>
+                          </td>
+                          <td>
+                            <button
+                              className="user-delete-btn"
+                              onClick={() => handleUserDelete(u.id, u.username)}
+                            >
+                              Xóa
+                            </button>
                           </td>
                         </tr>
                       ))}
