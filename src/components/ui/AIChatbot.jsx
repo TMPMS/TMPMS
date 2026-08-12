@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, ShoppingCart, ArrowRight } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, ShoppingCart, ArrowRight, Mic } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { askAiChatbot, formatImageUrl } from '../../services/api';
 import './AIChatbot.css';
@@ -16,9 +16,12 @@ const AIChatbot = () => {
   ]);
   const [inputVal, setInputVal] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
+
   const { addToCart } = useCart();
   const chatEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -26,20 +29,35 @@ const AIChatbot = () => {
     }
   }, [messages, isTyping]);
 
+  // Dừng mic khi đóng cửa sổ chat, tránh mic vẫn nghe ngầm sau khi khách đã đóng.
+  useEffect(() => {
+    if (!isOpen && recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  }, [isOpen]);
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!inputVal.trim()) return;
+    const text = inputVal;
+    setInputVal('');
+    await sendMessage(text);
+  };
+
+  // Tách riêng khỏi handleSend để voice input (kết quả nhận dạng giọng nói) có thể gửi thẳng đi
+  // ngay khi có transcript, không cần đợi state inputVal cập nhật xong rồi giả lập bấm gửi.
+  const sendMessage = async (text) => {
+    if (!text.trim()) return;
 
     const userMsg = {
       id: Date.now(),
       sender: 'user',
-      text: inputVal,
+      text,
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
 
     setMessages(prev => [...prev, userMsg]);
-    const currentInput = inputVal;
-    setInputVal('');
+    const currentInput = text;
     setIsTyping(true);
 
     try {
@@ -53,12 +71,20 @@ const AIChatbot = () => {
 
       const data = await askAiChatbot(currentInput, history);
       setIsTyping(false);
+
+      // ORDER_MEDICINE: server đã xác định đúng 1 sản phẩm + số lượng — tự thêm vào giỏ ngay
+      // (giống hành vi "thêm vào giỏ" khách vẫn bấm tay), không cần khách bấm thêm 1 lần nữa.
+      if (data.intent === 'ORDER_MEDICINE' && data.product) {
+        await addToCart(data.product, data.quantity || 1);
+      }
+
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
         intent: data.intent,
         text: data.text,
-        product: data.product,
+        product: data.intent === 'ORDER_MEDICINE' ? null : data.product, // đã tự thêm giỏ — khỏi hiện lại nút "Thêm vào giỏ"
+        appointment: data.appointment,
         suggestedAction: data.suggestedAction,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       }]);
@@ -74,7 +100,7 @@ const AIChatbot = () => {
     }
   };
 
-  const handleActionClick = (action) => {
+  const handleActionClick = (action, message) => {
     if (!action || !action.type || action.type === 'none') return;
 
     if (action.type === 'navigate_to_booking') {
@@ -87,7 +113,75 @@ const AIChatbot = () => {
     } else if (action.type === 'navigate_to_history') {
       // Navigate to patient portal / diagnosis & prescription history
       window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'history' }));
+    } else if (action.type === 'add_to_cart' || action.type === 'add_to_cart_checkout') {
+      // Sản phẩm đã được tự thêm vào giỏ ngay khi nhận phản hồi (xem handleSend) — nút này chỉ mở giỏ.
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('open-cart-drawer', { detail: { checkout: action.type === 'add_to_cart_checkout' } }));
+    } else if (action.type === 'navigate_to_booking_checkout' && message?.appointment) {
+      // Khung giờ đã được giữ chỗ ở server (xem handleSend) — điều hướng thẳng tới bước xác nhận +
+      // đặt cọc (bước 3) của trang đặt lịch, mang theo token giữ chỗ để không phải chọn giờ lại.
+      sessionStorage.setItem('pp_ai_hold', JSON.stringify(message.appointment));
+      sessionStorage.setItem('pp_open_booking', '1');
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'patient-portal' }));
+    } else if (action.type === 'require_login') {
+      setIsOpen(false);
+      window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
     }
+  };
+
+  // Nhập bằng giọng nói — dùng Web Speech API của trình duyệt (Chrome/Edge), cùng cách làm với
+  // ô "Tìm bằng giọng nói" ở thanh tìm kiếm (Header.jsx). Gửi thẳng đi ngay khi nhận dạng xong,
+  // không cần bấm gửi thêm lần nữa — đúng trải nghiệm "nói là làm" của trợ lý giọng nói.
+  const startVoiceInput = () => {
+    setVoiceError('');
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      setVoiceError('Trình duyệt của bạn không hỗ trợ nhập bằng giọng nói. Vui lòng dùng Chrome hoặc Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'vi-VN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (!transcript) {
+        setVoiceError('Không nghe rõ, vui lòng thử lại.');
+        return;
+      }
+      sendMessage(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        setVoiceError('Vui lòng cho phép truy cập micro để dùng tính năng này.');
+      } else if (event.error === 'no-speech') {
+        setVoiceError('Không nghe thấy gì. Vui lòng thử lại.');
+      } else {
+        setVoiceError('Không thể nhận diện giọng nói. Vui lòng thử lại.');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      setVoiceError('Không thể khởi động micro. Vui lòng thử lại.');
+    }
+  };
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setIsListening(false);
   };
 
   const handleAddToCart = (product) => {
@@ -161,7 +255,7 @@ const AIChatbot = () => {
                       <div className="msg-action-box">
                         <button
                           className="msg-action-btn"
-                          onClick={() => handleActionClick(msg.suggestedAction)}
+                          onClick={() => handleActionClick(msg.suggestedAction, msg)}
                         >
                           <span>{msg.suggestedAction.label}</span>
                           <ArrowRight size={14} />
@@ -192,11 +286,21 @@ const AIChatbot = () => {
             <div ref={chatEndRef} />
           </div>
 
+          {voiceError && <p className="ai-voice-error">{voiceError}</p>}
+
           {/* Input Footer Form */}
           <form onSubmit={handleSend} className="ai-chat-input-form">
-            <input 
-              type="text" 
-              placeholder="Nhập câu hỏi (vd: đặt lịch hẹn, bị đau khớp)..." 
+            <button
+              type="button"
+              className={`ai-mic-btn${isListening ? ' listening' : ''}`}
+              onClick={isListening ? stopVoiceInput : startVoiceInput}
+              title={isListening ? 'Đang nghe... bấm để dừng' : 'Nhập bằng giọng nói'}
+            >
+              <Mic size={16} />
+            </button>
+            <input
+              type="text"
+              placeholder={isListening ? 'Đang nghe...' : 'Nhập câu hỏi (vd: đặt lịch hẹn, bị đau khớp)...'}
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
             />

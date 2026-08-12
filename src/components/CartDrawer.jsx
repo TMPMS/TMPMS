@@ -12,11 +12,17 @@ const PICKUP_STORES = [
   'Nhà thuốc TMPMS 88 Nguyễn Tri Phương, Hải Châu, Đà Nẵng'
 ];
 
-const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
+const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) => {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { user } = useAuth();
-  
+
   const [checkoutMode, setCheckoutMode] = useState(false);
+
+  // Trợ lý AI vừa tự thêm sản phẩm theo lệnh "mua ngay" của khách — mở thẳng vào bước thanh toán
+  // thay vì màn xem giỏ hàng (AIChatbot chỉ dispatch sự kiện này sau khi addToCart đã xong).
+  useEffect(() => {
+    if (isOpen && startInCheckout) setCheckoutMode(true);
+  }, [isOpen, startInCheckout]);
   const [deliveryMode, setDeliveryMode] = useState('shipping'); // shipping or pickup
   const [pickupStore, setPickupStore] = useState(PICKUP_STORES[0]);
   

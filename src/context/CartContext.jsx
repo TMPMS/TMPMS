@@ -88,8 +88,8 @@ export const CartProvider = ({ children }) => {
   }, [cartItems, user]);
 
   // Trả về true nếu thêm thành công, false nếu thất bại (kể cả khi bị chặn vì cần đơn thuốc),
-  // để nơi gọi (ProductCard, trang chi tiết sản phẩm...) biết có nên báo "thành công" hay không.
-  const addToCart = useCallback(async (product) => {
+  // để nơi gọi (ProductCard, trang chi tiết sản phẩm, Trợ lý AI...) biết có nên báo "thành công" hay không.
+  const addToCart = useCallback(async (product, quantity = 1) => {
     // Tài khoản Admin/Nhân viên Nhà thuốc không được tự mua hàng (chỉ được tạo đơn hộ khách qua
     // kênh riêng ở trang quản trị) — chặn ngay từ bước thêm giỏ hàng.
     if (user && (user.role_id === 1 || user.role_id === 3)) {
@@ -97,15 +97,15 @@ export const CartProvider = ({ children }) => {
       return false;
     }
 
-    let showToastMessage = `Đã thêm ${product.name} vào giỏ hàng`;
+    let showToastMessage = quantity > 1 ? `Đã thêm ${quantity} ${product.name} vào giỏ hàng` : `Đã thêm ${product.name} vào giỏ hàng`;
     let toastType = 'success';
     let success = true;
     const cartId = user ? (user.cart_id || user.cartId) : null;
 
     if (user && cartId) {
       try {
-        // BE cộng dồn số lượng cho dòng đã tồn tại (cart_id + medicine_id), nên chỉ cần gửi 1 đơn vị
-        await api.addCartItem(cartId, product.id, 1);
+        // BE cộng dồn số lượng cho dòng đã tồn tại (cart_id + medicine_id).
+        await api.addCartItem(cartId, product.id, quantity);
 
         // Re-fetch cart items to get updated state and database item IDs
         const dbItems = await api.fetchCartItems(cartId);
@@ -139,9 +139,9 @@ export const CartProvider = ({ children }) => {
       setCartItems(prev => {
         const existing = prev.find(item => item.id === product.id);
         if (existing) {
-          return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+          return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
         }
-        return [...prev, { ...product, quantity: 1 }];
+        return [...prev, { ...product, quantity }];
       });
     }
 

@@ -36,7 +36,8 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [authMode, setAuthMode] = useState('login'); // login | register | forgot | reset | otp-login
   const [otpSent, setOtpSent] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  
+  const [cartStartInCheckout, setCartStartInCheckout] = useState(false);
+
   // Auth Form State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -113,6 +114,17 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     window.addEventListener('open-upload-prescription-modal', handleOpenUploadPrescription);
     return () => window.removeEventListener('open-upload-prescription-modal', handleOpenUploadPrescription);
   }, [user]);
+
+  // Cho phép Trợ lý AI (AIChatbot) mở giỏ hàng sau khi tự thêm sản phẩm theo lệnh của khách
+  // (vd "mua 2 hộp sâm nhật"), thẳng vào bước thanh toán nếu khách dùng ý "mua"/"thanh toán luôn".
+  useEffect(() => {
+    const handleOpenCartDrawer = (e) => {
+      setCartStartInCheckout(!!e.detail?.checkout);
+      setIsCartOpen(true);
+    };
+    window.addEventListener('open-cart-drawer', handleOpenCartDrawer);
+    return () => window.removeEventListener('open-cart-drawer', handleOpenCartDrawer);
+  }, []);
 
   const loadSuggestions = async () => {
     try {
@@ -965,10 +977,11 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
       )}
 
       {/* Cart Drawer */}
-      <CartDrawer 
-        isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
-        onOpenAuth={() => openAuthModal('login')} 
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onOpenAuth={() => openAuthModal('login')}
+        startInCheckout={cartStartInCheckout}
       />
 
       {/* Upload Prescription Modal */}
