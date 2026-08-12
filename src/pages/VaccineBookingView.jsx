@@ -22,7 +22,7 @@ const VaccineBookingView = ({ onBack }) => {
   
   // Schedule
   const [bookingDate, setBookingDate] = useState('');
-  const [bookingCenter, setBookingCenter] = useState('HN - 102 Cầu Giấy');
+  const [bookingCenter, setBookingCenter] = useState('HN - 18 Kim Mã');
   
   const [bookingCode, setBookingCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,7 +61,7 @@ const VaccineBookingView = ({ onBack }) => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      const code = 'LCVC-' + Math.floor(10000 + Math.random() * 90000);
+      const code = 'TMPMS-VC-' + Math.floor(10000 + Math.random() * 90000);
       setBookingCode(code);
       setStep(4);
     }, 1500);
@@ -82,7 +82,7 @@ const VaccineBookingView = ({ onBack }) => {
       <div className="vc-header">
         <Syringe size={28} className="vc-header-icon" />
         <div>
-          <h2>Trung Tâm Tiêm Chủng Long Châu</h2>
+          <h2>Trung Tâm Tiêm Chủng TMPMS</h2>
           <p>Đặt lịch tiêm chủng trực tuyến an toàn, vắc-xin chính hãng, quy trình bảo quản đạt chuẩn GSP quốc tế</p>
         </div>
       </div>
@@ -194,10 +194,10 @@ const VaccineBookingView = ({ onBack }) => {
                 <div className="input-group">
                   <label><MapPin size={14} /> Trung tâm tiêm chủng gần nhất</label>
                   <select value={bookingCenter} onChange={(e) => setBookingCenter(e.target.value)}>
-                    <option value="HN - 102 Cầu Giấy">Hà Nội - Trung tâm 102 Cầu Giấy</option>
-                    <option value="HN - 54 Chùa Bộc">Hà Nội - Trung tâm 54 Chùa Bộc</option>
-                    <option value="HCM - 12 Nguyễn Huệ">TP. HCM - Trung tâm 12 Nguyễn Huệ</option>
-                    <option value="DN - 52 Nguyễn Văn Linh">Đà Nẵng - Trung tâm 52 Nguyễn Văn Linh</option>
+                    <option value="HN - 18 Kim Mã">Hà Nội - Trung tâm 18 Kim Mã</option>
+                    <option value="HN - 76 Nguyễn Chí Thanh">Hà Nội - Trung tâm 76 Nguyễn Chí Thanh</option>
+                    <option value="HCM - 1 Võ Văn Ngân">TP. HCM - Trung tâm 1 Võ Văn Ngân</option>
+                    <option value="DN - 88 Nguyễn Tri Phương">Đà Nẵng - Trung tâm 88 Nguyễn Tri Phương</option>
                   </select>
                 </div>
                 <div className="input-group">

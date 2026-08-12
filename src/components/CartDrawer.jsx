@@ -6,10 +6,10 @@ import * as api from '../services/api';
 import './CartDrawer.css';
 
 const PICKUP_STORES = [
-  'Trung tâm 102 Cầu Giấy, Hà Nội',
-  'Trung tâm 54 Chùa Bộc, Đống Đa, Hà Nội',
-  'Trung tâm 12 Nguyễn Huệ, Quận 1, TP. HCM',
-  'Trung tâm 52 Nguyễn Văn Linh, Hải Châu, Đà Nẵng'
+  'Nhà thuốc TMPMS 18 Kim Mã, Hà Nội',
+  'Nhà thuốc TMPMS 76 Nguyễn Chí Thanh, Đống Đa, Hà Nội',
+  'Nhà thuốc TMPMS 1 Võ Văn Ngân, TP. Thủ Đức, TP. HCM',
+  'Nhà thuốc TMPMS 88 Nguyễn Tri Phương, Hải Châu, Đà Nẵng'
 ];
 
 const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {

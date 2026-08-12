@@ -11,7 +11,7 @@ const supplierNames = {
   4: 'Sâm KGC Hàn Quốc',
   5: 'Dược phẩm Thái Minh',
   6: 'Dược Hậu Giang (DHG)',
-  7: 'Pharmacity'
+  7: 'Dược phẩm TMPMS'
 };
 
 const PAGE_SIZE = 12;

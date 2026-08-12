@@ -15,11 +15,7 @@ const OrderTrackingView = ({ order, onClose }) => {
   const [trackingData, setTrackingData] = useState({
     status: 'Preparing',
     coords: { lat: 10.76008, lng: 106.68220 },
-    shipper: {
-      name: "Nguyễn Minh Hải",
-      phone: "0912.345.678",
-      plate: "59-A1 789.65"
-    }
+    shipper: null
   });
 
   const [connected, setConnected] = useState(false);
@@ -52,7 +48,7 @@ const OrderTrackingView = ({ order, onClose }) => {
           iconSize: [36, 36],
           iconAnchor: [18, 18]
         })
-      }).addTo(mapInstance.current).bindPopup('<b>🏥 Cửa hàng Long Châu</b><br>Nguồn hàng chuẩn bị');
+      }).addTo(mapInstance.current).bindPopup('<b>🏥 Nhà thuốc TMPMS</b><br>Nguồn hàng chuẩn bị');
 
       // User Destination Marker (Point B)
       L.marker([userLat, userLng], {
@@ -245,26 +241,28 @@ const OrderTrackingView = ({ order, onClose }) => {
               )}
             </div>
 
-            {/* Simulation controls */}
-            <div className="controls-card">
-              <h4>Mô phỏng (Simulation Panel)</h4>
-              <p>Mô phỏng hành trình tài xế từ hiệu thuốc đến tay khách hàng dọc theo tuyến đường chim bay.</p>
-              
-              <div className="control-buttons">
-                <button className="restart-btn" onClick={restartSimulation}>
-                  <RotateCcw size={15} /> Khởi động lại hành trình
-                </button>
-              </div>
-            </div>
+            {/* Debug-only: mô phỏng + hướng dẫn test webhook — chỉ hiện khi chạy dev,
+                không được lọt vào bản build production cho khách hàng thật xem. */}
+            {import.meta.env.DEV && (
+              <>
+                <div className="controls-card">
+                  <h4>Mô phỏng (Simulation Panel)</h4>
+                  <p>Mô phỏng hành trình tài xế từ hiệu thuốc đến tay khách hàng dọc theo tuyến đường chim bay.</p>
 
-            {/* Webhook Developer Guide */}
-            <div className="webhook-dev-card">
-              <div className="dev-header">
-                <Info size={16} />
-                <h5>Hướng dẫn thử nghiệm Webhook (Tốt nghiệp)</h5>
-              </div>
-              <p>Có thể gửi request đổi trạng thái trực tiếp bằng Postman để test Webhook đối tác:</p>
-              <pre className="dev-code">
+                  <div className="control-buttons">
+                    <button className="restart-btn" onClick={restartSimulation}>
+                      <RotateCcw size={15} /> Khởi động lại hành trình
+                    </button>
+                  </div>
+                </div>
+
+                <div className="webhook-dev-card">
+                  <div className="dev-header">
+                    <Info size={16} />
+                    <h5>Hướng dẫn thử nghiệm Webhook (dev only)</h5>
+                  </div>
+                  <p>Có thể gửi request đổi trạng thái trực tiếp bằng Postman để test Webhook đối tác:</p>
+                  <pre className="dev-code">
 POST /api/shipping/webhook
 Header:
   X-Signature: {"&lt;"}hex(HMAC-SHA256(webhookSecret, rawBody)){">"}
@@ -274,15 +272,17 @@ Body:
   "orderId": {orderId},
   "status": "Shipping",
   "coords": &#123; "lat": 10.759, "lng": 106.678 &#125;,
-  "shipper": &#123; 
-    "name": "Shipper Webhook", 
-    "phone": "0999999999", 
-    "plate": "59-W1 999.99" 
+  "shipper": &#123;
+    "name": "Shipper Webhook",
+    "phone": "0999999999",
+    "plate": "59-W1 999.99"
   &#125;
 &#125;
-              </pre>
-              <p className="dev-note">Webhook chỉ chấp nhận request có chữ ký hợp lệ (HMAC-SHA256 của raw body, viết thường hex). Thiếu/sai chữ ký sẽ bị từ chối (401).</p>
-            </div>
+                  </pre>
+                  <p className="dev-note">Webhook chỉ chấp nhận request có chữ ký hợp lệ (HMAC-SHA256 của raw body, viết thường hex). Thiếu/sai chữ ký sẽ bị từ chối (401).</p>
+                </div>
+              </>
+            )}
 
           </div>
         </div>

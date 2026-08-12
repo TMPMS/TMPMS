@@ -28,17 +28,17 @@ const districtsMap = {
 
 const defaultStoreList = [
   // Hà Nội
-  { id: 1, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc TMPMS 102 Cầu Giấy', address: '102 Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.036214, longitude: 105.795412 },
+  { id: 1, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc TMPMS 18 Trần Duy Hưng', address: '18 Trần Duy Hưng, Trung Hòa, Cầu Giấy, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.005321, longitude: 105.792841 },
   { id: 2, provinceId: 'hn', districtId: 'cg', name: 'Nhà thuốc TMPMS 24 Xuân Thủy', address: '24 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.036812, longitude: 105.786521 },
-  { id: 3, provinceId: 'hn', districtId: 'dd', name: 'Nhà thuốc TMPMS 54 Chùa Bộc', address: '54 Chùa Bộc, Quang Trung, Đống Đa, Hà Nội', phone: '0862 544 627', hours: '06:30 - 22:30', latitude: 21.007621, longitude: 105.828412 },
+  { id: 3, provinceId: 'hn', districtId: 'dd', name: 'Nhà thuốc TMPMS 76 Nguyễn Chí Thanh', address: '76 Nguyễn Chí Thanh, Láng Thượng, Đống Đa, Hà Nội', phone: '0862 544 627', hours: '06:30 - 22:30', latitude: 21.021324, longitude: 105.812653 },
   { id: 4, provinceId: 'hn', districtId: 'hk', name: 'Nhà thuốc TMPMS 9 Hai Bà Trưng', address: '9 Hai Bà Trưng, Tràng Tiền, Hoàn Kiếm, Hà Nội', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 21.023512, longitude: 105.852412 },
 
   // TP. HCM
-  { id: 5, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc TMPMS 12 Nguyễn Huệ', address: '12 Nguyễn Huệ, Bến Nghé, Quận 1, Hồ Chí Minh', phone: '0862 544 627', hours: '24/7 (Mở cả đêm)', latitude: 10.774512, longitude: 106.704212 },
+  { id: 5, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc TMPMS 45 Lê Lợi', address: '45 Lê Lợi, Bến Thành, Quận 1, Hồ Chí Minh', phone: '0862 544 627', hours: '24/7 (Mở cả đêm)', latitude: 10.771842, longitude: 106.698653 },
   { id: 6, provinceId: 'hcm', districtId: 'q1', name: 'Nhà thuốc TMPMS 85 Trần Hưng Đạo', address: '85 Trần Hưng Đạo, Cô Giang, Quận 1, Hồ Chí Minh', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 10.767512, longitude: 106.692412 },
 
   // Đà Nẵng
-  { id: 9, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc TMPMS 52 Nguyễn Văn Linh', address: '52 Nguyễn Văn Linh, Phường Nam Dương, Quận Hải Châu, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.060783, longitude: 108.217316 },
+  { id: 9, provinceId: 'dn', districtId: 'hc', name: 'Nhà thuốc TMPMS 88 Nguyễn Tri Phương', address: '88 Nguyễn Tri Phương, Phường Nam Dương, Quận Hải Châu, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.053214, longitude: 108.208765 },
   { id: 10, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 112 Điện Biên Phủ', address: '112 Điện Biên Phủ, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '07:00 - 22:00', latitude: 16.065842, longitude: 108.204561 },
   { id: 11, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 340 Hùng Vương', address: '340 Hùng Vương, Phường Vĩnh Trung, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '06:00 - 23:30', latitude: 16.067341, longitude: 108.212450 },
   { id: 12, provinceId: 'dn', districtId: 'tk', name: 'Nhà thuốc TMPMS 456 Lê Duẩn', address: '456 Lê Duẩn, Phường Chính Gián, Quận Thanh Khê, Đà Nẵng', phone: '0862 544 627', hours: '06:30 - 22:00', latitude: 16.068912, longitude: 108.208123 },

@@ -143,7 +143,7 @@ const UploadPrescriptionModal = ({ isOpen, onClose, user }) => {
                   <label>Bệnh viện / Phòng khám (Nếu có)</label>
                   <input 
                     type="text" 
-                    placeholder="Ví dụ: Bệnh viện Bạch Mai" 
+                    placeholder="Ví dụ: Phòng khám Đông Y TMPMS"
                     value={hospital} 
                     onChange={(e) => setHospital(e.target.value)} 
                   />
