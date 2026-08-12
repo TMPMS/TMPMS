@@ -108,7 +108,7 @@ export const HERBAL_MERIDIAN_MAPPING = [
         code: 'CV4',
         location: 'Dưới rốn 3 thốn trên đường giữa bụng',
         benefit: 'Bổ hạ tiêu, tráng dương khí, đại bổ hư tổn.',
-        position: [0.0, 0.32, 0.22]
+        position: [0.0, 0.14, 0.22]
       }
     ]
   },
