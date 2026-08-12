@@ -30,8 +30,8 @@ jobs:
           context: .
           push: true
           tags: |
-            angeldhit/tmpms-fe:latest
-            angeldhit/tmpms-fe:${{ github.sha }}
+            tamak4/tmpms-fe:latest
+            tamak4/tmpms-fe:${{ github.sha }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
