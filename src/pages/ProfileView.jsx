@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound, Plus, Trash2, Star } from 'lucide-react';
+import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound, Plus, Trash2, Star, Gift } from 'lucide-react';
 import * as api from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
 import './ProfileView.css';
@@ -38,6 +38,12 @@ export default function ProfileView({ onNavigate }) {
   const [addrSaving, setAddrSaving] = useState(false);
   const [addrError, setAddrError] = useState('');
 
+  const [loyaltySummary, setLoyaltySummary] = useState({ points: 0, transactions: [] });
+  const [redeemInput, setRedeemInput] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemError, setRedeemError] = useState('');
+  const [redeemSuccess, setRedeemSuccess] = useState('');
+
   const user = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
 
   const reloadAddresses = async () => {
@@ -51,11 +57,12 @@ export default function ProfileView({ onNavigate }) {
       setLoading(true);
       setLoadError('');
       try {
-        const [prof, vouch, myVouch, addr] = await Promise.allSettled([
+        const [prof, vouch, myVouch, addr, loyalty] = await Promise.allSettled([
           api.fetchMyProfile(),
           api.fetchVouchers(),
           api.fetchMyVouchers(),
           user?.id ? api.getPatientAddresses(user.id) : Promise.resolve([]),
+          api.fetchMyLoyaltySummary(),
         ]);
         if (prof.status === 'fulfilled') {
           setProfile(prof.value);
@@ -66,6 +73,7 @@ export default function ProfileView({ onNavigate }) {
         if (vouch.status === 'fulfilled') setVouchers(vouch.value);
         if (myVouch.status === 'fulfilled') setMyVouchers(myVouch.value);
         if (addr.status === 'fulfilled') setAddresses(Array.isArray(addr.value) ? addr.value : []);
+        if (loyalty.status === 'fulfilled') setLoyaltySummary(loyalty.value);
       } finally {
         setLoading(false);
       }
@@ -156,6 +164,32 @@ export default function ProfileView({ onNavigate }) {
       setError(e.message || 'Không thể cập nhật hồ sơ. Vui lòng thử lại.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRedeemPoints = async () => {
+    const points = parseInt(redeemInput, 10);
+    setRedeemError('');
+    setRedeemSuccess('');
+    if (!points || points <= 0) {
+      setRedeemError('Vui lòng nhập số điểm hợp lệ.');
+      return;
+    }
+    setRedeeming(true);
+    try {
+      const result = await api.redeemLoyaltyPoints(points);
+      setRedeemSuccess(`Đổi thành công! Voucher ${result.voucherCode} giảm ${new Intl.NumberFormat('vi-VN').format(result.discountValue)}đ đã được thêm vào ví voucher của bạn.`);
+      setRedeemInput('');
+      const [summary, myVouch] = await Promise.all([
+        api.fetchMyLoyaltySummary().catch(() => loyaltySummary),
+        api.fetchMyVouchers().catch(() => myVouchers),
+      ]);
+      setLoyaltySummary(summary);
+      setMyVouchers(myVouch);
+    } catch (e) {
+      setRedeemError(e.message || 'Không thể đổi điểm.');
+    } finally {
+      setRedeeming(false);
     }
   };
 
@@ -293,6 +327,13 @@ export default function ProfileView({ onNavigate }) {
           >
             <Tag size={16} /> Voucher
             <span className="pnav-badge">{myVouchers.length + vouchers.length}</span>
+          </button>
+          <button
+            className={`pnav-btn ${activeTab === 'loyalty' ? 'active' : ''}`}
+            onClick={() => setActiveTab('loyalty')}
+          >
+            <Gift size={16} /> Điểm tích lũy
+            <span className="pnav-badge">{loyaltySummary.points}</span>
           </button>
           <button
             className={`pnav-btn ${activeTab === 'orders' ? 'active' : ''}`}
@@ -514,6 +555,69 @@ export default function ProfileView({ onNavigate }) {
                   ))}
                 </div>
               )
+            )}
+          </div>
+        )}
+
+        {/* ─── TAB: LOYALTY POINTS ─── */}
+        {activeTab === 'loyalty' && (
+          <div className="profile-card">
+            <div className="profile-card-header">
+              <h2>Điểm tích lũy</h2>
+            </div>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px',
+              background: 'linear-gradient(135deg, #0d9488, #14b8a6)', borderRadius: 12, marginBottom: 20, color: '#fff'
+            }}>
+              <Gift size={36} />
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 800 }}>{loyaltySummary.points.toLocaleString('vi-VN')} điểm</div>
+                <div style={{ fontSize: 13, opacity: 0.9 }}>Tích 1 điểm cho mỗi 10.000đ đơn hàng giao thành công · 1 điểm = 1.000đ giảm giá</div>
+              </div>
+            </div>
+
+            {redeemError && <div className="profile-error" role="alert">{redeemError}</div>}
+            {redeemSuccess && <div className="profile-success" role="status">{redeemSuccess}</div>}
+
+            <div className="pform-group" style={{ maxWidth: 360, marginBottom: 24 }}>
+              <label>Đổi điểm lấy voucher (tối thiểu 50 điểm)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  className="pform-input"
+                  type="number"
+                  min={50}
+                  step={10}
+                  placeholder="Nhập số điểm muốn đổi"
+                  value={redeemInput}
+                  onChange={e => setRedeemInput(e.target.value)}
+                />
+                <button type="button" className="save-btn" onClick={handleRedeemPoints} disabled={redeeming}>
+                  {redeeming ? 'Đang đổi...' : 'Đổi voucher'}
+                </button>
+              </div>
+            </div>
+
+            <h3 style={{ fontSize: 15, margin: '0 0 12px' }}>Lịch sử điểm</h3>
+            {loyaltySummary.transactions.length === 0 ? (
+              <div className="voucher-empty">
+                <Gift size={48} strokeWidth={1} />
+                <p>Chưa có giao dịch điểm nào. Mua hàng và nhận hàng thành công để bắt đầu tích điểm!</p>
+              </div>
+            ) : (
+              <div className="address-list">
+                {loyaltySummary.transactions.map(t => (
+                  <div key={t.id} className="address-card" style={{ alignItems: 'center' }}>
+                    <div className="address-card-main">
+                      <p className="address-line">{t.reason}</p>
+                      <p className="address-sub">{formatDate(t.createdAt)}</p>
+                    </div>
+                    <strong style={{ fontSize: 15, color: t.points > 0 ? '#059669' : '#dc2626', whiteSpace: 'nowrap' }}>
+                      {t.points > 0 ? `+${t.points}` : t.points}
+                    </strong>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}

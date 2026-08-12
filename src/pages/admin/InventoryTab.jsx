@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
-import { Package, Info } from 'lucide-react';
+import { Package, Info, ScanLine } from 'lucide-react';
 import { formatDateVN } from '../../utils/dateUtils';
 import { formatPrice } from './shared/adminFormat';
+import BarcodeScannerModal from '../../components/admin/BarcodeScannerModal';
 
 // Kho Dược liệu — tách từ AdminView.jsx (tab "inventory").
 // Toàn bộ state/handler trong tab này chỉ được dùng riêng ở đây trong bản gốc
@@ -18,6 +19,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
 
   // Nhập kho theo lô (batch/lot) — state
   const [batchMedicineId, setBatchMedicineId] = useState('');
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [batchWarehouseId, setBatchWarehouseId] = useState('');
   const [existingBatches, setExistingBatches] = useState([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
@@ -82,6 +84,27 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
       loadExistingBatches(batchMedicineId, batchWarehouseId);
     }
   }, [batchMedicineId, batchWarehouseId]);
+
+  const handleBarcodeScanned = async (code) => {
+    setShowBarcodeScanner(false);
+    const found = medicines.find(m => m.barcode && m.barcode === code);
+    if (found) {
+      setBatchMedicineId(String(found.id));
+      showSuccess(`Đã chọn: ${found.name}`);
+      return;
+    }
+    try {
+      const med = await api.fetchMedicineByBarcode(code);
+      if (med) {
+        setBatchMedicineId(String(med.id));
+        showSuccess(`Đã chọn: ${med.name}`);
+      } else {
+        setError(`Không tìm thấy sản phẩm với mã vạch "${code}"`);
+      }
+    } catch (err) {
+      setError(err.message || 'Không thể tra cứu mã vạch');
+    }
+  };
 
   const refreshExpiryAlerts = async () => {
     const alertsData = await api.fetchExpiryAlerts(30).catch(() => []);
@@ -207,6 +230,9 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
 
   return (
             <>
+              {showBarcodeScanner && (
+                <BarcodeScannerModal onDetected={handleBarcodeScanned} onClose={() => setShowBarcodeScanner(false)} />
+              )}
               <div className="admin-card">
                 <h3 className="card-title">Tình trạng Kho hàng</h3>
                 {warehouses.length === 0 ? (
@@ -358,10 +384,24 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label">Thuốc/Dược liệu *</label>
-                    <select className="form-select" value={batchMedicineId} onChange={(e) => setBatchMedicineId(e.target.value)}>
-                      <option value="">-- Chọn thuốc/dược liệu --</option>
-                      {medicines.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <select className="form-select" value={batchMedicineId} onChange={(e) => setBatchMedicineId(e.target.value)}>
+                        <option value="">-- Chọn thuốc/dược liệu --</option>
+                        {medicines.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowBarcodeScanner(true)}
+                        title="Quét mã vạch để chọn nhanh"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                          background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
+                          borderRadius: 6, padding: '0 12px', cursor: 'pointer', fontWeight: 600, fontSize: 13
+                        }}
+                      >
+                        <ScanLine size={15} /> Quét
+                      </button>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Kho nhập *</label>

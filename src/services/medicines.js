@@ -27,6 +27,7 @@ function normalizeMedicine(m) {
     image: imgUrl,
     packaging: m.packaging || m.Packaging,
     unit: m.unit || m.Unit,
+    barcode: m.barcode || m.Barcode || '',
     requires_prescription: m.requires_prescription !== undefined ? m.requires_prescription : (m.requiresPrescription !== undefined ? m.requiresPrescription : m.RequiresPrescription),
     requiresPrescription: m.requiresPrescription !== undefined ? m.requiresPrescription : (m.requires_prescription !== undefined ? m.requires_prescription : m.RequiresPrescription),
     rating: m.rating !== undefined ? m.rating : m.Rating
@@ -188,6 +189,7 @@ export async function addMedicine(medicineData) {
     unit: medicineData.unit,
     origin: medicineData.origin,
     packaging: medicineData.packaging,
+    barcode: medicineData.barcode || null,
     imageUrl: medicineData.image_url || medicineData.imageUrl,
     requiresPrescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
     categoryId: medicineData.category_id || medicineData.categoryId,
@@ -216,6 +218,7 @@ export async function updateMedicine(medicineId, medicineData) {
     unit: medicineData.unit,
     origin: medicineData.origin,
     packaging: medicineData.packaging,
+    barcode: medicineData.barcode ?? null,
     imageUrl: medicineData.image_url || medicineData.imageUrl,
     requiresPrescription: medicineData.requires_prescription !== undefined ? medicineData.requires_prescription : medicineData.requiresPrescription,
     categoryId: parseInt(medicineData.category_id || medicineData.categoryId),
@@ -232,6 +235,16 @@ export async function updateMedicine(medicineId, medicineData) {
     throw new Error(err || 'Không thể cập nhật thông tin thuốc');
   }
   return res.json();
+}
+
+
+// Tra cứu sản phẩm bằng mã vạch — dùng cho máy quét ở POS/kiểm kê. Trả về null nếu không tìm thấy
+// (thay vì throw) để nơi gọi (form quét) tự quyết định hiển thị "không tìm thấy" ra sao.
+export async function fetchMedicineByBarcode(barcode) {
+  const res = await apiFetch(`${API_URL}/medicines/by-barcode/${encodeURIComponent(barcode)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('Không thể tra cứu sản phẩm theo mã vạch');
+  return normalizeMedicine(await res.json());
 }
 
 
