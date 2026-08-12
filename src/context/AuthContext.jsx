@@ -100,8 +100,20 @@ export const AuthProvider = ({ children }) => {
     api.logoutUser();
   };
 
+  // Cập nhật một phần thông tin user (vd cart_id sau khi tạo giỏ hàng) vào cả state React lẫn
+  // localStorage — trước đây CartContext chỉ ghi thẳng vào localStorage, khiến state của
+  // AuthContext (mà các trang khác như PatientPortal đọc qua useAuth().user) không đồng bộ.
+  const updateUser = (patch) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      persistUser(next);
+      return next;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle, loginWithOtp }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle, loginWithOtp, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

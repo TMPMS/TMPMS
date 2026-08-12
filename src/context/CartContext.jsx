@@ -7,7 +7,7 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
   // Hiện khi BE từ chối thêm thuốc kê đơn vào giỏ vì chưa có đơn thuốc được duyệt
@@ -32,12 +32,10 @@ export const CartProvider = ({ children }) => {
           cartId = newCart.id;
         }
 
-        // Update user object to persist resolved cartId.
-        // Merge into the LATEST stored user so we don't clobber other fields written since load.
-        const storedRaw = localStorage.getItem('user');
-        const stored = storedRaw ? JSON.parse(storedRaw) : currentUser;
-        stored.cart_id = cartId;
-        localStorage.setItem('user', JSON.stringify(stored));
+        // Cập nhật cart_id vào cả state React của AuthContext (không chỉ localStorage) để các
+        // trang khác đọc qua useAuth().user (vd PatientPortal) thấy cart_id ngay, không phải
+        // đợi reload trang.
+        updateUser({ cart_id: cartId });
 
         // If we had guest items, sync them to database first
         const guestItems = JSON.parse(localStorage.getItem('guest_cart') || '[]');
