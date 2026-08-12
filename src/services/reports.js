@@ -83,6 +83,15 @@ export async function fetchReportUserGrowth(from, to, groupBy = 'Day') {
 }
 
 
+export async function fetchReportInventoryValue() {
+  const res = await requestWithAuth(`${API_URL}/Report/inventory-value`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Không thể tải giá trị tồn kho theo kho');
+  return res.json();
+}
+
+
 export async function exportReportRevenueExcel(from, to, groupBy = 'Day') {
   const res = await requestWithAuth(`${API_URL}/Report/revenue/export-excel?from=${from}&to=${to}&groupBy=${groupBy}`, {
     headers: getAuthHeaders()

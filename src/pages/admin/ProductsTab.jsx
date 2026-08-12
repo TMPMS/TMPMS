@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import * as api from '../../services/api';
-import { Upload, Download } from 'lucide-react';
+import { Upload, Download, ScanLine } from 'lucide-react';
+import BarcodeScannerModal from '../../components/admin/BarcodeScannerModal';
 
 const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
 
@@ -175,9 +176,11 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
   const [prodUnit, setProdUnit] = useState('Hộp');
   const [prodOrigin, setProdOrigin] = useState('Việt Nam');
   const [prodPackaging, setProdPackaging] = useState('');
+  const [prodBarcode, setProdBarcode] = useState('');
   const [prodImgUrl, setProdImgUrl] = useState('');
   const [prodDesc, setProdDesc] = useState('');
   const [prodReqPrescription, setProdReqPrescription] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // AI Image Verification State
   const [aiVerifying, setAiVerifying] = useState(false);
@@ -226,6 +229,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
     setProdUnit(medicine.unit || 'Hộp');
     setProdOrigin(medicine.origin || 'Việt Nam');
     setProdPackaging(medicine.packaging || '');
+    setProdBarcode(medicine.barcode || '');
     setProdImgUrl(medicine.image_url || '');
     setProdDesc(medicine.description || '');
     setProdReqPrescription(medicine.requires_prescription || false);
@@ -243,6 +247,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
     setProdUnit('Hộp');
     setProdOrigin('Việt Nam');
     setProdPackaging('');
+    setProdBarcode('');
     setProdImgUrl('');
     setProdDesc('');
     setProdReqPrescription(false);
@@ -466,6 +471,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
         unit: prodUnit,
         origin: prodOrigin,
         packaging: prodPackaging,
+        barcode: prodBarcode.trim() || null,
         image_url: prodImgUrl,
         description: prodDesc,
         requires_prescription: prodReqPrescription
@@ -503,6 +509,12 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
 
   return (
     <>
+            {showBarcodeScanner && (
+              <BarcodeScannerModal
+                onDetected={(code) => { setProdBarcode(code); setShowBarcodeScanner(false); showSuccess(`Đã quét mã: ${code}`); }}
+                onClose={() => setShowBarcodeScanner(false)}
+              />
+            )}
             <div className="products-crud-layout">
               {/* LEFT: Add / Edit Form */}
               <div className="admin-card products-form-panel">
@@ -622,6 +634,31 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
                         value={prodPackaging}
                         onChange={(e) => setProdPackaging(e.target.value)}
                       />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Mã vạch (Barcode)</label>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Quét hoặc nhập mã vạch..."
+                          value={prodBarcode}
+                          onChange={(e) => setProdBarcode(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowBarcodeScanner(true)}
+                          title="Quét mã vạch bằng camera"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                            background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
+                            borderRadius: 6, padding: '0 12px', cursor: 'pointer', fontWeight: 600, fontSize: 13
+                          }}
+                        >
+                          <ScanLine size={15} /> Quét
+                        </button>
+                      </div>
                     </div>
 
                     <div className="form-group">

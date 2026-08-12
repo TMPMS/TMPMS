@@ -21,3 +21,5 @@ export * from './reviews';
 export * from './chat';
 export * from './reports';
 export * from './admin-import';
+export * from './auditlogs';
+export * from './loyalty';

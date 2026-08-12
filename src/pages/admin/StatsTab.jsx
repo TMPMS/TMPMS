@@ -21,6 +21,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
   const [appointmentStatusData, setAppointmentStatusData] = useState([]);
   const [prescriptionStatusData, setPrescriptionStatusData] = useState([]);
   const [userGrowthData, setUserGrowthData] = useState([]);
+  const [inventoryValueData, setInventoryValueData] = useState([]);
 
   const loadTabData = async () => {
     setLoading(true);
@@ -28,7 +29,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
     try {
       const last30From = new Date(Date.now() - 30 * 86400000).toISOString();
       const last30To = new Date().toISOString();
-      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData, apptStatusData, presStatusData, growthData] = await Promise.all([
+      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData, apptStatusData, presStatusData, growthData, invValueData] = await Promise.all([
         api.fetchAdminOrders().catch(() => []),
         api.fetchPatients().catch(() => []),
         api.fetchAppointments().catch(() => []),
@@ -40,6 +41,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
         api.fetchReportAppointmentStatus().catch(() => []),
         api.fetchReportPrescriptionStatus().catch(() => []),
         api.fetchReportUserGrowth(last30From, last30To, 'Day').catch(() => []),
+        api.fetchReportInventoryValue().catch(() => []),
       ]);
       setOrders(ordersData);
       setPatients(patientsData);
@@ -52,6 +54,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
       setAppointmentStatusData(apptStatusData);
       setPrescriptionStatusData(presStatusData);
       setUserGrowthData(growthData);
+      setInventoryValueData(invValueData);
     } catch (err) {
       console.error(err);
       setError('Lỗi tải dữ liệu. Vui lòng thử lại.');
@@ -419,7 +422,40 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                 )}
               </div>
 
-              {/* Detail graphs placeholder & Lists */}
+              {/* Giá trị tồn kho theo từng kho (giá vốn các lô còn hàng) */}
+              {inventoryValueData.length > 0 && (
+                <div className="admin-card" style={{ marginBottom: 20 }}>
+                  <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
+                    <Package size={18} /> 💰 Giá trị Tồn kho hiện tại theo Kho (giá vốn)
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(() => {
+                      const maxVal = Math.max(...inventoryValueData.map(w => w.totalValue || 1));
+                      return inventoryValueData.map(w => (
+                        <div key={w.warehouseId} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ width: 140, fontSize: 13, fontWeight: 600, color: '#1e293b', flexShrink: 0 }}>{w.warehouseName}</span>
+                          <div style={{ flex: 1, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden', height: 22 }}>
+                            <div style={{
+                              width: `${maxVal > 0 ? Math.max(4, Math.round((w.totalValue / maxVal) * 100)) : 4}%`,
+                              height: '100%',
+                              background: 'linear-gradient(90deg, #0d9488, #14b8a6)',
+                              borderRadius: 6
+                            }} />
+                          </div>
+                          <span style={{ width: 150, textAlign: 'right', fontSize: 13, fontWeight: 700, color: '#059669', flexShrink: 0 }}>
+                            {formatPrice(w.totalValue)}
+                          </span>
+                          <span style={{ width: 90, textAlign: 'right', fontSize: 11, color: '#64748b', flexShrink: 0 }}>
+                            {w.totalUnits} đơn vị
+                          </span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Cảnh báo tồn kho & tình trạng hoạt động */}
               <div className="stats-detail-grid">
                 <div className="stats-detail-card">
                   <h4>⚠️ Cảnh báo tồn kho cực thấp (dưới 20 đơn vị)</h4>

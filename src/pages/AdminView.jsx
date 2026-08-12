@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import {
   ShoppingCart, Leaf, Calendar, FileText, Package, BarChart2, Shield, Tag, MessageSquare,
-  User, Users
+  User, Users, History
 } from 'lucide-react';
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
 import './AdminView.css';
@@ -23,6 +23,7 @@ const StatsTab = lazy(() => import('./admin/StatsTab'));
 const ProductsTab = lazy(() => import('./admin/ProductsTab'));
 const VouchersTab = lazy(() => import('./admin/VouchersTab'));
 const NewsTab = lazy(() => import('./admin/NewsTab'));
+const AuditLogTab = lazy(() => import('./admin/AuditLogTab'));
 
 const TabFallback = () => (
   <div className="admin-loading">
@@ -158,6 +159,11 @@ const AdminView = () => {
               <FileText size={16} /> Tin tức sức khỏe
             </button>
           )}
+          {hasAccess([1]) && (
+            <button className={`admin-tab-btn ${activeTab === 'audit-log' ? 'active' : ''}`} onClick={() => setActiveTab('audit-log')}>
+              <History size={16} /> Nhật ký thao tác
+            </button>
+          )}
         </div>
       </div>
 
@@ -225,6 +231,10 @@ const AdminView = () => {
 
           {activeTab === 'news' && hasAccess([1]) && (
             <NewsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+          )}
+
+          {activeTab === 'audit-log' && hasAccess([1]) && (
+            <AuditLogTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
           )}
 
           {/* TAB: PHARMACY LIVE CHAT */}
