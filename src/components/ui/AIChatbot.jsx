@@ -19,7 +19,7 @@ const AIChatbot = () => {
   const [isListening, setIsListening] = useState(false);
   const [voiceError, setVoiceError] = useState('');
 
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, removeFromCart, updateQuantity } = useCart();
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -72,18 +72,36 @@ const AIChatbot = () => {
       const data = await askAiChatbot(currentInput, history);
       setIsTyping(false);
 
+      let botText = data.text;
+
       // ORDER_MEDICINE: server đã xác định đúng 1 sản phẩm + số lượng — tự thêm vào giỏ ngay
       // (giống hành vi "thêm vào giỏ" khách vẫn bấm tay), không cần khách bấm thêm 1 lần nữa.
       if (data.intent === 'ORDER_MEDICINE' && data.product) {
         await addToCart(data.product, data.quantity || 1);
+      } else if (data.intent === 'REMOVE_FROM_CART' && data.product) {
+        // BE không biết giỏ hàng khách vãng lai (chỉ có ở localStorage phía FE) nên không thể tự
+        // xác nhận đã gỡ đúng số lượng — FE phải tự đối chiếu cartItems thực tế rồi mới thực hiện,
+        // và luôn ghi đè lại lời thoại theo đúng những gì thực sự xảy ra (tránh AI "ảo tưởng" đã gỡ
+        // trong khi thực chất không có gì trong giỏ, hoặc số lượng gỡ không khớp).
+        const existing = cartItems.find(i => i.id === data.product.id);
+        if (!existing) {
+          botText = `Giỏ hàng của bạn hiện không có "${data.product.name}" nên không có gì để gỡ cả.`;
+        } else if (data.removeAll || !data.quantity || data.quantity >= existing.quantity) {
+          await removeFromCart(data.product.id);
+          botText = `Đã gỡ toàn bộ "${data.product.name}" (${existing.quantity} sản phẩm) khỏi giỏ hàng.`;
+        } else {
+          const remaining = existing.quantity - data.quantity;
+          await updateQuantity(data.product.id, remaining);
+          botText = `Đã gỡ ${data.quantity} "${data.product.name}" khỏi giỏ hàng, còn lại ${remaining}.`;
+        }
       }
 
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
         intent: data.intent,
-        text: data.text,
-        product: data.intent === 'ORDER_MEDICINE' ? null : data.product, // đã tự thêm giỏ — khỏi hiện lại nút "Thêm vào giỏ"
+        text: botText,
+        product: (data.intent === 'ORDER_MEDICINE' || data.intent === 'REMOVE_FROM_CART') ? null : data.product, // đã tự xử lý giỏ hàng — khỏi hiện lại nút "Thêm vào giỏ"
         appointment: data.appointment,
         suggestedAction: data.suggestedAction,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
@@ -113,8 +131,8 @@ const AIChatbot = () => {
     } else if (action.type === 'navigate_to_history') {
       // Navigate to patient portal / diagnosis & prescription history
       window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'history' }));
-    } else if (action.type === 'add_to_cart' || action.type === 'add_to_cart_checkout') {
-      // Sản phẩm đã được tự thêm vào giỏ ngay khi nhận phản hồi (xem handleSend) — nút này chỉ mở giỏ.
+    } else if (action.type === 'add_to_cart' || action.type === 'add_to_cart_checkout' || action.type === 'remove_from_cart') {
+      // Giỏ hàng đã được cập nhật ngay khi nhận phản hồi (xem sendMessage) — nút này chỉ mở giỏ.
       setIsOpen(false);
       window.dispatchEvent(new CustomEvent('open-cart-drawer', { detail: { checkout: action.type === 'add_to_cart_checkout' } }));
     } else if (action.type === 'navigate_to_booking_checkout' && message?.appointment) {

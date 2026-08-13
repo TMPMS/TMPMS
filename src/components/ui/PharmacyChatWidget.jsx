@@ -23,8 +23,15 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Chỉ phụ thuộc user?.id (không phải cả object `user`) — AuthContext tạo lại object `user`
+  // với reference mới mỗi khi xác thực lại /auth/me (vd sau khi access_token hết hạn được tự
+  // làm mới ngầm), dù id không đổi. Nếu effect phụ thuộc cả object, mỗi lần đó sẽ đóng kết nối
+  // SignalR đang chạy/đang mở rồi mở lại ngay, gây lỗi đua "Failed to start ... before stop() was
+  // called" hiện trong console dù tính năng chat vẫn hoạt động được nhờ auto-reconnect.
+  const userId = user?.id;
+
   useEffect(() => {
-    if (!isOpen || !user) return;
+    if (!isOpen || !userId) return;
 
     // Load active session and message history via REST API first
     const initSession = async () => {
@@ -81,7 +88,7 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
         connection.stop();
       }
     };
-  }, [isOpen, user]);
+  }, [isOpen, userId]);
 
   useEffect(() => {
     scrollToBottom();
