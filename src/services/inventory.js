@@ -94,11 +94,17 @@ export async function fetchFlashSaleCandidates(daysThreshold = 30) {
 }
 
 
-export async function applyFlashSale(medicineId, discountPercent = null) {
+export async function applyFlashSale(medicineId, options = {}) {
+  const { discountPercent = null, startTime = null, endTime = null, quantityLimit = null } = options;
   const res = await requestWithAuth(`${API_URL}/inventory/flash-sale/${medicineId}/apply`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ discountPercent }),
+    body: JSON.stringify({
+      discountPercent,
+      startTime: startTime || null,
+      endTime: endTime || null,
+      quantityLimit: quantityLimit || null,
+    }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -126,6 +132,15 @@ export async function fetchFlashSaleList(activeOnly = true) {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải bảng quản lý Flash Sale');
+  return res.json();
+}
+
+
+// Danh sách Flash Sale công khai (đang chạy + sắp diễn ra) cho trang khách hàng — không giới hạn
+// theo hàng sắp hết hạn như fetchFlashSaleCandidates, gồm mọi sản phẩm Admin đã đưa vào Flash Sale.
+export async function fetchActiveFlashSales() {
+  const res = await apiFetch(`${API_URL}/inventory/flash-sale/active`);
+  if (!res.ok) throw new Error('Không thể tải danh sách Flash Sale');
   return res.json();
 }
 

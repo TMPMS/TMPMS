@@ -297,6 +297,50 @@
 }
 .fs-cta:hover { background: var(--primary-color); color: #fff; }
 
+/* Scheduled (chưa tới giờ) card */
+.fs-card-scheduled { opacity: 0.88; }
+.fs-scheduled-badge {
+  position: absolute;
+  top: 44px;
+  left: 10px;
+  right: 10px;
+  background: rgba(15,23,42,0.85);
+  color: #fef08a;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 6px;
+  z-index: 2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Progress bar — số lượng đã bán / giới hạn */
+.fs-progress-wrap {
+  margin-bottom: 8px;
+}
+.fs-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  overflow: hidden;
+}
+.fs-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #dc2626);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.fs-progress-label {
+  display: block;
+  font-size: 10px;
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 /* Swiper nav buttons */
 .flashsale-products .swiper-button-next,
 .flashsale-products .swiper-button-prev {

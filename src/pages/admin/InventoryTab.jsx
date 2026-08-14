@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Package, Info, ScanLine } from 'lucide-react';
-import { formatDateVN } from '../../utils/dateUtils';
+import { formatDateVN, formatDateTimeVN } from '../../utils/dateUtils';
 import { formatPrice } from './shared/adminFormat';
 import BarcodeScannerModal from '../../components/admin/BarcodeScannerModal';
 
@@ -16,6 +16,13 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
   const [expiryAlerts, setExpiryAlerts] = useState([]);
   const [flashSales, setFlashSales] = useState([]);
   const [profitReport, setProfitReport] = useState([]);
+
+  // Thêm thủ công vào Flash Sale — không giới hạn ở hàng sắp hết hạn, chọn bất kỳ thuốc nào có giá bán
+  const [fsMedicineId, setFsMedicineId] = useState('');
+  const [fsDiscountPercent, setFsDiscountPercent] = useState('');
+  const [fsStartTime, setFsStartTime] = useState('');
+  const [fsEndTime, setFsEndTime] = useState('');
+  const [fsQuantityLimit, setFsQuantityLimit] = useState('');
 
   // Nhập kho theo lô (batch/lot) — state
   const [batchMedicineId, setBatchMedicineId] = useState('');
@@ -193,6 +200,37 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
     }
   };
 
+  const handleApplyFlashSaleManual = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!hasAccess([1, 3])) {
+      setError('Chỉ Admin hoặc Dược sĩ có quyền áp dụng Flash Sale.');
+      return;
+    }
+    if (!fsMedicineId) {
+      setError('Vui lòng chọn thuốc/dược liệu.');
+      return;
+    }
+    try {
+      await api.applyFlashSale(fsMedicineId, {
+        discountPercent: fsDiscountPercent ? parseInt(fsDiscountPercent, 10) : null,
+        startTime: fsStartTime || null,
+        endTime: fsEndTime || null,
+        quantityLimit: fsQuantityLimit ? parseInt(fsQuantityLimit, 10) : null,
+      });
+      showSuccess('Đã đưa sản phẩm vào Flash Sale!');
+      setFsMedicineId('');
+      setFsDiscountPercent('');
+      setFsStartTime('');
+      setFsEndTime('');
+      setFsQuantityLimit('');
+      await refreshExpiryAlerts();
+      await refreshFlashSales();
+    } catch (err) {
+      setError(err.message || 'Lỗi khi áp dụng Flash Sale.');
+    }
+  };
+
   const handleRemoveFlashSale = async (medicineId) => {
     setError('');
     if (!window.confirm('Gỡ Flash Sale cho sản phẩm này? Giá sẽ trở về giá gốc.')) return;
@@ -211,6 +249,12 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
     Warning: { text: 'Sắp hết hạn (≤30 ngày)', color: '#92400e', bg: '#fef3c7' },
     Notice: { text: 'Còn hạn', color: '#065f46', bg: '#d1fae5' },
   }[sev] || { text: sev, color: '#374151', bg: '#f3f4f6' });
+
+  const fsStatusLabel = (status) => ({
+    Scheduled: { text: '🕒 Đã hẹn giờ', color: '#92400e', bg: '#fef3c7' },
+    Running: { text: '🔥 Đang chạy', color: '#166534', bg: '#dcfce7' },
+    Ended: { text: 'Đã kết thúc', color: '#374151', bg: '#f3f4f6' },
+  }[status] || { text: status, color: '#374151', bg: '#f3f4f6' });
 
   const batchStatusLabel = (status) => ({
     Active: { text: 'Còn hạn', color: '#065f46', bg: '#d1fae5' },
@@ -266,8 +310,42 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
               {/* QUẢN LÝ FLASH SALE */}
               <div className="admin-card">
                 <h3 className="card-title">🔥 Quản lý Flash Sale đang áp dụng</h3>
+
+                {/* Thêm thủ công — chọn bất kỳ thuốc nào (không chỉ hàng sắp hết hạn), có thể hẹn giờ
+                    bắt đầu/kết thúc và giới hạn số lượng bán theo giá sale. */}
+                <form className="add-product-form" onSubmit={handleApplyFlashSaleManual} style={{ marginBottom: 16 }}>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Thuốc/Dược liệu *</label>
+                      <select className="form-select" value={fsMedicineId} onChange={(e) => setFsMedicineId(e.target.value)}>
+                        <option value="">-- Chọn thuốc/dược liệu --</option>
+                        {medicines.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">% Giảm giá (để trống = tự đề xuất theo HSD)</label>
+                      <input type="number" min="1" max="99" className="form-input" placeholder="VD: 20" value={fsDiscountPercent} onChange={(e) => setFsDiscountPercent(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Bắt đầu (để trống = ngay bây giờ)</label>
+                      <input type="datetime-local" className="form-input" value={fsStartTime} onChange={(e) => setFsStartTime(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Kết thúc (để trống = không tự kết thúc)</label>
+                      <input type="datetime-local" className="form-input" value={fsEndTime} onChange={(e) => setFsEndTime(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Giới hạn số lượng bán (để trống = không giới hạn)</label>
+                      <input type="number" min="1" className="form-input" placeholder="VD: 50" value={fsQuantityLimit} onChange={(e) => setFsQuantityLimit(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="product-form-actions">
+                    <button type="submit" className="add-submit-btn">🔥 Đưa vào Flash Sale</button>
+                  </div>
+                </form>
+
                 {flashSales.length === 0 ? (
-                  <div className="admin-empty">Chưa có sản phẩm nào đang Flash Sale. Áp dụng từ bảng cảnh báo hạn dùng bên dưới.</div>
+                  <div className="admin-empty">Chưa có sản phẩm nào đang Flash Sale. Áp dụng từ form phía trên hoặc từ bảng cảnh báo hạn dùng bên dưới.</div>
                 ) : (
                   <div className="table-wrapper">
                     <table className="admin-table">
@@ -277,40 +355,49 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                           <th>Giá gốc</th>
                           <th>Giá Flash Sale</th>
                           <th>Giảm</th>
-                          <th>Số lô</th>
-                          <th>HSD lô</th>
+                          <th>Trạng thái</th>
+                          <th>Bắt đầu</th>
+                          <th>Kết thúc</th>
+                          <th>Đã bán / Giới hạn</th>
                           <th>Áp dụng bởi</th>
-                          <th>Ngày áp dụng</th>
                           <th>Hành động</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {flashSales.map(f => (
-                          <tr key={f.id}>
-                            <td><strong>{f.medicineName}</strong></td>
-                            <td style={{ textDecoration: 'line-through', color: '#94a3b8' }}>{formatPrice(f.originalPrice)}</td>
-                            <td style={{ color: '#dc2626', fontWeight: 700 }}>{formatPrice(f.salePrice)}</td>
-                            <td>
-                              <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, color: '#991b1b', background: '#fee2e2' }}>
-                                -{f.discountPercent}%
-                              </span>
-                            </td>
-                            <td>{f.batchNumber || '—'}</td>
-                            <td>{f.batchExpiryDate ? formatDateVN(f.batchExpiryDate) : '—'}</td>
-                            <td>{f.appliedByStaffName || '—'}</td>
-                            <td>{formatDateVN(f.appliedAt)}</td>
-                            <td>
-                              <button
-                                type="button"
-                                className="cancel-edit-btn"
-                                style={{ padding: '6px 10px', fontSize: '12px' }}
-                                onClick={() => handleRemoveFlashSale(f.medicineId)}
-                              >
-                                Gỡ Flash Sale
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                        {flashSales.map(f => {
+                          const st = fsStatusLabel(f.status);
+                          return (
+                            <tr key={f.id}>
+                              <td><strong>{f.medicineName}</strong></td>
+                              <td style={{ textDecoration: 'line-through', color: '#94a3b8' }}>{formatPrice(f.originalPrice)}</td>
+                              <td style={{ color: '#dc2626', fontWeight: 700 }}>{formatPrice(f.salePrice)}</td>
+                              <td>
+                                <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, color: '#991b1b', background: '#fee2e2' }}>
+                                  -{f.discountPercent}%
+                                </span>
+                              </td>
+                              <td>
+                                <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: st.color, background: st.bg }}>
+                                  {st.text}
+                                </span>
+                              </td>
+                              <td>{f.startTime ? formatDateTimeVN(f.startTime) : 'Ngay'}</td>
+                              <td>{f.endTime ? formatDateTimeVN(f.endTime) : 'Không giới hạn'}</td>
+                              <td>{f.quantityLimit != null ? `${f.quantitySold}/${f.quantityLimit}` : `${f.quantitySold} (không giới hạn)`}</td>
+                              <td>{f.appliedByStaffName || '—'}</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="cancel-edit-btn"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => handleRemoveFlashSale(f.medicineId)}
+                                >
+                                  Gỡ Flash Sale
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
