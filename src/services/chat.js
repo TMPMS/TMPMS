@@ -1,10 +1,14 @@
 import { API_URL, apiFetch, getAuthHeaders, requestWithAuth } from './core';
 
-export async function askAiChatbot(messageText, history = []) {
+export async function askAiChatbot(messageText, history = [], image = null) {
   const res = await apiFetch(`${API_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: messageText, history }),
+    body: JSON.stringify({
+      text: messageText,
+      history,
+      ...(image ? { imageBase64: image.base64, imageMimeType: image.mimeType } : {}),
+    }),
   });
   if (!res.ok) throw new Error('Không thể kết nối trợ lý AI');
   return res.json();
