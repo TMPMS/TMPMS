@@ -2,23 +2,53 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { History } from 'lucide-react';
 
-// Nhật ký thao tác — ghi lại các hành động nhạy cảm (user, NCC, kho, voucher) do Admin thực hiện.
+// Nhật ký thao tác — ghi lại các hành động nhạy cảm trên toàn hệ thống, chỉ Admin xem được.
 const ACTION_LABELS = {
-  Create: 'Tạo mới', Update: 'Cập nhật', Delete: 'Xóa',
+  Create: 'Tạo mới', Update: 'Cập nhật', Delete: 'Xóa', Deactivate: 'Ẩn',
   Lock: 'Khóa', Unlock: 'Mở khóa', AssignRole: 'Gán vai trò',
   Dispose: 'Huỷ lô hàng', Adjust: 'Điều chỉnh',
+  Finalize: 'Duyệt đơn thuốc', UpdateStatus: 'Đổi trạng thái',
+  Cancel: 'Hủy', CancelWithRefund: 'Hủy & hoàn cọc', ReturnRequest: 'Yêu cầu trả hàng',
+  CheckIn: 'Check-in', ProposeTime: 'Đề xuất giờ khám', ResolveReschedule: 'Xử lý đổi lịch',
+  NoShow: 'Vắng mặt', Approve: 'Duyệt', Reject: 'Từ chối', Complete: 'Hoàn thành',
+  Sync: 'Đồng bộ', WebhookSuccess: 'Webhook thanh toán',
+  AppointmentPaymentSuccess: 'Đặt cọc thành công', DemoPayAppointment: 'Đặt cọc (giả lập)',
+  VerifySuccess: 'Xác minh thanh toán', VerifyFailed: 'Thanh toán thất bại', DemoPay: 'Thanh toán (giả lập)',
 };
 const ACTION_COLORS = {
   Create: { bg: '#dcfce7', fg: '#166534' },
   Update: { bg: '#dbeafe', fg: '#1e40af' },
   Delete: { bg: '#fee2e2', fg: '#991b1b' },
+  Deactivate: { bg: '#fee2e2', fg: '#991b1b' },
   Lock: { bg: '#fee2e2', fg: '#991b1b' },
   Unlock: { bg: '#dcfce7', fg: '#166534' },
   AssignRole: { bg: '#fef3c7', fg: '#92400e' },
   Dispose: { bg: '#fee2e2', fg: '#991b1b' },
   Adjust: { bg: '#fef3c7', fg: '#92400e' },
+  Finalize: { bg: '#dcfce7', fg: '#166534' },
+  UpdateStatus: { bg: '#dbeafe', fg: '#1e40af' },
+  Cancel: { bg: '#fee2e2', fg: '#991b1b' },
+  CancelWithRefund: { bg: '#fee2e2', fg: '#991b1b' },
+  ReturnRequest: { bg: '#fef3c7', fg: '#92400e' },
+  CheckIn: { bg: '#dbeafe', fg: '#1e40af' },
+  ProposeTime: { bg: '#fef3c7', fg: '#92400e' },
+  ResolveReschedule: { bg: '#dbeafe', fg: '#1e40af' },
+  NoShow: { bg: '#fee2e2', fg: '#991b1b' },
+  Approve: { bg: '#dcfce7', fg: '#166534' },
+  Reject: { bg: '#fee2e2', fg: '#991b1b' },
+  Complete: { bg: '#dcfce7', fg: '#166534' },
+  Sync: { bg: '#f1f5f9', fg: '#334155' },
+  WebhookSuccess: { bg: '#dcfce7', fg: '#166534' },
+  AppointmentPaymentSuccess: { bg: '#dcfce7', fg: '#166534' },
+  DemoPayAppointment: { bg: '#fef3c7', fg: '#92400e' },
+  VerifySuccess: { bg: '#dcfce7', fg: '#166534' },
+  VerifyFailed: { bg: '#fee2e2', fg: '#991b1b' },
+  DemoPay: { bg: '#fef3c7', fg: '#92400e' },
 };
-const ENTITY_OPTIONS = ['User', 'Supplier', 'Voucher', 'StockBatch'];
+const ENTITY_OPTIONS = [
+  'User', 'Supplier', 'Voucher', 'StockBatch', 'Medicine', 'Category',
+  'Order', 'Cart', 'CartItem', 'Prescription', 'Appointment', 'Payment',
+];
 
 const AuditLogTab = ({ hasAccess, showSuccess, setError }) => {
   const [loading, setLoading] = useState(true);
