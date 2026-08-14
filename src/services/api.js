@@ -23,3 +23,4 @@ export * from './reports';
 export * from './admin-import';
 export * from './auditlogs';
 export * from './loyalty';
+export * from './categories';

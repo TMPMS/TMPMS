@@ -23,6 +23,7 @@ const StatsTab = lazy(() => import('./admin/StatsTab'));
 const ProductsTab = lazy(() => import('./admin/ProductsTab'));
 const VouchersTab = lazy(() => import('./admin/VouchersTab'));
 const NewsTab = lazy(() => import('./admin/NewsTab'));
+const CategoryTab = lazy(() => import('./admin/CategoryTab'));
 const AuditLogTab = lazy(() => import('./admin/AuditLogTab'));
 
 const TabFallback = () => (
@@ -160,6 +161,11 @@ const AdminView = () => {
             </button>
           )}
           {hasAccess([1]) && (
+            <button className={`admin-tab-btn ${activeTab === 'category' ? 'active' : ''}`} onClick={() => setActiveTab('category')}>
+              <Tag size={16} /> Quản lý Danh mục
+            </button>
+          )}
+          {hasAccess([1]) && (
             <button className={`admin-tab-btn ${activeTab === 'audit-log' ? 'active' : ''}`} onClick={() => setActiveTab('audit-log')}>
               <History size={16} /> Nhật ký thao tác
             </button>
@@ -231,6 +237,10 @@ const AdminView = () => {
 
           {activeTab === 'news' && hasAccess([1]) && (
             <NewsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+          )}
+
+          {activeTab === 'category' && hasAccess([1]) && (
+            <CategoryTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
           )}
 
           {activeTab === 'audit-log' && hasAccess([1]) && (
