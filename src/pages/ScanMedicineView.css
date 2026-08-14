@@ -1,0 +1,161 @@
+.scan-medicine-view {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.scan-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+}
+
+.scan-medicine-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.scan-medicine-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #e0f2f1;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-medicine-card h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px;
+}
+
+.scan-medicine-desc {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.scan-medicine-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.scan-medicine-btn:hover:not(:disabled) {
+  background: #0b7f74;
+}
+
+.scan-medicine-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.scan-medicine-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #9ca3af;
+  font-size: 12px;
+  margin: 20px 0;
+}
+
+.scan-medicine-divider::before,
+.scan-medicine-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.scan-medicine-manual {
+  display: flex;
+  gap: 8px;
+}
+
+.scan-medicine-manual input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.scan-medicine-manual input:focus {
+  outline: none;
+  border-color: #0d9488;
+}
+
+.scan-medicine-manual button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.scan-medicine-manual button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.scan-medicine-status {
+  margin-top: 18px;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.scan-medicine-notfound {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  color: #92400e;
+  font-size: 13px;
+  text-align: left;
+}
+
+.scan-medicine-error {
+  margin-top: 18px;
+  color: #dc2626;
+  font-size: 13px;
+}
