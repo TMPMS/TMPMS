@@ -32,6 +32,7 @@ import FeaturedVideosCarousel from './components/ui/FeaturedVideosCarousel';
 import HealthQuizList from './pages/HealthQuizList';
 import HealthQuizPlayer from './pages/HealthQuizPlayer';
 import PaymentResultView from './pages/PaymentResultView';
+import ScanMedicineView from './pages/ScanMedicineView';
 
 import { fetchMedicines, verifyAppointmentPayOS } from './services/api';
 
@@ -232,6 +233,8 @@ function App() {
         return <ProfileView onNavigate={handleNavigate} />;
       case 'detail':
         return <ProductDetailView product={selectedProduct} onBack={() => handleNavigate('home')} />;
+      case 'scan-medicine':
+        return <ScanMedicineView onBack={() => handleNavigate('home')} onProductFound={handleSelectProduct} />;
       case 'payment-result':
         return <PaymentResultView orderCode={paymentOrderCode} onNavigate={handleNavigate} />;
       case 'home':
