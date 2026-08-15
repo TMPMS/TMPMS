@@ -33,21 +33,9 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
   useEffect(() => {
     if (!isOpen || !userId) return;
 
-    // Load active session and message history via REST API first
-    const initSession = async () => {
-      try {
-        const sessData = await api.fetchMyPharmacyChatSession();
-        setSession(sessData);
-        setMessages(sessData.messages || []);
-        if (sessData.assignedPharmacistName) {
-          setAssignedPharmacistName(sessData.assignedPharmacistName);
-        }
-      } catch (err) {
-        console.error('Lỗi khởi tạo phiên chat dược sĩ:', err);
-      }
-    };
-
-    initSession();
+    // sessionIdRef giữ id session mới nhất để dùng trong onreconnected (closure của handler được
+    // đăng ký 1 lần lúc mount, không thấy state session cập nhật sau đó nếu đọc trực tiếp).
+    const sessionIdRef = { current: null };
 
     // Xác thực qua httpOnly cookie (access_token) được trình duyệt tự đính kèm khi withCredentials.
     const connection = new signalR.HubConnectionBuilder()
@@ -74,12 +62,37 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
       scrollToBottom();
     });
 
-    connection
-      .start()
-      .then(() => {
-        console.log('SignalR Pharmacy Chat connected successfully');
-      })
-      .catch((err) => console.error('SignalR Pharmacy Chat Connection Error: ', err));
+    // SignalR không tự nhớ lại group đã join sau khi reconnect — phải join lại thủ công.
+    connection.onreconnected(() => {
+      if (sessionIdRef.current) {
+        connection.invoke('JoinSession', sessionIdRef.current).catch((err) =>
+          console.error('Lỗi tham gia lại phiên chat sau khi kết nối lại:', err)
+        );
+      }
+    });
+
+    // Lấy session thật qua REST rồi mới join đúng group của session đó qua SignalR — tránh trường
+    // hợp trước đây REST và Hub.OnConnectedAsync cùng tự tạo session song song, có thể ra 2 session
+    // khác nhau khiến tin nhắn gửi đi rơi vào group mà chính mình không ở trong đó.
+    const init = async () => {
+      try {
+        const [sessData] = await Promise.all([
+          api.fetchMyPharmacyChatSession(),
+          connection.start()
+        ]);
+        sessionIdRef.current = sessData.id;
+        setSession(sessData);
+        setMessages(sessData.messages || []);
+        if (sessData.assignedPharmacistName) {
+          setAssignedPharmacistName(sessData.assignedPharmacistName);
+        }
+        await connection.invoke('JoinSession', sessData.id);
+      } catch (err) {
+        console.error('Lỗi khởi tạo phiên chat dược sĩ:', err);
+      }
+    };
+
+    init();
 
     setHubConnection(connection);
 

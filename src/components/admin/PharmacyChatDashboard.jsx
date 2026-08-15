@@ -13,6 +13,12 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
   const [loading, setLoading] = useState(false);
   const [hubConnection, setHubConnection] = useState(null);
   const messagesEndRef = useRef(null);
+  // Đọc trong closure của handler SignalR đăng ký 1 lần lúc mount — state activeSessionId ở đó
+  // sẽ luôn là giá trị cũ (null) nếu đọc trực tiếp, nên phải dùng ref để luôn thấy giá trị mới nhất.
+  const activeSessionIdRef = useRef(activeSessionId);
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
+  }, [activeSessionId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -68,13 +74,23 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
     });
 
     connection.on('ReceiveMessage', (msg) => {
-      setMessages((prev) => {
-        if (prev.length > 0 && prev[0].sessionId === msg.sessionId) {
-          return [...prev, msg];
-        }
-        return prev;
-      });
-      scrollToBottom();
+      // Trước đây so sánh msg.sessionId với prev[0].sessionId để biết tin nhắn có thuộc session
+      // đang mở hay không — nhưng nếu session đang mở chưa có tin nhắn nào (mảng messages rỗng),
+      // prev[0] không tồn tại nên điều kiện luôn sai, khiến tin nhắn đầu tiên của khách hàng bị rơi
+      // mất khỏi khung chat cho tới khi Dược sĩ chuyển tab rồi quay lại (loadMessages chạy lại).
+      // Dùng ref theo dõi activeSessionId trực tiếp để không phụ thuộc vào nội dung mảng messages.
+      if (msg.sessionId === activeSessionIdRef.current) {
+        setMessages((prev) => [...prev, msg]);
+        scrollToBottom();
+      }
+
+      if (msg.sessionId !== activeSessionIdRef.current && msg.senderRole === 'User') {
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === msg.sessionId ? { ...s, unreadCount: (s.unreadCount || 0) + 1 } : s
+          )
+        );
+      }
     });
 
     connection.on('PharmacistAssigned', (data) => {
@@ -116,6 +132,10 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
         const msgs = await api.fetchPharmacyChatMessages(activeSessionId);
         setMessages(msgs);
         scrollToBottom();
+        // Backend đã đánh dấu IsRead khi trả về danh sách tin nhắn này, đồng bộ lại badge chưa đọc.
+        setSessions((prev) =>
+          prev.map((s) => (s.id === activeSessionId ? { ...s, unreadCount: 0 } : s))
+        );
       } catch (err) {
         console.error('Lỗi tải lịch sử tin nhắn:', err);
       }
@@ -221,6 +241,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
                 <div className="session-card-meta">
                   <span>{s.lastMessageAt ? formatTimeVN(s.lastMessageAt) : ''}</span>
                   {s.userPhone && <span className="user-phone">📞 {s.userPhone}</span>}
+                  {s.unreadCount > 0 && <span className="unread-badge">{s.unreadCount}</span>}
                 </div>
               </div>
             ))

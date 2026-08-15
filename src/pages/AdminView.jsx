@@ -67,6 +67,11 @@ const AdminView = () => {
     setTimeout(() => setSuccess(''), 3000);
   }, []);
 
+  const showError = useCallback((msg) => {
+    setError(msg);
+    setTimeout(() => setError(''), 3000);
+  }, []);
+
   // Roles Authorization - Admin (role_id === 1) luôn có toàn quyền truy cập tất cả chức năng,
   // TRỪ 4 tab nghiệp vụ lâm sàng/CSKH (Hồ sơ Bệnh nhân, Lịch hẹn Khám, Chẩn đoán & Kê đơn,
   // Tư vấn trực tuyến) — các tab này chỉ dành cho Pharmacy (3), Admin không thao tác nghiệp vụ.
@@ -179,14 +184,14 @@ const AdminView = () => {
       <div className="admin-tab-content">
         <Suspense fallback={<TabFallback />}>
           {activeTab === 'orders' && (
-            <OrdersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <OrdersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'patients' && isPharmacyOnly && (
             <PatientsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
-              setError={setError}
+              setError={showError}
               appointments={appointments}
               prescriptions={prescriptions}
             />
@@ -196,7 +201,7 @@ const AdminView = () => {
             <AppointmentsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
-              setError={setError}
+              setError={showError}
               appointments={appointments}
               setAppointments={setAppointments}
             />
@@ -206,7 +211,7 @@ const AdminView = () => {
             <PrescriptionsTab
               hasAccess={hasAccess}
               showSuccess={showSuccess}
-              setError={setError}
+              setError={showError}
               loggedInUser={loggedInUser}
               appointments={appointments}
               setAppointments={setAppointments}
@@ -216,35 +221,35 @@ const AdminView = () => {
           )}
 
           {activeTab === 'inventory' && (
-            <InventoryTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <InventoryTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'users' && (
-            <UsersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <UsersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'stats' && (
-            <StatsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <StatsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'products' && (
-            <ProductsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <ProductsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'vouchers' && hasAccess([1]) && (
-            <VouchersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <VouchersTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'news' && hasAccess([1]) && (
-            <NewsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <NewsTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'category' && hasAccess([1]) && (
-            <CategoryTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <CategoryTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {activeTab === 'audit-log' && hasAccess([1]) && (
-            <AuditLogTab hasAccess={hasAccess} showSuccess={showSuccess} setError={setError} />
+            <AuditLogTab hasAccess={hasAccess} showSuccess={showSuccess} setError={showError} />
           )}
 
           {/* TAB: PHARMACY LIVE CHAT */}

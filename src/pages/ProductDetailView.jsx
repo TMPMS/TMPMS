@@ -114,7 +114,7 @@ const ProductDetailView = ({ product, onBack }) => {
       setComment('');
       setRating(5);
       setSuccessMsg('Gửi đánh giá của bạn thành công! Cảm ơn bạn đã đóng góp ý kiến.');
-      setTimeout(() => setSuccessMsg(''), 5000);
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       setErrorMsg(err.message || 'Không thể gửi đánh giá.');
     } finally {
