@@ -1,0 +1,171 @@
+.tongue-card {
+  margin-top: 24px;
+  background-color: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.tongue-card h5 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  color: #0f766e;
+}
+
+.tongue-intro {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+}
+
+.tongue-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tongue-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.tongue-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0d9488;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tongue-upload-btn:hover {
+  background-color: #0f766e;
+}
+
+.tongue-preview-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1.5px solid #a7f3d0;
+}
+
+.tongue-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #0f766e;
+  margin-top: 12px;
+}
+
+.tongue-loading .spinner {
+  animation: tongue-spin 1s linear infinite;
+}
+
+@keyframes tongue-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.tongue-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 12px;
+}
+
+.tongue-result {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.tongue-attrs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tongue-attrs-grid > div {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.tongue-attrs-grid span {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.tongue-attrs-grid strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.tongue-observations {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+}
+
+.tongue-syndromes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tongue-syndrome-badge {
+  background-color: #ecfdf5;
+  color: #0f766e;
+  border: 1px solid #a7f3d0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.tongue-recommendation {
+  font-size: 13px;
+  color: #334155;
+  background-color: #fffbeb;
+  border-left: 3px solid #d97706;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+}
+
+.tongue-disclaimer {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+  line-height: 1.5;
+}
