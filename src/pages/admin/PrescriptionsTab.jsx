@@ -508,10 +508,41 @@ const PrescriptionsTab = ({ hasAccess, showSuccess, setError, loggedInUser, appo
                               )}
                               {ocrResult.items?.some(it => !it.matchedMedicineId) && (
                                 <div style={{ marginTop: 6 }}>
-                                  <strong style={{ color: '#b91c1c' }}>Không tìm thấy trong hệ thống — vui lòng tự thêm thủ công bên dưới:</strong>
-                                  <ul style={{ margin: '4px 0 0 16px' }}>
-                                    {ocrResult.items.filter(it => !it.matchedMedicineId).map((it, idx) => <li key={idx}>{it.rawText}</li>)}
-                                  </ul>
+                                  <strong style={{ color: '#b91c1c' }}>Không tìm thấy trong hệ thống:</strong>
+                                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {ocrResult.items.map((it, idx) => {
+                                      if (it.matchedMedicineId) return null;
+                                      return (
+                                        <div key={idx} style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 8px' }}>
+                                          <div>{it.rawText}</div>
+                                          {it.similarSuggestions?.length > 0 ? (
+                                            <div style={{ marginTop: 6 }}>
+                                              <span style={{ fontSize: 11.5, color: '#64748b' }}>Không có sẵn — gợi ý thuốc có tên/công dụng gần giống:</span>
+                                              <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                                {it.similarSuggestions.map((sug) => {
+                                                  const med = medicines.find(m => m.id === sug.medicineId);
+                                                  const alreadyAdded = currentPrescription.items.some(i => i.medicineId === sug.medicineId);
+                                                  return (
+                                                    <button
+                                                      key={sug.medicineId}
+                                                      type="button"
+                                                      disabled={alreadyAdded || !med}
+                                                      onClick={() => addMedicineToPrescription(med, it.suggestedQuantity || 1, '')}
+                                                      style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #0d9488', background: alreadyAdded ? '#cbd5e1' : '#f0fdfa', color: alreadyAdded ? '#475569' : '#0f766e', fontWeight: 600, cursor: alreadyAdded ? 'default' : 'pointer', fontSize: 11.5 }}
+                                                    >
+                                                      {alreadyAdded ? '✓ Đã thêm' : `+ ${sug.medicineName}`}
+                                                    </button>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <span style={{ fontSize: 11.5, color: '#64748b' }}>Vui lòng tự thêm thủ công bên dưới.</span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               )}
                             </div>
