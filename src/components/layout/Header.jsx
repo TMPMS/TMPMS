@@ -613,20 +613,27 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               </button>
             )}
 
-            {/* Gửi toa thuốc */}
-            <button 
-              className="header-action-btn presc-upload-btn" 
-              onClick={handlePrescriptionClick}
-              style={{ cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}
-            >
-              <div className="cart-icon-wrap" style={{ background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FileText size={22} />
-              </div>
-              <div>
-                <span className="action-line1" style={{ color: '#1d4ed8', fontWeight: 'bold' }}>Gửi toa thuốc</span>
-                <span className="action-line2">Dược sĩ bốc thuốc</span>
-              </div>
-            </button>
+            {/* Gửi toa thuốc — chỉ dành cho khách hàng (role_id 2) hoặc khách chưa đăng nhập (bấm vào
+                sẽ mời đăng nhập). Ẩn với Admin/Pharmacy/Staff (role_id 1/3/4): tài khoản nhân viên
+                không phải là khách hàng, nếu bấm nút này thì đơn sẽ tự gán vào chính tài khoản nhân
+                viên (do backend cho phép Pharmacy/Admin tự chọn UserId khi kê đơn hộ khách khác),
+                sinh ra các toa thuốc rác trong hàng chờ duyệt như "Khách hàng: pharmacy/admin". Nhân
+                viên đã có luồng "Kê đơn thuốc" riêng trong Trang quản trị. */}
+            {(!user || user.role_id === 2) && (
+              <button
+                className="header-action-btn presc-upload-btn"
+                onClick={handlePrescriptionClick}
+                style={{ cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}
+              >
+                <div className="cart-icon-wrap" style={{ background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <span className="action-line1" style={{ color: '#1d4ed8', fontWeight: 'bold' }}>Gửi toa thuốc</span>
+                  <span className="action-line2">Dược sĩ bốc thuốc</span>
+                </div>
+              </button>
+            )}
 
             <button 
               className="header-action-btn cart-btn" 
