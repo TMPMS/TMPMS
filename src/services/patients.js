@@ -38,6 +38,29 @@ export async function classifyDiagnosis(answers) {
 }
 
 
+// Câu hỏi tự chẩn đoán thích ứng: BE chọn câu hỏi tiếp theo phân biệt tốt nhất giữa các thể bệnh
+// đang dẫn đầu dựa trên answers đã trả lời, hoặc báo done=true khi đã đủ rõ ràng / hết câu hỏi.
+export async function fetchNextDiagnosisQuestion(answers) {
+  const res = await requestWithAuth(`${API_URL}/Diagnosis/next-question`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ answers })
+  });
+  if (!res.ok) throw new Error('Không thể tải câu hỏi tiếp theo');
+  return res.json();
+}
+
+
+// Phân tích ảnh lưỡi bằng AI (Thiệt chẩn) — bổ trợ cho kết quả tự chẩn đoán theo bảng câu hỏi
+export async function analyzeTongueImage(file) {
+  const body = new FormData(); body.append('file', file);
+  const res = await requestWithAuth(`${API_URL}/TongueAnalysis/analyze`, { method: 'POST', body });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || 'Không thể phân tích ảnh lưỡi');
+  return data;
+}
+
+
 export async function getPatientAddresses(userId) {
   try {
     const res = await requestWithAuth(`${API_URL}/patient-address/user/${userId}`, {

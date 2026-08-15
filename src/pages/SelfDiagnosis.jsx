@@ -5,6 +5,7 @@ import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, 
 import { useCart } from '../context/CartContext';
 import { toLocalWallClockIso } from '../utils/dateTime';
 import { formatDateTimeVN } from '../utils/dateUtils';
+import TongueAnalysisCard from '../components/ui/TongueAnalysisCard';
 import './SelfDiagnosis.css';
 
 const pad = n => String(n).padStart(2, '0');
@@ -49,10 +50,12 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
 
-  const [questions, setQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { questionId: answerOptionId }
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [history, setHistory] = useState([]); // câu hỏi đã hiển thị theo thứ tự (adaptive)
+  const [answers, setAnswers] = useState([]); // [{ questionId, answerOptionId }] — song song history[0..length-1]
+  const [minRecommended, setMinRecommended] = useState(6);
+  const [loadingNext, setLoadingNext] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -68,48 +71,61 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const TIME_SLOTS = buildTimeSlots();
 
   useEffect(() => {
-    loadQuestions();
+    loadFirstQuestion();
   }, []);
 
-  const loadQuestions = async () => {
+  // Câu hỏi tự chẩn đoán thích ứng: BE chọn câu hỏi kế tiếp phân biệt tốt nhất giữa các thể bệnh
+  // đang dẫn đầu dựa trên answers hiện có, thay vì hỏi hết 1 bộ câu hỏi cố định theo thứ tự.
+  const loadFirstQuestion = async () => {
     setLoadingQuestions(true);
     try {
-      const data = await api.fetchDiagnosisQuestions();
-      setQuestions(data || []);
+      const data = await api.fetchNextDiagnosisQuestion([]);
+      if (data?.nextQuestion) {
+        setCurrentQuestion(data.nextQuestion);
+        setHistory([data.nextQuestion]);
+        setMinRecommended(data.minRecommended || 6);
+      }
     } catch (err) {
-      console.error('Không thể nạp danh sách câu hỏi:', err);
+      console.error('Không thể nạp câu hỏi tự chẩn đoán:', err);
     } finally {
       setLoadingQuestions(false);
     }
   };
 
-  const handleSelectOption = (questionId, optionId) => {
-    const nextAnswers = { ...answers, [questionId]: optionId };
+  const handleSelectOption = async (questionId, optionId) => {
+    const nextAnswers = [...answers, { questionId, answerOptionId: optionId }];
     setAnswers(nextAnswers);
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      // Last question completed -> trigger classification
-      submitDiagnosis(nextAnswers);
+    setLoadingNext(true);
+    try {
+      const data = await api.fetchNextDiagnosisQuestion(nextAnswers);
+      if (data?.done || !data?.nextQuestion) {
+        await submitDiagnosis(nextAnswers);
+      } else {
+        setCurrentQuestion(data.nextQuestion);
+        setHistory(prev => [...prev, data.nextQuestion]);
+      }
+    } catch (err) {
+      console.error('Không thể tải câu hỏi tiếp theo:', err);
+      // Không lấy được câu tiếp theo -> vẫn cố phân tích với các câu đã trả lời thay vì kẹt màn hình
+      await submitDiagnosis(nextAnswers);
+    } finally {
+      setLoadingNext(false);
     }
   };
 
   const handlePrevQuestion = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+    if (history.length <= 1) return;
+    const prevHistory = history.slice(0, -1);
+    const prevAnswers = answers.slice(0, -1);
+    setHistory(prevHistory);
+    setAnswers(prevAnswers);
+    setCurrentQuestion(prevHistory[prevHistory.length - 1]);
   };
 
-  const submitDiagnosis = async (finalAnswersMap) => {
+  const submitDiagnosis = async (finalAnswersList) => {
     setSubmitting(true);
     try {
-      const submissionList = Object.keys(finalAnswersMap).map(qId => ({
-        questionId: parseInt(qId, 10),
-        answerOptionId: finalAnswersMap[qId]
-      }));
-
-      const res = await api.classifyDiagnosis(submissionList);
+      const res = await api.classifyDiagnosis(finalAnswersList);
       setResult(res);
     } catch (err) {
       console.error('Lỗi khi phân tích chẩn đoán:', err);
@@ -181,11 +197,13 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
 
   const handleReset = () => {
     setResult(null);
-    setAnswers({});
-    setCurrentIndex(0);
+    setAnswers([]);
+    setHistory([]);
+    setCurrentQuestion(null);
     setBookingSuccess(false);
     setBlockingAppt(null);
     setLastBooked(null);
+    loadFirstQuestion();
   };
 
   if (loadingQuestions) {
@@ -199,8 +217,7 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
     );
   }
 
-  const currentQuestion = questions[currentIndex];
-  const progressPercent = questions.length > 0 ? Math.round(((currentIndex + 1) / questions.length) * 100) : 0;
+  const progressPercent = Math.min(100, Math.round((history.length / minRecommended) * 100));
 
   return (
     <div className="self-diagnosis-container">
@@ -216,11 +233,11 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
               <Activity className="pulse-icon" />
               <h2>Tự Chẩn Đoán Thể Bệnh Đông Y</h2>
             </div>
-            <p>Trả lời lần lượt 10 câu hỏi để mô hình AI Đông Y phân loại thể bệnh chính xác cho bạn.</p>
+            <p>Trả lời từng câu — AI Đông Y chọn câu hỏi tiếp theo dựa trên câu trả lời trước đó, thường dừng sau khoảng {minRecommended} câu khi đã đủ rõ ràng.</p>
 
             <div className="progress-bar-box">
               <div className="progress-bar-info">
-                <span>Câu {currentIndex + 1} / {questions.length}</span>
+                <span>Câu {history.length}</span>
                 <span>{progressPercent}%</span>
               </div>
               <div className="progress-track">
@@ -238,35 +255,31 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
               <h3 className="wizard-question-text">{currentQuestion.questionText}</h3>
 
               <div className="wizard-options-list">
-                {currentQuestion.answerOptions.map(opt => {
-                  const isSelected = answers[currentQuestion.id] === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      className={`wizard-option-btn ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleSelectOption(currentQuestion.id, opt.id)}
-                    >
-                      <div className="option-check-circle">
-                        {isSelected && <Check size={16} />}
-                      </div>
-                      <span>{opt.optionText}</span>
-                    </button>
-                  );
-                })}
+                {currentQuestion.answerOptions.map(opt => (
+                  <button
+                    key={opt.id}
+                    className="wizard-option-btn"
+                    disabled={loadingNext}
+                    onClick={() => handleSelectOption(currentQuestion.id, opt.id)}
+                  >
+                    <div className="option-check-circle" />
+                    <span>{opt.optionText}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
 
           {/* Wizard Footer Controls */}
           <div className="wizard-footer">
-            {currentIndex > 0 && (
-              <button className="wizard-prev-btn" onClick={handlePrevQuestion}>
+            {history.length > 1 && (
+              <button className="wizard-prev-btn" onClick={handlePrevQuestion} disabled={loadingNext}>
                 <ArrowLeft size={16} /> Câu trước
               </button>
             )}
-            {submitting && (
+            {(loadingNext || submitting) && (
               <div className="submitting-indicator">
-                <Activity className="spinner" size={18} /> Đang phân tích kết quả...
+                <Activity className="spinner" size={18} /> {submitting ? 'Đang phân tích kết quả...' : 'Đang chọn câu hỏi tiếp theo...'}
               </div>
             )}
           </div>
@@ -298,6 +311,34 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
               <h5>🌱 Lời khuyên dưỡng sinh & Khuyến nghị y tế:</h5>
               <p>{result.recommendationText}</p>
             </div>
+
+            {result.suggestedMedicines?.length > 0 && (
+              <div className="suggested-medicines-section">
+                <h5>💊 Sản phẩm gợi ý phù hợp thể bệnh {result.primarySyndrome?.name}:</h5>
+                <div className="suggested-medicines-grid">
+                  {result.suggestedMedicines.map(m => (
+                    <div key={m.medicineId} className="suggested-medicine-card">
+                      {m.imageUrl && <img src={api.formatImageUrl(m.imageUrl)} alt={m.name} />}
+                      <div className="sm-info">
+                        <span className="sm-name">{m.name}</span>
+                        {m.price != null && <span className="sm-price">{m.price.toLocaleString('vi-VN')}đ</span>}
+                        <p className="sm-reason">{m.reason}</p>
+                      </div>
+                      <button className="sm-add-btn" onClick={() => addToCart({ id: m.medicineId, name: m.name }, 1)}>
+                        <ShoppingCart size={14} /> Thêm vào giỏ
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="sm-disclaimer">
+                  {result.suggestedMedicines.some(m => m.isAiGenerated)
+                    ? 'Gợi ý bởi AI dựa trên thể bệnh vừa chẩn đoán — không thay thế tư vấn của Dược sĩ.'
+                    : 'Gợi ý theo từ khóa công dụng liên quan — không thay thế tư vấn của Dược sĩ.'}
+                </p>
+              </div>
+            )}
+
+            <TongueAnalysisCard />
 
             {/* Direct Clinical Appointment Booking */}
             <div className="appointment-booking-box">
