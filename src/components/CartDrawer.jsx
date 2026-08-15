@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Minus, Trash2, ShoppingBag, MapPin, Truck, Ticket, CreditCard } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Plus, Minus, Trash2, ShoppingBag, MapPin, Truck, Ticket, CreditCard, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
@@ -13,10 +13,45 @@ const PICKUP_STORES = [
 ];
 
 const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) => {
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, refreshCart } = useCart();
   const { user } = useAuth();
 
   const [checkoutMode, setCheckoutMode] = useState(false);
+
+  // Chọn mua một phần giỏ hàng (kiểu Shopee) — mặc định chọn hết, khách có thể bỏ tick những món
+  // chưa muốn mua ngay. seenIdsRef nhớ các id đã từng xuất hiện để chỉ tự động tick món MỚI thêm
+  // vào, không ghi đè lựa chọn khách đã tự bỏ tick trước đó.
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const seenIdsRef = useRef(new Set());
+  useEffect(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const currentIds = new Set(cartItems.map(i => i.id));
+      for (const id of next) if (!currentIds.has(id)) next.delete(id);
+      for (const item of cartItems) {
+        if (!seenIdsRef.current.has(item.id)) {
+          next.add(item.id);
+          seenIdsRef.current.add(item.id);
+        }
+      }
+      return next;
+    });
+  }, [cartItems]);
+
+  const toggleSelected = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected = cartItems.length > 0 && cartItems.every(i => selectedIds.has(i.id));
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(cartItems.map(i => i.id)));
+  };
+
+  const selectedItems = cartItems.filter(i => selectedIds.has(i.id));
 
   // Trợ lý AI vừa tự thêm sản phẩm theo lệnh "mua ngay" của khách — mở thẳng vào bước thanh toán
   // thay vì màn xem giỏ hàng (AIChatbot chỉ dispatch sự kiện này sau khi addToCart đã xong).
@@ -143,7 +178,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
   const rxItems = cartItems.filter(item => item.requiresPrescription);
   const otcItems = cartItems.filter(item => !item.requiresPrescription);
 
-  const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const totalAmount = selectedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   
   // Số tiền giảm — do server tính khi validate/checkout, FE chỉ hiển thị lại kết quả đã áp dụng.
   const productDiscount = appliedProductVoucher?.discount || 0;
@@ -191,6 +226,10 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
 
   const handleCheckoutClick = async () => {
     setError('');
+    if (selectedItems.length === 0) {
+      setError('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.');
+      return;
+    }
     if (!user) {
       requireLogin();
       return;
@@ -353,7 +392,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
         shippingFee: shippingFee,
         productVoucherCode: appliedProductVoucher?.code || null,
         shippingVoucherCode: appliedShippingVoucher?.code || null,
-        items: cartItems.map(item => ({
+        items: selectedItems.map(item => ({
           medicineId: item.id,
           quantity: item.quantity,
           price: item.price
@@ -369,12 +408,12 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
           `${baseUrl}/?payment=success&orderCode=${order.id}`,
           `${baseUrl}/?payment=cancelled&orderCode=${order.id}`
         );
-        clearCart();
+        await refreshCart();
         window.location.assign(paymentLink.checkoutUrl);
         return;
       }
 
-      clearCart();
+      await refreshCart();
       setSuccessMsg('Đặt hàng thành công! Đơn hàng của bạn đã được chuyển cho dược sĩ xử lý.');
       setCheckoutMode(false);
       setAddressDetail('');
@@ -432,7 +471,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
         shippingFee: shippingFee,
         productVoucherCode: appliedProductVoucher?.code || null,
         shippingVoucherCode: appliedShippingVoucher?.code || null,
-        items: cartItems.map(item => ({
+        items: selectedItems.map(item => ({
           medicineId: item.id,
           quantity: item.quantity,
           price: item.price
@@ -441,7 +480,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
 
       const order = await api.createOrder(orderPayload);
       await api.demoPayOSPayment(order.id);
-      clearCart();
+      await refreshCart();
 
       const baseUrl = window.location.origin;
       window.location.assign(`${baseUrl}/?payment=success&orderCode=${order.id}`);
@@ -843,10 +882,33 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
             /* Cart List */
             <div className="cart-items-list">
               {error && <div className="checkout-error">{error}</div>}
+              <div className="cart-select-all-row" onClick={toggleSelectAll}>
+                <button
+                  type="button"
+                  className={`cart-item-checkbox ${allSelected ? 'checked' : ''}`}
+                  role="checkbox"
+                  aria-checked={allSelected}
+                  aria-label="Chọn tất cả sản phẩm"
+                >
+                  {allSelected && <Check size={12} strokeWidth={3} />}
+                </button>
+                <span>Chọn tất cả ({selectedItems.length}/{cartItems.length})</span>
+              </div>
               {otcItems.map((item) => {
                 const otcAtLimit = item.stockQuantity != null && item.quantity >= item.stockQuantity;
+                const isChecked = selectedIds.has(item.id);
                 return (
-                <div key={item.id} className="cart-item-card">
+                <div key={item.id} className={`cart-item-card ${isChecked ? '' : 'unselected'}`}>
+                  <button
+                    type="button"
+                    className={`cart-item-checkbox ${isChecked ? 'checked' : ''}`}
+                    onClick={() => toggleSelected(item.id)}
+                    role="checkbox"
+                    aria-checked={isChecked}
+                    aria-label={`Chọn ${item.name}`}
+                  >
+                    {isChecked && <Check size={12} strokeWidth={3} />}
+                  </button>
                   <img src={api.formatImageUrl(item.imageUrl || item.image)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                   <div className="cart-item-info">
                     <span className="cart-item-name">{item.name}</span>
@@ -886,8 +948,19 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
                   </div>
                   {rxItems.map((item) => {
                     const atLimit = item.allowedQuantity != null && item.quantity >= item.allowedQuantity;
+                    const isChecked = selectedIds.has(item.id);
                     return (
-                      <div key={item.id} className="cart-item-card">
+                      <div key={item.id} className={`cart-item-card ${isChecked ? '' : 'unselected'}`}>
+                        <button
+                          type="button"
+                          className={`cart-item-checkbox ${isChecked ? 'checked' : ''}`}
+                          onClick={() => toggleSelected(item.id)}
+                          role="checkbox"
+                          aria-checked={isChecked}
+                          aria-label={`Chọn ${item.name}`}
+                        >
+                          {isChecked && <Check size={12} strokeWidth={3} />}
+                        </button>
                         <img src={api.formatImageUrl(item.imageUrl || item.image)} alt={item.name} className="cart-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
                         <div className="cart-item-info">
                           <span className="cart-item-name">{item.name}</span>
@@ -925,10 +998,10 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
         {!checkoutMode && cartItems.length > 0 && !successMsg && (
           <div className="cart-drawer-footer">
             <div className="cart-subtotal-row">
-              <span className="subtotal-label">Tổng tiền tạm tính:</span>
+              <span className="subtotal-label">Tổng tiền tạm tính ({selectedItems.length} sản phẩm):</span>
               <span className="subtotal-val">{formatPrice(totalAmount)}</span>
             </div>
-            <button className="cart-checkout-btn" onClick={handleCheckoutClick}>
+            <button className="cart-checkout-btn" onClick={handleCheckoutClick} disabled={selectedItems.length === 0}>
               Tiến hành thanh toán
             </button>
           </div>

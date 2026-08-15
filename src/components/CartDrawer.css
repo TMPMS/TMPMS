@@ -368,6 +368,57 @@ body.cart-drawer-open .pharmacy-chat-widget {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
 }
+.cart-checkout-btn:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Chọn một phần giỏ hàng để mua (kiểu Shopee) */
+.cart-select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cart-item-checkbox {
+  flex-shrink: 0;
+  align-self: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.15s ease;
+}
+.cart-item-checkbox:hover {
+  border-color: #0d9488;
+}
+.cart-item-checkbox.checked {
+  background-color: #0d9488;
+  border-color: #0d9488;
+}
+
+.cart-item-card.unselected {
+  opacity: 0.55;
+}
 
 /* Checkout Form styling */
 .checkout-form {
