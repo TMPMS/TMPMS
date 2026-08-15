@@ -145,6 +145,20 @@
   color: #059669;
 }
 
+.unread-badge {
+  background: #ef4444;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
 .pharmacy-dash-main {
   flex: 1;
   display: flex;
