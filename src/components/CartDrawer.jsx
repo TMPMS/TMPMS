@@ -816,6 +816,22 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
                 </div>
               </div>
 
+              {/* Danh sách sản phẩm sẽ thanh toán — khách cần thấy rõ đang mua đúng món/đúng số
+                  lượng nào trước khi bấm xác nhận, tránh nhầm lẫn khi chỉ chọn 1 phần giỏ hàng. */}
+              <div className="checkout-order-items">
+                <h4 className="checkout-section-title" style={{ marginTop: 0 }}>Sản phẩm thanh toán ({selectedItems.length})</h4>
+                {selectedItems.map(item => (
+                  <div key={item.id} className="checkout-order-item-row">
+                    <img src={api.formatImageUrl(item.imageUrl || item.image)} alt={item.name} className="checkout-order-item-img" onError={(e) => { e.target.onerror = null; e.target.src = api.FALLBACK_MED_IMG; }} />
+                    <div className="checkout-order-item-info">
+                      <span className="checkout-order-item-name">{item.name}</span>
+                      <span className="checkout-order-item-qty">Số lượng: {item.quantity}</span>
+                    </div>
+                    <span className="checkout-order-item-total">{formatPrice(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+
               {/* Price summary table */}
               <div className="checkout-summary-box">
                 <div className="price-calc-row">

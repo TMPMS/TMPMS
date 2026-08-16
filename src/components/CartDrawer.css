@@ -873,6 +873,62 @@ body.cart-drawer-open .pharmacy-chat-widget {
   flex-shrink: 0;
 }
 
+/* ============ CHECKOUT ORDER ITEMS LIST ============ */
+.checkout-order-items {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkout-order-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkout-order-item-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.checkout-order-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.checkout-order-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkout-order-item-qty {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.checkout-order-item-total {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
 /* ============ DETAILED CALCULATIONS BOX ============ */
 .checkout-summary-box {
   background: #f8fafc;
