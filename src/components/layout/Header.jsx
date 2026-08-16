@@ -63,10 +63,11 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
 
   // Search input state
   const [searchText, setSearchText] = useState('');
-  
+
   // Autocomplete / suggestions states
   const [allMedicines, setAllMedicines] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchWrapRef = useRef(null);
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [isWheelModalOpen, setIsWheelModalOpen] = useState(false);
 
@@ -96,6 +97,20 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     const timer = window.setTimeout(() => setResendSeconds(value => Math.max(0, value - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [resendSeconds]);
+
+  // Đóng thanh gợi ý tìm kiếm khi bấm ra ngoài. Cần thiết vì tìm kiếm bằng giọng nói/hình ảnh
+  // mở thanh gợi ý bằng setIsSearchFocused(true) chứ không thật sự focus vào ô input, nên sự
+  // kiện onBlur của input sẽ không bao giờ được kích hoạt để tự đóng thanh gợi ý.
+  useEffect(() => {
+    if (!isSearchFocused) return undefined;
+    const handleClickOutside = (e) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchFocused]);
 
   useEffect(() => {
     const handleOpenAuth = (e) => {
@@ -481,7 +496,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
           </a>
 
           {/* Search */}
-          <div className="search-wrap" style={{ position: 'relative' }}>
+          <div className="search-wrap" style={{ position: 'relative' }} ref={searchWrapRef}>
             <div className="search-bar">
               <Search size={18} className="search-icon-left" />
               <input 
