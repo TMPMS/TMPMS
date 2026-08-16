@@ -99,6 +99,41 @@
   border-bottom: 1px solid #a7f3d0;
 }
 
+.pharmacy-chat-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pharmacy-chat-error button {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pharmacy-chat-error button:hover {
+  background: #b91c1c;
+}
+
+.pharmacy-chat-send-error {
+  margin: 0;
+  padding: 6px 14px 0;
+  font-size: 11.5px;
+  color: #b91c1c;
+}
+
 .pharmacy-chat-body {
   flex: 1;
   padding: 14px;

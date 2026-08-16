@@ -234,7 +234,16 @@ export async function deleteUser(userId) {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error('Không thể xóa người dùng');
+  if (!res.ok) {
+    let message = 'Không thể xóa người dùng';
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch (e) {
+      // response không có JSON body hợp lệ, dùng message mặc định
+    }
+    throw new Error(message);
+  }
   return res.json();
 }
 

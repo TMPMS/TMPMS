@@ -11,6 +11,12 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
   const [hubConnection, setHubConnection] = useState(null);
   const [assignedPharmacistName, setAssignedPharmacistName] = useState(null);
   const [systemNotice, setSystemNotice] = useState('');
+  // Trước đây init() thất bại (mất mạng, server quá tải...) chỉ log console.error mà không báo gì
+  // cho khách — khách gõ tin nhắn, bấm Gửi, không có gì xảy ra và cũng không biết vì sao (session
+  // vẫn null nên handleSendMessage tự thoát sớm). Giờ hiển thị banner lỗi kèm nút Thử lại.
+  const [connectError, setConnectError] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -32,6 +38,8 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
 
   useEffect(() => {
     if (!isOpen || !userId) return;
+
+    setConnectError(false);
 
     // sessionIdRef giữ id session mới nhất để dùng trong onreconnected (closure của handler được
     // đăng ký 1 lần lúc mount, không thấy state session cập nhật sau đó nếu đọc trực tiếp).
@@ -89,6 +97,7 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
         await connection.invoke('JoinSession', sessData.id);
       } catch (err) {
         console.error('Lỗi khởi tạo phiên chat dược sĩ:', err);
+        setConnectError(true);
       }
     };
 
@@ -101,7 +110,7 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
         connection.stop();
       }
     };
-  }, [isOpen, userId]);
+  }, [isOpen, userId, retryTick]);
 
   useEffect(() => {
     scrollToBottom();
@@ -111,10 +120,15 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!inputText.trim() || !session || !hubConnection) return;
+    if (!inputText.trim()) return;
+    if (!session || !hubConnection) {
+      setSendError('Chưa kết nối được tới máy chủ tư vấn. Vui lòng thử lại.');
+      return;
+    }
 
     const text = inputText.trim();
     setInputText('');
+    setSendError('');
 
     try {
       if (hubConnection.state !== signalR.HubConnectionState.Connected) {
@@ -124,7 +138,15 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
       await hubConnection.invoke('SendMessage', session.id, text);
     } catch (err) {
       console.error('Lỗi gửi tin nhắn:', err);
+      setInputText(text);
+      setSendError('Gửi tin nhắn thất bại (mất kết nối). Vui lòng thử lại.');
     }
+  };
+
+  const handleRetryConnect = () => {
+    setConnectError(false);
+    setSendError('');
+    setRetryTick((t) => t + 1);
   };
 
   return (
@@ -152,6 +174,13 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
       {session && session.status === 'Open' && !assignedPharmacistName && (
         <div className="pharmacy-chat-notice">
           ℹ️ Vui lòng đặt câu hỏi, Dược sĩ chuyên môn sẽ tiếp nhận và phản hồi ngay.
+        </div>
+      )}
+
+      {connectError && (
+        <div className="pharmacy-chat-error">
+          <span>⚠️ Không thể kết nối tới máy chủ tư vấn. Vui lòng kiểm tra mạng và thử lại.</span>
+          <button type="button" onClick={handleRetryConnect}>Thử lại</button>
         </div>
       )}
 
@@ -194,6 +223,7 @@ const PharmacyChatWidget = ({ isOpen, onClose, user, initialMessage }) => {
       </div>
 
       {/* Footer / Input form */}
+      {sendError && <p className="pharmacy-chat-send-error">{sendError}</p>}
       <form className="pharmacy-chat-footer" onSubmit={handleSendMessage}>
         <input
           type="text"

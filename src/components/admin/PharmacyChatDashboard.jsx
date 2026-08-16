@@ -12,6 +12,12 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [hubConnection, setHubConnection] = useState(null);
+  // Trước đây handleSendReply/handleAssign/handleClose nuốt lỗi khi kết nối SignalR chưa sẵn sàng
+  // (WebSocket bị chặn/rớt) — Dược sĩ bấm Gửi mà không có gì xảy ra, không rõ vì sao. Giờ báo lỗi
+  // kèm nút Thử lại kết nối.
+  const [hubError, setHubError] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
   const messagesEndRef = useRef(null);
   // Đọc trong closure của handler SignalR đăng ký 1 lần lúc mount — state activeSessionId ở đó
   // sẽ luôn là giá trị cũ (null) nếu đọc trực tiếp, nên phải dùng ref để luôn thấy giá trị mới nhất.
@@ -113,15 +119,25 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
       .start()
       .then(() => {
         console.log('SignalR Dashboard connected to PharmacyChatHub');
+        setHubError(false);
       })
-      .catch((err) => console.error('Dashboard SignalR Error:', err));
+      .catch((err) => {
+        console.error('Dashboard SignalR Error:', err);
+        setHubError(true);
+      });
 
     setHubConnection(connection);
 
     return () => {
       connection.stop();
     };
-  }, []);
+  }, [retryTick]);
+
+  const handleRetryConnect = () => {
+    setHubError(false);
+    setSendError('');
+    setRetryTick((t) => t + 1);
+  };
 
   // Load messages when active session changes
   useEffect(() => {
@@ -166,6 +182,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
       }
     } catch (err) {
       console.error('Lỗi tiếp nhận tư vấn:', err);
+      setSendError('Tiếp nhận tư vấn thất bại (mất kết nối). Vui lòng thử lại.');
     }
   };
 
@@ -176,20 +193,31 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
       await hubConnection.invoke('CloseSession', activeSessionId);
     } catch (err) {
       console.error('Lỗi đóng phiên tư vấn:', err);
+      setSendError('Kết thúc tư vấn thất bại (mất kết nối). Vui lòng thử lại.');
     }
   };
 
   const handleSendReply = async (e) => {
     e.preventDefault();
-    if (!inputText.trim() || !activeSessionId || !hubConnection) return;
+    if (!inputText.trim() || !activeSessionId) return;
+    if (!hubConnection) {
+      setSendError('Chưa kết nối được tới máy chủ tư vấn. Vui lòng thử lại.');
+      return;
+    }
 
     const text = inputText.trim();
     setInputText('');
+    setSendError('');
 
     try {
+      if (hubConnection.state !== signalR.HubConnectionState.Connected) {
+        await hubConnection.start();
+      }
       await hubConnection.invoke('SendMessage', activeSessionId, text);
     } catch (err) {
       console.error('Lỗi gửi tin nhắn trả lời:', err);
+      setInputText(text);
+      setSendError('Gửi tin nhắn thất bại (mất kết nối). Vui lòng thử lại.');
     }
   };
 
@@ -251,6 +279,12 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
 
       {/* Main Chat Content */}
       <div className="pharmacy-dash-main">
+        {hubError && (
+          <div className="dash-hub-error">
+            <span>⚠️ Mất kết nối tới máy chủ chat theo thời gian thực. Tin nhắn có thể không gửi/nhận được.</span>
+            <button type="button" onClick={handleRetryConnect}>Thử lại</button>
+          </div>
+        )}
         {activeSession ? (
           <>
             {/* Header */}
@@ -302,6 +336,7 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
             </div>
 
             {/* Reply Input */}
+            {sendError && <p className="dash-send-error">{sendError}</p>}
             <form className="dash-reply-footer" onSubmit={handleSendReply}>
               <input
                 type="text"

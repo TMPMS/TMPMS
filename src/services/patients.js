@@ -153,7 +153,7 @@ export async function createPatient(patientData) {
     phone: patientData.phone || patientData.phoneNumber || patientData.Phone,
     phoneNumber: patientData.phone || patientData.phoneNumber || patientData.Phone,
     gender: patientData.gender || patientData.Gender || 'Nam',
-    dateOfBirth: patientData.date_of_birth || patientData.dateOfBirth,
+    dateOfBirth: (patientData.date_of_birth || patientData.dateOfBirth) || null,
     address: patientData.address || patientData.Address
   };
   const res = await requestWithAuth(`${API_URL}/patients`, {
@@ -177,7 +177,7 @@ export async function updatePatient(patientId, patientData) {
     phone: patientData.phone || patientData.phoneNumber || patientData.Phone,
     phoneNumber: patientData.phone || patientData.phoneNumber || patientData.Phone,
     gender: patientData.gender || patientData.Gender,
-    dateOfBirth: patientData.date_of_birth || patientData.dateOfBirth,
+    dateOfBirth: (patientData.date_of_birth || patientData.dateOfBirth) || null,
     address: patientData.address || patientData.Address,
     isActive: patientData.is_active !== undefined ? patientData.is_active : patientData.isActive
   };

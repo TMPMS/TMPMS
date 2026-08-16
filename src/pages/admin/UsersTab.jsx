@@ -63,7 +63,7 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
       setUsers(prev => prev.filter(u => u.id !== userId));
       showSuccess('Đã xóa người dùng thành công!');
     } catch (err) {
-      setError('Lỗi khi xóa người dùng.');
+      setError(err.message || 'Lỗi khi xóa người dùng.');
     }
   };
 
