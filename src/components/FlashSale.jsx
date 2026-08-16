@@ -56,7 +56,7 @@ const FlashSale = ({ onProductClick }) => {
           .map(c => ({
             id: c.medicineId,
             name: c.medicineName,
-            image: c.imageUrl,
+            image: formatImageUrl(c.imageUrl),
             price: c.salePrice,
             oldPrice: c.originalPrice,
             stockQuantity: c.stockQuantity ?? 0,
