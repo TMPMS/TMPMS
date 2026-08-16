@@ -148,7 +148,16 @@ const AIChatbot = () => {
       // ORDER_MEDICINE: server đã xác định đúng 1 sản phẩm + số lượng — tự thêm vào giỏ ngay
       // (giống hành vi "thêm vào giỏ" khách vẫn bấm tay), không cần khách bấm thêm 1 lần nữa.
       if (data.intent === 'ORDER_MEDICINE' && data.product) {
-        await addToCart(data.product, data.quantity || 1);
+        const requestedQty = data.quantity || 1;
+        // isCorrection: khách đang sửa lại số lượng đã đặt trước đó (vd "thôi 1 chai thôi" sau khi
+        // vừa đặt 2 chai) — phải GHI ĐÈ số lượng trong giỏ, không cộng dồn thêm như addToCart.
+        const existingItem = cartItems.find(i => i.id === data.product.id);
+        if (data.isCorrection && existingItem) {
+          await updateQuantity(data.product.id, requestedQty);
+          botText = `Đã cập nhật "${data.product.name}" trong giỏ hàng thành ${requestedQty} sản phẩm.`;
+        } else {
+          await addToCart(data.product, requestedQty);
+        }
       } else if (data.intent === 'REMOVE_FROM_CART' && data.product) {
         // BE không biết giỏ hàng khách vãng lai (chỉ có ở localStorage phía FE) nên không thể tự
         // xác nhận đã gỡ đúng số lượng — FE phải tự đối chiếu cartItems thực tế rồi mới thực hiện,
