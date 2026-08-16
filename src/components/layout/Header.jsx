@@ -37,6 +37,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   const [otpSent, setOtpSent] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartStartInCheckout, setCartStartInCheckout] = useState(false);
+  const [cartCheckoutOnlyProductId, setCartCheckoutOnlyProductId] = useState(null);
 
   // Auth Form State
   const [username, setUsername] = useState('');
@@ -120,6 +121,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
   useEffect(() => {
     const handleOpenCartDrawer = (e) => {
       setCartStartInCheckout(!!e.detail?.checkout);
+      setCartCheckoutOnlyProductId(e.detail?.checkoutOnlyProductId ?? null);
       setIsCartOpen(true);
     };
     window.addEventListener('open-cart-drawer', handleOpenCartDrawer);
@@ -635,9 +637,16 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
               </button>
             )}
 
-            <button 
-              className="header-action-btn cart-btn" 
-              onClick={() => setIsCartOpen(true)}
+            <button
+              className="header-action-btn cart-btn"
+              onClick={() => {
+                // Reset cờ "vào thẳng thanh toán" từ lần Trợ lý AI mở giỏ trước đó — bấm icon giỏ
+                // hàng thủ công phải luôn mở màn xem giỏ hàng bình thường, không nhảy thẳng vào
+                // thanh toán hay giữ nguyên lựa chọn chỉ-1-sản-phẩm còn sót lại.
+                setCartStartInCheckout(false);
+                setCartCheckoutOnlyProductId(null);
+                setIsCartOpen(true);
+              }}
               style={{ cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}
             >
               <div className="cart-icon-wrap">
@@ -989,6 +998,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
         onClose={() => setIsCartOpen(false)}
         onOpenAuth={() => openAuthModal('login')}
         startInCheckout={cartStartInCheckout}
+        checkoutOnlyProductId={cartCheckoutOnlyProductId}
       />
 
       {/* Upload Prescription Modal */}
