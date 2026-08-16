@@ -166,6 +166,41 @@
   background: #ffffff;
 }
 
+.dash-hub-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #fecaca;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dash-hub-error button {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dash-hub-error button:hover {
+  background: #b91c1c;
+}
+
+.dash-send-error {
+  margin: 0;
+  padding: 6px 20px 0;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
 .dash-main-header {
   padding: 14px 20px;
   border-bottom: 1px solid #e2e8f0;
