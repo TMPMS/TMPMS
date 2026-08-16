@@ -175,6 +175,11 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
     if (!activeSessionId) return;
     try {
       if (hubConnection) {
+        // Kết nối có thể vẫn đang ở trạng thái "Connecting" (start() chưa resolve) ngay sau khi
+        // dashboard vừa mở — invoke() ngay lúc đó sẽ ném lỗi dù kết nối không thực sự mất.
+        if (hubConnection.state !== signalR.HubConnectionState.Connected) {
+          await hubConnection.start();
+        }
         await hubConnection.invoke('AssignPharmacist', activeSessionId);
       } else {
         await api.assignPharmacyChatSession(activeSessionId);
@@ -190,6 +195,9 @@ const PharmacyChatDashboard = ({ loggedInUser }) => {
     if (!activeSessionId || !hubConnection) return;
     if (!window.confirm('Bạn có chắc chắn muốn kết thúc phiên tư vấn này?')) return;
     try {
+      if (hubConnection.state !== signalR.HubConnectionState.Connected) {
+        await hubConnection.start();
+      }
       await hubConnection.invoke('CloseSession', activeSessionId);
     } catch (err) {
       console.error('Lỗi đóng phiên tư vấn:', err);
