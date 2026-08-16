@@ -59,6 +59,7 @@ const FlashSale = ({ onProductClick }) => {
             image: c.imageUrl,
             price: c.salePrice,
             oldPrice: c.originalPrice,
+            stockQuantity: c.stockQuantity ?? 0,
             unit: c.unit || 'Hộp',
             discount: c.discountPercent,
             origin: c.origin || 'Việt Nam',
