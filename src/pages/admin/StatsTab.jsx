@@ -213,7 +213,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                   <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
                     <BarChart2 size={18} /> 📈 Biểu đồ Xu hướng Doanh thu {customRevenueTrend ? `(${statsDateFrom} → ${statsDateTo})` : '(30 Ngày gần nhất)'}
                   </h4>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 180, padding: '20px 10px 10px', borderBottom: '1px solid #e2e8f0', overflowX: 'auto' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 215, padding: '20px 10px 10px', borderBottom: '1px solid #e2e8f0', overflowX: 'auto', overflowY: 'hidden' }}>
                     {(customRevenueTrend || reportData.revenueTrend).map((pt, idx) => {
                       const trendData = customRevenueTrend || reportData.revenueTrend;
                       const maxRev = Math.max(...trendData.map(p => p.revenue || 1));
@@ -394,7 +394,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                   <Users size={18} /> 📈 Người dùng mới đăng ký (30 Ngày gần nhất)
                 </h4>
                 {userGrowthData.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 160, padding: '20px 10px 10px', borderBottom: '1px solid #e2e8f0', overflowX: 'auto' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 195, padding: '20px 10px 10px', borderBottom: '1px solid #e2e8f0', overflowX: 'auto', overflowY: 'hidden' }}>
                     {userGrowthData.map((pt, idx) => {
                       const maxUsers = Math.max(...userGrowthData.map(p => p.newUsers || 1));
                       const barHeight = maxUsers > 0 ? Math.max(15, Math.round((pt.newUsers / maxUsers) * 120)) : 15;
