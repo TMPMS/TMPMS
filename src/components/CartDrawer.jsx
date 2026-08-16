@@ -12,7 +12,7 @@ const PICKUP_STORES = [
   'Nhà thuốc TMPMS 88 Nguyễn Tri Phương, Hải Châu, Đà Nẵng'
 ];
 
-const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) => {
+const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, checkoutOnlyProductId = null }) => {
   const { cartItems, updateQuantity, removeFromCart, refreshCart } = useCart();
   const { user } = useAuth();
 
@@ -56,8 +56,19 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false }) =>
   // Trợ lý AI vừa tự thêm sản phẩm theo lệnh "mua ngay" của khách — mở thẳng vào bước thanh toán
   // thay vì màn xem giỏ hàng (AIChatbot chỉ dispatch sự kiện này sau khi addToCart đã xong).
   useEffect(() => {
-    if (isOpen && startInCheckout) setCheckoutMode(true);
-  }, [isOpen, startInCheckout]);
+    if (isOpen && startInCheckout) {
+      setCheckoutMode(true);
+      // Khách chỉ ra lệnh mua ĐÚNG 1 sản phẩm (vd "mua mật ong thôi") — chỉ tick chọn sản phẩm đó,
+      // không được gộp luôn những món khác đã có sẵn trong giỏ hàng từ trước vào đơn thanh toán.
+      if (checkoutOnlyProductId != null) {
+        setSelectedIds(new Set([checkoutOnlyProductId]));
+      }
+    } else if (!isOpen) {
+      // Đóng giỏ hàng thì luôn reset về màn xem giỏ hàng bình thường — tránh lần mở tiếp theo (vd
+      // bấm icon giỏ hàng thủ công) bị kẹt lại đúng bước thanh toán 1-sản-phẩm của lần trước.
+      setCheckoutMode(false);
+    }
+  }, [isOpen, startInCheckout, checkoutOnlyProductId]);
   const [deliveryMode, setDeliveryMode] = useState('shipping'); // shipping or pickup
   const [pickupStore, setPickupStore] = useState(PICKUP_STORES[0]);
   

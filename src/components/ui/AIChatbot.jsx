@@ -173,6 +173,9 @@ const AIChatbot = () => {
         intent: data.intent,
         text: botText,
         product: (data.intent === 'ORDER_MEDICINE' || data.intent === 'REMOVE_FROM_CART') ? null : data.product, // đã tự xử lý giỏ hàng — khỏi hiện lại nút "Thêm vào giỏ"
+        // Giữ lại id sản phẩm vừa đặt (dù đã ẩn `product` ở trên) để khi khách bấm nút "Thanh toán",
+        // CartDrawer biết chỉ nên tick chọn đúng sản phẩm này thay vì cả giỏ hàng.
+        orderedProductId: data.intent === 'ORDER_MEDICINE' ? data.product?.id ?? null : null,
         appointment: data.appointment,
         suggestedAction: data.suggestedAction,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
@@ -204,8 +207,15 @@ const AIChatbot = () => {
       window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'history' }));
     } else if (action.type === 'add_to_cart' || action.type === 'add_to_cart_checkout' || action.type === 'remove_from_cart') {
       // Giỏ hàng đã được cập nhật ngay khi nhận phản hồi (xem sendMessage) — nút này chỉ mở giỏ.
+      // Kèm theo productId để CartDrawer chỉ tick chọn ĐÚNG sản phẩm khách vừa yêu cầu mua khi
+      // thanh toán ngay, tránh gộp nhầm cả những món khác đã có sẵn trong giỏ từ trước.
       setIsOpen(false);
-      window.dispatchEvent(new CustomEvent('open-cart-drawer', { detail: { checkout: action.type === 'add_to_cart_checkout' } }));
+      window.dispatchEvent(new CustomEvent('open-cart-drawer', {
+        detail: {
+          checkout: action.type === 'add_to_cart_checkout',
+          checkoutOnlyProductId: action.type === 'add_to_cart_checkout' ? message?.orderedProductId : null
+        }
+      }));
     } else if (action.type === 'navigate_to_booking_checkout' && message?.appointment) {
       // Khung giờ đã được giữ chỗ ở server (xem handleSend) — điều hướng thẳng tới bước xác nhận +
       // đặt cọc (bước 3) của trang đặt lịch, mang theo token giữ chỗ để không phải chọn giờ lại.
