@@ -558,9 +558,10 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                                   name: m.name,
                                   description: m.description,
                                   price: m.price,
-                                  oldPrice: m.price * 1.15,
+                                  oldPrice: m.oldPrice,
+                                  discount: m.discount,
                                   image: m.imageUrl,
-                                  unit: 'Hộp',
+                                  unit: m.unit || 'Hộp',
                                   requiresPrescription: m.requiresPrescription,
                                   supplierId: m.supplierId
                                 });

@@ -162,10 +162,10 @@ const ProductDetailView = ({ product, onBack }) => {
                   <span className="pd-price">{(displayPrice || 0).toLocaleString('vi-VN')}đ</span>
                   <span className="pd-unit">/ {product.unit}</span>
                 </div>
-                {displayOldPrice && (
+                {displayOldPrice && displayOldPrice > displayPrice && (
                   <div className="pd-old-price-row">
                     <span className="pd-old-price">{displayOldPrice.toLocaleString('vi-VN')}đ</span>
-                    <span className="pd-discount">-{product.discount}%</span>
+                    <span className="pd-discount">-{Math.round((1 - displayPrice / displayOldPrice) * 100)}%</span>
                   </div>
                 )}
               </>

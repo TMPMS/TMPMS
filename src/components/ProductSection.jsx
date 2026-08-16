@@ -16,7 +16,9 @@ const ProductCard = ({ product, onProductClick }) => {
   return (
     <div className="pc-card">
       {/* Badges */}
-      {product.discount && <span className="pc-badge-disc">-{product.discount}%</span>}
+      {current.oldPrice != null && current.price != null && current.oldPrice > current.price && (
+        <span className="pc-badge-disc">-{Math.round((1 - current.price / current.oldPrice) * 100)}%</span>
+      )}
       {product.isNew && <span className="pc-badge-new">MỚI</span>}
       {product.requiresPrescription && <span className="pc-badge-rx">Kê đơn</span>}
 

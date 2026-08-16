@@ -80,8 +80,8 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
 
       {/* Badges */}
       <div className="product-badges">
-        {product.discount && (
-          <span className="badge-discount">-{product.discount}%</span>
+        {product.oldPrice != null && product.price != null && product.oldPrice > product.price && (
+          <span className="badge-discount">-{Math.round((1 - product.price / product.oldPrice) * 100)}%</span>
         )}
         {dongy && (
           <span className="badge-dongy">
