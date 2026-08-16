@@ -63,12 +63,16 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
       if (checkoutOnlyProductId != null) {
         setSelectedIds(new Set([checkoutOnlyProductId]));
       }
+      // Trợ lý AI mở thẳng vào bước thanh toán, bỏ qua nút "Tiến hành thanh toán" thủ công — nên
+      // phải tự nạp hồ sơ + sổ địa chỉ ở đây, nếu không form sẽ trống (không tự điền tên/sđt/địa chỉ).
+      if (user) prefillCheckoutInfo();
     } else if (!isOpen) {
       // Đóng giỏ hàng thì luôn reset về màn xem giỏ hàng bình thường — tránh lần mở tiếp theo (vd
       // bấm icon giỏ hàng thủ công) bị kẹt lại đúng bước thanh toán 1-sản-phẩm của lần trước.
       setCheckoutMode(false);
     }
-  }, [isOpen, startInCheckout, checkoutOnlyProductId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, startInCheckout, checkoutOnlyProductId, user]);
   const [deliveryMode, setDeliveryMode] = useState('shipping'); // shipping or pickup
   const [pickupStore, setPickupStore] = useState(PICKUP_STORES[0]);
   
@@ -80,7 +84,41 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
   const [selectedAddressId, setSelectedAddressId] = useState(null); // null = "địa chỉ khác" (nhập tay)
 
   const formatSavedAddress = (a) => [a.addressLine, a.ward, a.district, a.city].filter(Boolean).join(', ');
-  
+
+  // Nạp hồ sơ mới nhất + sổ địa chỉ đã lưu để tự điền form thanh toán — dùng chung cho cả 2 đường
+  // vào bước thanh toán: bấm nút "Tiến hành thanh toán" thủ công VÀ được Trợ lý AI mở thẳng vào
+  // thanh toán (vd "thanh toán cho tôi 1 chai mật ong"), để cả 2 đường đều tự điền tên/sđt/địa chỉ.
+  const prefillCheckoutInfo = async () => {
+    let freshProfile = null;
+    try {
+      freshProfile = await api.fetchMyProfile();
+      setRecipientName(freshProfile.fullName || freshProfile.username || '');
+      setRecipientPhone(freshProfile.phone || '');
+    } catch {
+      setRecipientName(user.username || '');
+      setRecipientPhone(user.phone || '');
+    }
+
+    const fallbackAddress = freshProfile?.address || user.address || 'Quận Ba Đình, Hà Nội';
+    try {
+      const addresses = await api.getPatientAddresses(user.id);
+      if (Array.isArray(addresses) && addresses.length > 0) {
+        setSavedAddresses(addresses);
+        const defaultAddr = addresses.find(a => a.isDefault || a.is_default) || addresses[0];
+        setSelectedAddressId(defaultAddr.id);
+        setAddressDetail(formatSavedAddress(defaultAddr));
+      } else {
+        setSavedAddresses([]);
+        setSelectedAddressId(null);
+        setAddressDetail(fallbackAddress);
+      }
+    } catch {
+      setSavedAddresses([]);
+      setSelectedAddressId(null);
+      setAddressDetail(fallbackAddress);
+    }
+  };
+
   // Voucher states — tối đa 1 voucher giảm sản phẩm + 1 voucher giảm phí ship, áp dụng song song.
   // Tự động chọn voucher lợi nhất cho mỗi loại; người dùng có thể xem danh sách và đổi ý.
   const [productVoucherCode, setProductVoucherCode] = useState('');
@@ -245,37 +283,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
       requireLogin();
       return;
     }
-    // Pre-populate user details if logged in — dùng hồ sơ mới nhất thay vì dữ liệu đăng nhập cũ
-    let freshProfile = null;
-    try {
-      freshProfile = await api.fetchMyProfile();
-      setRecipientName(freshProfile.fullName || freshProfile.username || '');
-      setRecipientPhone(freshProfile.phone || '');
-    } catch {
-      setRecipientName(user.username || '');
-      setRecipientPhone(user.phone || '');
-    }
-
-    // Nạp sổ địa chỉ đã lưu, tự chọn địa chỉ mặc định (nếu có)
-    const fallbackAddress = freshProfile?.address || user.address || 'Quận Ba Đình, Hà Nội';
-    try {
-      const addresses = await api.getPatientAddresses(user.id);
-      if (Array.isArray(addresses) && addresses.length > 0) {
-        setSavedAddresses(addresses);
-        const defaultAddr = addresses.find(a => a.isDefault || a.is_default) || addresses[0];
-        setSelectedAddressId(defaultAddr.id);
-        setAddressDetail(formatSavedAddress(defaultAddr));
-      } else {
-        setSavedAddresses([]);
-        setSelectedAddressId(null);
-        setAddressDetail(fallbackAddress);
-      }
-    } catch {
-      setSavedAddresses([]);
-      setSelectedAddressId(null);
-      setAddressDetail(fallbackAddress);
-    }
-
+    await prefillCheckoutInfo();
     setCheckoutMode(true);
   };
 
