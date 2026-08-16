@@ -9,16 +9,15 @@ import { formatDateVN } from '../../utils/dateUtils';
 import { formatDate } from './shared/adminFormat';
 
 // Hồ sơ Bệnh nhân — tách từ AdminView.jsx (tab "patients").
-// appointments/prescriptions được truyền xuống từ AdminView (shell) vì bản gốc
-// đọc 2 mảng này (do tab Lịch hẹn / Kê đơn tải) trong modal xem chi tiết bệnh nhân
-// mà KHÔNG tự tải lại — giữ nguyên hành vi đó (có thể trống nếu chưa từng ghé 2 tab kia).
-const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescriptions }) => {
+const PatientsTab = ({ hasAccess, showSuccess, setError }) => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [patientModal, setPatientModal] = useState(null); // 'add' | 'edit' | null
   const [currentPatient, setCurrentPatient] = useState({ name: '', gender: 'Nam', dateOfBirth: '', phone: '', address: '', medicalHistory: '' });
   const [viewingPatient, setViewingPatient] = useState(null); // Hồ sơ bệnh nhân đang xem chi tiết | null
   const [patientDiagnosisHistory, setPatientDiagnosisHistory] = useState([]);
+  const [patientAppointmentHistory, setPatientAppointmentHistory] = useState([]);
+  const [patientPrescriptionHistory, setPatientPrescriptionHistory] = useState([]);
   const [patientDetailLoading, setPatientDetailLoading] = useState(false);
 
   const loadTabData = async () => {
@@ -40,12 +39,27 @@ const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescript
   useEffect(() => {
     if (!viewingPatient) {
       setPatientDiagnosisHistory([]);
+      setPatientAppointmentHistory([]);
+      setPatientPrescriptionHistory([]);
       return;
     }
     setPatientDetailLoading(true);
-    api.fetchPatientDiagnoses(viewingPatient.id)
-      .then(data => setPatientDiagnosisHistory(Array.isArray(data) ? data : []))
-      .catch(() => setPatientDiagnosisHistory([]))
+    Promise.all([
+      api.fetchPatientDiagnoses(viewingPatient.id).catch(() => []),
+      api.fetchAppointments().catch(() => []),
+      api.fetchPrescriptions().catch(() => []),
+    ])
+      .then(([diagnoses, allAppointments, allPrescriptions]) => {
+        setPatientDiagnosisHistory(Array.isArray(diagnoses) ? diagnoses : []);
+        setPatientAppointmentHistory(
+          (Array.isArray(allAppointments) ? allAppointments : []).filter(a => a.patientId === viewingPatient.id)
+        );
+        setPatientPrescriptionHistory(
+          (Array.isArray(allPrescriptions) ? allPrescriptions : []).filter(
+            p => p.patientId === viewingPatient.id || p.userId === viewingPatient.id
+          )
+        );
+      })
       .finally(() => setPatientDetailLoading(false));
   }, [viewingPatient]);
 
@@ -57,15 +71,14 @@ const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescript
     }
     try {
       if (patientModal === 'add') {
-        const added = await api.createPatient(currentPatient);
-        setPatients(prev => [added, ...prev]);
+        await api.createPatient(currentPatient);
         showSuccess('Thêm bệnh nhân thành công!');
       } else {
-        const updated = await api.updatePatient(currentPatient.id, currentPatient);
-        setPatients(prev => prev.map(p => p.id === currentPatient.id ? updated : p));
+        await api.updatePatient(currentPatient.id, currentPatient);
         showSuccess('Cập nhật bệnh nhân thành công!');
       }
       setPatientModal(null);
+      loadTabData();
     } catch (err) {
       setError(err.message || 'Lỗi khi lưu bệnh nhân.');
     }
@@ -195,8 +208,8 @@ const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescript
               )}
 
               {viewingPatient && (() => {
-                const patientAppointments = appointments.filter(a => a.patientId === viewingPatient.id);
-                const patientPrescriptions = prescriptions.filter(p => p.patientId === viewingPatient.id || p.userId === viewingPatient.id);
+                const patientAppointments = patientAppointmentHistory;
+                const patientPrescriptions = patientPrescriptionHistory;
                 return (
                   <div className="safety-warning-overlay" onClick={() => setViewingPatient(null)}>
                     <div className="safety-warning-box" style={{ maxWidth: 760, border: '2px solid #0d9488' }} onClick={e => e.stopPropagation()}>
@@ -223,7 +236,9 @@ const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescript
                       <h5 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Calendar size={15} /> Lịch sử đặt lịch khám ({patientAppointments.length})
                       </h5>
-                      {patientAppointments.length === 0 ? (
+                      {patientDetailLoading ? (
+                        <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '0 0 18px 0' }}>Đang tải...</p>
+                      ) : patientAppointments.length === 0 ? (
                         <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '0 0 18px 0' }}>Chưa có lịch hẹn nào.</p>
                       ) : (
                         <div style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -240,7 +255,9 @@ const PatientsTab = ({ hasAccess, showSuccess, setError, appointments, prescript
                       <h5 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <FileText size={15} /> Đơn thuốc đã kê ({patientPrescriptions.length})
                       </h5>
-                      {patientPrescriptions.length === 0 ? (
+                      {patientDetailLoading ? (
+                        <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '0 0 18px 0' }}>Đang tải...</p>
+                      ) : patientPrescriptions.length === 0 ? (
                         <p style={{ fontSize: 12.5, color: '#94a3b8', margin: '0 0 18px 0' }}>Chưa có đơn thuốc nào.</p>
                       ) : (
                         <div style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
