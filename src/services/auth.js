@@ -236,6 +236,29 @@ export async function deleteUser(userId) {
   });
   if (!res.ok) {
     let message = 'Không thể xóa người dùng';
+    let code;
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+      code = body?.code;
+    } catch (e) {
+      // response không có JSON body hợp lệ, dùng message mặc định
+    }
+    const err = new Error(message);
+    err.code = code;
+    throw err;
+  }
+  return res.json();
+}
+
+// Ẩn danh hóa + khóa vĩnh viễn tài khoản, dùng khi deleteUser() bị chặn vì còn đơn thuốc/hồ sơ liên quan.
+export async function forceDeleteUser(userId) {
+  const res = await requestWithAuth(`${API_URL}/users/force-delete/${userId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    let message = 'Không thể ẩn danh hóa tài khoản';
     try {
       const body = await res.json();
       if (body?.message) message = body.message;

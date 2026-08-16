@@ -63,6 +63,21 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
       setUsers(prev => prev.filter(u => u.id !== userId));
       showSuccess('Đã xóa người dùng thành công!');
     } catch (err) {
+      if (err.code === 'HAS_RELATED_DATA') {
+        const wantsForce = window.confirm(
+          `${err.message}\n\nBạn có muốn ẩn danh hóa thông tin cá nhân (tên, email, SĐT) và khóa vĩnh viễn tài khoản "${username}" thay vì xóa cứng không? Đơn thuốc/hồ sơ liên quan sẽ được giữ nguyên.`
+        );
+        if (wantsForce) {
+          try {
+            await api.forceDeleteUser(userId);
+            setUsers(prev => prev.filter(u => u.id !== userId));
+            showSuccess('Đã ẩn danh hóa và khóa vĩnh viễn tài khoản!');
+          } catch (err2) {
+            setError(err2.message || 'Lỗi khi ẩn danh hóa tài khoản.');
+          }
+        }
+        return;
+      }
       setError(err.message || 'Lỗi khi xóa người dùng.');
     }
   };

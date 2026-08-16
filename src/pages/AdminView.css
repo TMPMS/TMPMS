@@ -31,6 +31,28 @@
   font-weight: 800;
 }
 
+/* Error / Success banners (AdminView.jsx showError/showSuccess) */
+.admin-error-msg,
+.admin-success-msg {
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.admin-error-msg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.admin-success-msg {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
 /* Header & Title Section */
 .admin-header {
   border-bottom: 1.5px solid #e2e8f0;
