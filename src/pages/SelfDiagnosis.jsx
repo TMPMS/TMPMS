@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import { Leaf, Activity, Sparkles, Check, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw, AlertCircle, XCircle } from 'lucide-react';
+import { Leaf, Activity, Sparkles, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toLocalWallClockIso } from '../utils/dateTime';
-import { formatDateTimeVN } from '../utils/dateUtils';
 import TongueAnalysisCard from '../components/ui/TongueAnalysisCard';
 import './SelfDiagnosis.css';
 
@@ -33,20 +32,11 @@ function isSlotPassed(dateStr, slot) {
   return slotToDate(dateStr, slot) <= new Date();
 }
 
-const formatDateTime = (value) => formatDateTimeVN(value);
+// Khớp với địa điểm mặc định LOCATIONS[0] của AppointmentBooking.jsx — chỗ giữ (hold) tạo ở đây
+// phải cùng địa điểm với bước xác nhận + đặt cọc mà người dùng được điều hướng tới sau đó.
+const BOOKING_LOCATION = 'Nhà thuốc TMPMS - Quận 1';
 
-const APPT_STATUS_LABELS = {
-  Pending: 'Chờ xác nhận',
-  PendingConfirmation: 'Chờ xác nhận',
-  Scheduled: 'Chờ xác nhận',
-  Confirmed: 'Đã xác nhận',
-  Completed: 'Hoàn thành',
-  Cancelled: 'Đã hủy',
-  Rejected: 'Đã từ chối',
-  Expired: 'Quá hạn'
-};
-
-const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
+const SelfDiagnosis = ({ onBack, onNavigateToLogin }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
 
@@ -59,12 +49,9 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingDate, setBookingDate] = useState(() => toDateInput(new Date()));
   const [timeSlot, setTimeSlot] = useState(() => buildTimeSlots().find(s => !isSlotPassed(toDateInput(new Date()), s)) || buildTimeSlots()[buildTimeSlots().length - 1]);
-  const [blockingAppt, setBlockingAppt] = useState(null);
-  const [cancelling, setCancelling] = useState(false);
-  const [lastBooked, setLastBooked] = useState(null);
+  const [holding, setHolding] = useState(false);
 
   const todayStr = toDateInput(new Date());
   const maxDateStr = toDateInput(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
@@ -137,13 +124,15 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
 
   const handleDateChange = (dateStr) => {
     setBookingDate(dateStr);
-    setBlockingAppt(null);
     if (isSlotPassed(dateStr, timeSlot)) {
       const next = TIME_SLOTS.find(s => !isSlotPassed(dateStr, s));
       setTimeSlot(next || TIME_SLOTS[TIME_SLOTS.length - 1]);
     }
   };
 
+  // Giữ khung giờ ở server (giống luồng đặt lịch chuẩn / Trợ lý AI) rồi điều hướng sang Cổng thông
+  // tin bệnh nhân, bước 3 "Xác nhận và đặt cọc" — KHÔNG tạo lịch hẹn trực tiếp ở đây, vì endpoint
+  // /Appointment/book tạo lịch ngay mà không yêu cầu đặt cọc, bỏ qua bước thanh toán bắt buộc.
   const handleBookAppointment = async () => {
     if (!user) {
       alert('Vui lòng đăng nhập tài khoản để đăng ký lịch hẹn khám!');
@@ -152,46 +141,30 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
       return;
     }
 
+    setHolding(true);
     try {
       const syndromeName = result?.primarySyndrome?.name || 'Đông Y';
       const reasonText = `Tự chẩn đoán: Thể bệnh ${syndromeName}`;
-
       const apptDate = slotToDate(bookingDate, timeSlot);
+      const appointmentIso = toLocalWallClockIso(apptDate);
 
-      await api.createAppointment({
-        appointmentDate: toLocalWallClockIso(apptDate),
-        reason: reasonText,
-        status: 'Scheduled',
-        notes: `Phân tích thể bệnh: ${syndromeName}. Lời khuyên: ${result?.recommendationText}.`
-      });
+      const hold = await api.holdAppointmentSlot(appointmentIso, BOOKING_LOCATION);
 
-      setLastBooked({ date: apptDate, slot: timeSlot });
-      setBookingSuccess(true);
-      setBlockingAppt(null);
-      if (onAppointmentBooked) onAppointmentBooked();
+      sessionStorage.setItem('pp_ai_hold', JSON.stringify({
+        token: hold.token || hold.Token,
+        expiresAt: hold.expiresAt || hold.ExpiresAt,
+        depositAmount: hold.depositAmount ?? hold.DepositAmount,
+        symptomHint: reasonText,
+        location: BOOKING_LOCATION,
+        appointmentDate: appointmentIso
+      }));
+      sessionStorage.setItem('pp_open_booking', '1');
+      window.dispatchEvent(new CustomEvent('app-navigate', { detail: 'patient-portal' }));
     } catch (err) {
       console.error(err);
-      if (err.isBlocked && err.blockingAppointment) {
-        setBlockingAppt(err.blockingAppointment);
-      } else {
-        alert(err.message || 'Đã xảy ra lỗi khi đăng ký lịch hẹn.');
-      }
-    }
-  };
-
-  const handleCancelBlocking = async () => {
-    if (!blockingAppt) return;
-    setCancelling(true);
-    try {
-      await api.cancelAppointment(blockingAppt.id);
-      setBlockingAppt(null);
-      alert('Đã hủy lịch hẹn cũ. Bạn có thể đặt lịch mới!');
-      if (onAppointmentBooked) onAppointmentBooked();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Không thể hủy lịch hẹn. Vui lòng thử lại.');
+      alert(err.message || 'Đã xảy ra lỗi khi giữ khung giờ hẹn khám.');
     } finally {
-      setCancelling(false);
+      setHolding(false);
     }
   };
 
@@ -200,9 +173,6 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
     setAnswers([]);
     setHistory([]);
     setCurrentQuestion(null);
-    setBookingSuccess(false);
-    setBlockingAppt(null);
-    setLastBooked(null);
     loadFirstQuestion();
   };
 
@@ -324,7 +294,7 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
                         {m.price != null && <span className="sm-price">{m.price.toLocaleString('vi-VN')}đ</span>}
                         <p className="sm-reason">{m.reason}</p>
                       </div>
-                      <button className="sm-add-btn" onClick={() => addToCart({ id: m.medicineId, name: m.name }, 1)}>
+                      <button className="sm-add-btn" onClick={() => addToCart({ id: m.medicineId, name: m.name, price: m.price, imageUrl: api.formatImageUrl(m.imageUrl) }, 1)}>
                         <ShoppingCart size={14} /> Thêm vào giỏ
                       </button>
                     </div>
@@ -343,66 +313,43 @@ const SelfDiagnosis = ({ onBack, onNavigateToLogin, onAppointmentBooked }) => {
             {/* Direct Clinical Appointment Booking */}
             <div className="appointment-booking-box">
               <h5>📅 Đăng ký lịch hẹn khám chi tiết:</h5>
-              {bookingSuccess ? (
-                <div className="booking-success-msg">
-                  <Check size={18} />
-                  <span>Đã gửi yêu cầu hẹn khám thành công! Khung giờ khám {lastBooked ? formatDateTime(lastBooked.date) : ''}. Vui lòng chờ nhà thuốc xác nhận (tối đa 24 giờ); lịch hẹn sẽ hết hiệu lực nếu không được xác nhận đúng hạn.</span>
+              <div className="booking-inputs">
+                <p className="booking-notice">Lý do hẹn sẽ tự động điền: <strong>"Tự chẩn đoán: Thể bệnh {result.primarySyndrome?.name}"</strong>. Sau khi giữ chỗ, bạn sẽ được chuyển sang bước xác nhận và đặt cọc.</p>
+                <div className="inputs-row">
+                  <input
+                    type="date"
+                    className="booking-input"
+                    value={bookingDate}
+                    min={todayStr}
+                    max={maxDateStr}
+                    onChange={e => handleDateChange(e.target.value)}
+                  />
                 </div>
-              ) : blockingAppt ? (
-                <div className="blocking-appt-box">
-                  <div className="blocking-title">
-                    <AlertCircle size={18} />
-                    <strong>Bạn đang có một lịch hẹn chưa hoàn tất</strong>
-                  </div>
-                  <div className="blocking-detail">
-                    <span>Thời gian: <strong>{formatDateTime(blockingAppt.appointmentDate)}</strong></span>
-                    <span>Trạng thái: <strong>{APPT_STATUS_LABELS[blockingAppt.status] || blockingAppt.status}</strong></span>
-                    {blockingAppt.reason && <span>Lý do: {blockingAppt.reason}</span>}
-                  </div>
-                  <p className="blocking-note">Bạn có thể hủy lịch hẹn này để đặt lịch mới, hoặc chờ lịch được xác nhận / quá hạn.</p>
-                  <button className="cancel-blocking-btn" onClick={handleCancelBlocking} disabled={cancelling}>
-                    <XCircle size={16} /> {cancelling ? 'Đang hủy...' : 'Hủy lịch hẹn này'}
+                <div className="slot-grid">
+                  {TIME_SLOTS.map(slot => {
+                    const disabled = isSlotPassed(bookingDate, slot);
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        className={`slot-btn ${timeSlot === slot ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+                        disabled={disabled}
+                        onClick={() => setTimeSlot(slot)}
+                      >
+                        {slot}
+                      </button>
+                    );
+                  })}
+                </div>
+                {bookingDate === todayStr && TIME_SLOTS.every(s => isSlotPassed(todayStr, s)) && (
+                  <p className="slot-warning">Đã hết khung giờ khả dụng hôm nay, vui lòng chọn ngày khác.</p>
+                )}
+                <div className="inputs-row">
+                  <button className="confirm-booking-btn" onClick={handleBookAppointment} disabled={holding || isSlotPassed(bookingDate, timeSlot)}>
+                    <Calendar size={16} /> {holding ? 'Đang giữ chỗ...' : isSlotPassed(bookingDate, timeSlot) ? 'Vui lòng chọn ngày/giờ khác' : `Giữ chỗ & Đặt cọc - ${timeSlot}`}
                   </button>
                 </div>
-              ) : (
-                <div className="booking-inputs">
-                  <p className="booking-notice">Lý do hẹn sẽ tự động điền: <strong>"Tự chẩn đoán: Thể bệnh {result.primarySyndrome?.name}"</strong></p>
-                  <div className="inputs-row">
-                    <input
-                      type="date"
-                      className="booking-input"
-                      value={bookingDate}
-                      min={todayStr}
-                      max={maxDateStr}
-                      onChange={e => handleDateChange(e.target.value)}
-                    />
-                  </div>
-                  <div className="slot-grid">
-                    {TIME_SLOTS.map(slot => {
-                      const disabled = isSlotPassed(bookingDate, slot);
-                      return (
-                        <button
-                          key={slot}
-                          type="button"
-                          className={`slot-btn ${timeSlot === slot ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
-                          disabled={disabled}
-                          onClick={() => setTimeSlot(slot)}
-                        >
-                          {slot}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {bookingDate === todayStr && TIME_SLOTS.every(s => isSlotPassed(todayStr, s)) && (
-                    <p className="slot-warning">Đã hết khung giờ khả dụng hôm nay, vui lòng chọn ngày khác.</p>
-                  )}
-                  <div className="inputs-row">
-                    <button className="confirm-booking-btn" onClick={handleBookAppointment} disabled={isSlotPassed(bookingDate, timeSlot)}>
-                      <Calendar size={16} /> {isSlotPassed(bookingDate, timeSlot) ? 'Vui lòng chọn ngày/giờ khác' : `Đặt lịch khám - ${timeSlot}`}
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
