@@ -949,6 +949,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
                           <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Tên sản phẩm</th>
                           <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Danh mục</th>
                           <th style={{ padding: '10px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>Giá bán</th>
+                          <th style={{ padding: '10px', textAlign: 'right', borderBottom: '1px solid #e5e7eb' }}>Giá nhập (lô)</th>
                           <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>Trạng thái</th>
                           <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Ghi chú lỗi / cảnh báo</th>
                         </tr>
@@ -1013,6 +1014,11 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
                                   ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.price)
                                   : <span style={{ color: '#9ca3af' }}>Liên hệ</span>}
                               </td>
+                              <td style={{ padding: '10px', textAlign: 'right', fontWeight: '600', color: '#b45309' }}>
+                                {row.costPrice > 0
+                                  ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(row.costPrice)
+                                  : <span style={{ color: '#9ca3af', fontWeight: 400 }}>—</span>}
+                              </td>
                               <td style={{ padding: '10px', textAlign: 'center' }}>
                                 <span style={{
                                   display: 'inline-block', padding: '3px 10px', borderRadius: '999px',
@@ -1064,6 +1070,14 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
                   {importResult.failedCount > 0 && (
                     <p style={{ margin: '4px 0', color: '#dc2626', fontSize: '14px' }}>
                       ❌ Thất bại: <strong>{importResult.failedCount}</strong> dòng
+                    </p>
+                  )}
+                  {importResult.batchesCreatedCount > 0 && (
+                    <p style={{ margin: '10px 0 0', fontSize: '15px', color: '#374151' }}>
+                      📦 Đã tạo <strong>{importResult.batchesCreatedCount}</strong> lô hàng — tổng giá trị nhập kho:{' '}
+                      <strong style={{ color: '#b45309', fontSize: '18px' }}>
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(importResult.totalImportValue || 0)}
+                      </strong>
                     </p>
                   )}
                   <button

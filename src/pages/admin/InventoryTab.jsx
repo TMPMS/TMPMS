@@ -604,12 +604,12 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                 </form>
               </div>
 
-              {/* BÁO CÁO LÃI GỘP ƯỚC TÍNH THEO LÔ */}
+              {/* BÁO CÁO LÃI GỘP THEO LÔ */}
               <div className="admin-card">
-                <h3 className="card-title">💰 Báo cáo lãi gộp ước tính theo lô</h3>
+                <h3 className="card-title">💰 Báo cáo lãi gộp theo lô</h3>
                 <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '-6px', marginBottom: '12px' }}>
-                  Doanh thu tính theo <strong>giá bán hiện tại</strong> của sản phẩm, chỉ tính đơn <strong>đã thanh toán</strong> và không bị hủy/trả hàng — chỉ mang tính tham khảo, không phải sổ sách kế toán chính xác.
-                  Chỉ hiển thị các lô của sản phẩm đang chọn ở trên và đã điền Giá nhập.
+                  Doanh thu tính theo <strong>giá bán thực tế tại thời điểm bán</strong> của từng đơn (không phải giá hiện tại), chỉ tính đơn <strong>đã thanh toán</strong> và không bị hủy/trả hàng.
+                  Chỉ hiển thị các lô của sản phẩm đang chọn ở trên và đã điền Giá nhập. Dòng có nhãn "ước tính" là các lô có giao dịch cũ chưa lưu được giá bán thực tế, tạm dùng giá hiện tại thay thế.
                 </p>
                 {!batchMedicineId ? (
                   <div className="admin-empty">Chọn thuốc/dược liệu ở mục "Nhập lô hàng mới" phía trên để xem báo cáo lãi gộp.</div>
@@ -625,15 +625,25 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                           <th>SL đã bán</th>
                           <th>Giá vốn/đv</th>
                           <th>Giá bán hiện tại</th>
-                          <th>Doanh thu ước tính</th>
-                          <th>Lãi gộp ước tính</th>
+                          <th>Doanh thu</th>
+                          <th>Lãi gộp</th>
                           <th>Biên LN</th>
                         </tr>
                       </thead>
                       <tbody>
                         {profitReport.map(p => (
                           <tr key={p.batchId}>
-                            <td>{p.batchNumber}</td>
+                            <td>
+                              {p.batchNumber}
+                              {p.isEstimated && (
+                                <span
+                                  title="Có giao dịch cũ chưa lưu giá bán thực tế, tạm dùng giá hiện tại"
+                                  style={{ marginLeft: 6, fontSize: 11, padding: '1px 6px', borderRadius: 10, background: '#fef3c7', color: '#92400e' }}
+                                >
+                                  ước tính
+                                </span>
+                              )}
+                            </td>
                             <td><strong>{p.medicineName}</strong></td>
                             <td>{p.quantitySold}</td>
                             <td>{formatPrice(p.unitCostPrice)}</td>
