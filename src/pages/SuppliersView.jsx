@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import './SuppliersView.css';
 
@@ -21,7 +21,9 @@ const SuppliersView = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      try { setLoggedInUser(JSON.parse(storedUser)); } catch (e) {}
+      try { setLoggedInUser(JSON.parse(storedUser)); } catch {
+        // intentionally ignored: malformed stored user JSON, treat as not logged in
+      }
     }
   }, []);
 

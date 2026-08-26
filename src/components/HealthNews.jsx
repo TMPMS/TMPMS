@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchNewsArticles } from '../services/api';
 import './HealthNews.css';
 
@@ -44,14 +44,14 @@ const HealthNews = () => {
           ))}
         </div>
         {!showAll && articles.length > INITIAL_COUNT && (
-          <a href="#" className="hn-all" onClick={(e) => { e.preventDefault(); setShowAll(true); }}>Xem tất cả →</a>
+          <button type="button" className="hn-all" onClick={() => setShowAll(true)}>Xem tất cả →</button>
         )}
       </div>
 
       <div className="hn-content">
         {/* Featured */}
         {featured && (
-          <a href="#" className="hn-featured" onClick={(e) => { e.preventDefault(); setOpenArticle(featured); }}>
+          <button type="button" className="hn-featured" onClick={() => setOpenArticle(featured)}>
             <div className="hn-featured-img">
               <div className="hn-img-placeholder">{(featured.tag || tab)[0]}</div>
             </div>
@@ -61,13 +61,13 @@ const HealthNews = () => {
               <p className="hn-featured-excerpt">{featured.excerpt}</p>
               <span className="hn-date">{formatDate(featured.publishedDate || featured.published_date)}</span>
             </div>
-          </a>
+          </button>
         )}
 
         {/* List */}
         <div className="hn-list">
           {rest.map(a => (
-            <a key={a.id} href="#" className="hn-item" onClick={(e) => { e.preventDefault(); setOpenArticle(a); }}>
+            <button type="button" key={a.id} className="hn-item" onClick={() => setOpenArticle(a)}>
               <div className="hn-item-img">
                 <div className="hn-img-sm-placeholder">{(a.tag || tab)[0]}</div>
               </div>
@@ -76,7 +76,7 @@ const HealthNews = () => {
                 <p className="hn-item-title">{a.title}</p>
                 <span className="hn-date">{formatDate(a.publishedDate || a.published_date)}</span>
               </div>
-            </a>
+            </button>
           ))}
         </div>
       </div>

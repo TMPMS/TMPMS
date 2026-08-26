@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ShieldCheck, ChevronRight, Activity, ArrowLeft } from 'lucide-react';
 import './HealthQuizList.css';
 

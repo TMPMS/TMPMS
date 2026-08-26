@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchMedicines } from '../services/api';
 import ProductCard from './ui/ProductCard';
 import { Leaf, ChevronRight, Sparkles } from 'lucide-react';
@@ -27,7 +27,7 @@ const BENEFITS = [
   { icon: '💚', title: 'An toàn toàn diện', desc: 'Không tác dụng phụ' },
 ];
 
-const DongYSection = ({ onProductClick }) => {
+const DongYSection = ({ onProductClick, onViewAllCategory }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -80,9 +80,13 @@ const DongYSection = ({ onProductClick }) => {
               Tinh hoa dược liệu thiên nhiên — Chắt lọc từ bài thuốc gia truyền hàng nghìn năm
             </p>
           </div>
-          <a href="#" className="ds-view-all">
+          <button
+            type="button"
+            className="ds-view-all"
+            onClick={() => onViewAllCategory?.(tabs.find(t => t.key === activeTab)?.catId || 1)}
+          >
             Xem tất cả <ChevronRight size={16} />
-          </a>
+          </button>
         </div>
 
         {/* Benefits bar */}

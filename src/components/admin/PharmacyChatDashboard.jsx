@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import * as api from '../../services/api';
 import { formatTimeVN } from '../../utils/dateUtils';
 import './PharmacyChatDashboard.css';
 
-const PharmacyChatDashboard = ({ loggedInUser }) => {
+const PharmacyChatDashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [filterStatus, setFilterStatus] = useState('All');
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [hubConnection, setHubConnection] = useState(null);
   // Trước đây handleSendReply/handleAssign/handleClose nuốt lỗi khi kết nối SignalR chưa sẵn sàng
   // (WebSocket bị chặn/rớt) — Dược sĩ bấm Gửi mà không có gì xảy ra, không rõ vì sao. Giờ báo lỗi

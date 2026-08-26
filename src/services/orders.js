@@ -6,7 +6,9 @@ export async function fetchInvoiceByOrder(orderId) {
       headers: getAuthHeaders()
     });
     if (res.ok) return await res.json();
-  } catch (e) {}
+  } catch {
+    // intentionally ignored: no existing invoice found/reachable, fall back to generating one below
+  }
 
   const genRes = await requestWithAuth(`${API_URL}/Invoice/generate/${orderId}`, {
     method: 'POST',
@@ -120,7 +122,7 @@ export async function createOrder(orderData) {
       const errorData = await res.json();
       throw new Error(errorData.error || errorData.message || 'Không thể tạo đơn hàng');
     } catch (e) {
-      throw new Error(e.message || 'Không thể tạo đơn hàng');
+      throw new Error(e.message || 'Không thể tạo đơn hàng', { cause: e });
     }
   }
   return res.json();

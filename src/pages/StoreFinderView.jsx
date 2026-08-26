@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { MapPin, Phone, Clock, Search, ChevronRight, Navigation } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { MapPin, Phone, Clock, Search, ChevronRight } from 'lucide-react';
 import './StoreFinderView.css';
 
 const provinces = [
@@ -120,7 +120,7 @@ const StoreFinderView = ({ onBack }) => {
     <div className="sf-container">
       {/* Breadcrumbs */}
       <div className="sf-breadcrumbs">
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} className="sf-bc-home">Trang chủ</a>
+        <button type="button" onClick={onBack} className="sf-bc-home">Trang chủ</button>
         <ChevronRight size={14} className="sf-bc-sep" />
         <span className="sf-bc-current">Tìm nhà thuốc</span>
       </div>

@@ -90,7 +90,7 @@ export async function getMyProfile() {
 export async function logoutUser() {
   try {
     await apiFetch(`${API_URL}/auth/revoke-token`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-  } catch (e) {
+  } catch {
     // Đăng xuất ở client vẫn tiếp tục dù request tới server thất bại (mất mạng, v.v.)
   }
 }
@@ -241,7 +241,7 @@ export async function deleteUser(userId) {
       const body = await res.json();
       if (body?.message) message = body.message;
       code = body?.code;
-    } catch (e) {
+    } catch {
       // response không có JSON body hợp lệ, dùng message mặc định
     }
     const err = new Error(message);
@@ -262,7 +262,7 @@ export async function forceDeleteUser(userId) {
     try {
       const body = await res.json();
       if (body?.message) message = body.message;
-    } catch (e) {
+    } catch {
       // response không có JSON body hợp lệ, dùng message mặc định
     }
     throw new Error(message);

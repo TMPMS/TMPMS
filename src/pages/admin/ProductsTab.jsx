@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import * as api from '../../services/api';
-import { Upload, Download, ScanLine } from 'lucide-react';
+import { Upload, ScanLine } from 'lucide-react';
 import BarcodeScannerModal from '../../components/admin/BarcodeScannerModal';
 
 const FALLBACK_MED_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23e5e7eb'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='26'>🌿</text></svg>";
@@ -315,7 +315,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
       try {
         await api.deleteMedicine(id);
         okCount++;
-      } catch (err) {
+      } catch {
         failed.push(id);
       }
     }
@@ -978,7 +978,7 @@ const ProductsTab = ({ hasAccess, showSuccess, setError }) => {
                                       onChange={() => toggleImportRow(row.rowIndex)}
                                       style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#dc2626' }}
                                     />
-                                    {!isSelected && <span style={{ fontSize: '9px', color: '#dc2626', fontWeight: '700' }}>tick để xóa</span>}
+                                    {!isSelected && <span style={{ fontSize: '9px', color: '#dc2626', fontWeight: '700' }}>tick để xóa</span>}
                                   </div>
                                 ) : (
                                   <input

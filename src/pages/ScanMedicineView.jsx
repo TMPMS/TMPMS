@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ScanLine, Search, ArrowLeft, PackageX } from 'lucide-react';
 import BarcodeScannerModal from '../components/admin/BarcodeScannerModal';
 import { fetchMedicineByBarcode } from '../services/medicines';

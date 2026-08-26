@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, ShoppingCart, Volume2, VolumeX, ChevronLeft, Tv, RotateCw, Loader2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import * as api from '../services/api';
@@ -98,7 +98,7 @@ const ReelItem = ({ reel, active, isMuted, toggleMute }) => {
 const HealthReels = ({ onBack }) => {
   const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [, setErrorMessage] = useState('');
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const containerRef = useRef(null);

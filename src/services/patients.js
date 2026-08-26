@@ -139,6 +139,7 @@ export async function fetchPatients() {
     date_of_birth: p.dateOfBirth || p.DateOfBirth || null,
     dateOfBirth: p.dateOfBirth || p.DateOfBirth || null,
     address: p.address || p.Address || "",
+    medicalHistory: p.medicalHistory || p.MedicalHistory || "",
     is_active: p.isActive !== undefined ? p.isActive : p.IsActive,
     created_at: p.createdAt || p.CreatedAt
   }));
@@ -154,7 +155,8 @@ export async function createPatient(patientData) {
     phoneNumber: patientData.phone || patientData.phoneNumber || patientData.Phone,
     gender: patientData.gender || patientData.Gender || 'Nam',
     dateOfBirth: (patientData.date_of_birth || patientData.dateOfBirth) || null,
-    address: patientData.address || patientData.Address
+    address: patientData.address || patientData.Address,
+    medicalHistory: patientData.medicalHistory || patientData.MedicalHistory
   };
   const res = await requestWithAuth(`${API_URL}/patients`, {
     method: 'POST',
@@ -179,6 +181,7 @@ export async function updatePatient(patientId, patientData) {
     gender: patientData.gender || patientData.Gender,
     dateOfBirth: (patientData.date_of_birth || patientData.dateOfBirth) || null,
     address: patientData.address || patientData.Address,
+    medicalHistory: patientData.medicalHistory || patientData.MedicalHistory,
     isActive: patientData.is_active !== undefined ? patientData.is_active : patientData.isActive
   };
   const res = await requestWithAuth(`${API_URL}/patients/${patientId}`, {

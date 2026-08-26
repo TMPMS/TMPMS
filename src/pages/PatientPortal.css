@@ -559,3 +559,24 @@
   .portal-welcome-banner { flex-direction: column; text-align: center; }
   .back-home-btn-header { margin: 10px auto 0 auto; }
 }
+
+@media (max-width: 480px) {
+  .patient-portal-container { margin: 16px auto; padding: 0 12px; }
+  .portal-welcome-banner { padding: 20px 16px; border-radius: 16px; gap: 12px; }
+  .user-avatar-wrap { width: 44px; height: 44px; }
+  .welcome-text h2 { font-size: 18px; }
+  .welcome-text p { font-size: 12.5px; }
+  .portal-tabs-nav { gap: 4px; padding-bottom: 10px; margin-bottom: 18px; }
+  .portal-tab-item { padding: 6px 12px; font-size: 12.5px; gap: 4px; }
+  .portal-card { padding: 16px; border-radius: 12px; }
+  .quick-stats-row { flex-wrap: wrap; gap: 10px; }
+  .stat-box { min-width: calc(50% - 5px); padding: 12px; }
+  .stat-box .num { font-size: 20px; }
+  .card-header-actions { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .book-new-appt-btn { align-self: flex-start; }
+  .prescription-card-portal { padding: 14px; }
+  .pres-card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .date-time-box { white-space: normal; }
+  .login-required-box { padding: 28px 16px; border-radius: 16px; }
+  .presc-cart-notice { left: 12px; right: 12px; max-width: none; bottom: 12px; }
+}

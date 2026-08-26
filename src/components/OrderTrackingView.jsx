@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './OrderTrackingView.css';
-import { Shield, Phone, Compass, RotateCcw, X, Info } from 'lucide-react';
+import { Phone, RotateCcw, X, Info } from 'lucide-react';
 
 const OrderTrackingView = ({ order, onClose }) => {
   const orderId = order.id;
@@ -180,7 +180,7 @@ const OrderTrackingView = ({ order, onClose }) => {
               {connected ? '● Kết nối SignalR: Đã thiết lập' : '● Kết nối SignalR: Mất kết nối'}
             </span>
           </div>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} aria-label="Đóng">
             <X size={20} />
           </button>
         </div>

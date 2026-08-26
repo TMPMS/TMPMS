@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, ScanLine } from 'lucide-react';
 
@@ -32,7 +32,9 @@ const BarcodeScannerModal = ({ onDetected, onClose }) => {
       state.running = false;
       try {
         scanner.stop().then(() => scanner.clear()).catch(() => {});
-      } catch {}
+      } catch {
+        // intentionally ignored: stop() can throw synchronously if start() never succeeded
+      }
     };
 
     scanner.start(
@@ -58,7 +60,7 @@ const BarcodeScannerModal = ({ onDetected, onClose }) => {
       stopSafely();
     };
     // Cố ý chỉ chạy 1 lần khi mount/unmount — xem ghi chú ở onDetectedRef phía trên.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   return (
@@ -71,7 +73,7 @@ const BarcodeScannerModal = ({ onDetected, onClose }) => {
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
             <ScanLine size={18} /> Quét mã vạch / QR
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+          <button onClick={onClose} aria-label="Đóng" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
             <X size={20} />
           </button>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { User, Calendar, Plus, Edit2, Trash2, Eye, FileText, Activity, X } from 'lucide-react';
 import {
@@ -94,7 +94,7 @@ const PatientsTab = ({ hasAccess, showSuccess, setError }) => {
       await api.deletePatient(id);
       setPatients(prev => prev.filter(p => p.id !== id));
       showSuccess('Xóa bệnh nhân thành công!');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi xóa bệnh nhân.');
     }
   };
@@ -217,7 +217,7 @@ const PatientsTab = ({ hasAccess, showSuccess, setError }) => {
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <User size={22} /> <h4>Hồ sơ bệnh nhân: {viewingPatient.name}</h4>
                         </span>
-                        <button type="button" onClick={() => setViewingPatient(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                        <button type="button" aria-label="Đóng hồ sơ bệnh nhân" onClick={() => setViewingPatient(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
                           <X size={20} />
                         </button>
                       </div>

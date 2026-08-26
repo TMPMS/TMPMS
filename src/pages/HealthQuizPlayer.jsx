@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, RotateCcw, Calendar, AlertTriangle, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react';
 import './HealthQuizPlayer.css';
 

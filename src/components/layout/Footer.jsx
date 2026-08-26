@@ -1,4 +1,3 @@
-import React from 'react';
 import './Footer.css';
 
 const Footer = () => (
@@ -33,7 +32,7 @@ const Footer = () => (
         <div className="footer-col">
           <h4 className="footer-col-title">VỀ CHÚNG TÔI</h4>
           <ul className="footer-links">
-            {['Giới thiệu', 'Mua sắm cùng TMPMS', 'Điều khoản sử dụng', 'Chính sách bảo mật', 'Chính sách hoàn trả', 'Chính sách vận chuyển', 'Tra cứu hóa đơn điện tử', 'Tuyển dụng'].map(l => <li key={l}><a href="#">{l}</a></li>)}
+            {['Giới thiệu', 'Mua sắm cùng TMPMS', 'Điều khoản sử dụng', 'Chính sách bảo mật', 'Chính sách hoàn trả', 'Chính sách vận chuyển', 'Tra cứu hóa đơn điện tử', 'Tuyển dụng'].map(l => <li key={l}><span title="Tính năng đang được phát triển">{l}</span></li>)}
           </ul>
         </div>
 
@@ -41,7 +40,7 @@ const Footer = () => (
         <div className="footer-col">
           <h4 className="footer-col-title">TÌM HIỂU THÊM</h4>
           <ul className="footer-links">
-            {['Bệnh & Góc sức khỏe', 'Tra cứu thuốc', 'Tra cứu dược chất', 'Kiểm tra tương tác thuốc', 'Danh sách bệnh viện', 'Trung tâm châm cứu', 'Câu hỏi thường gặp'].map(l => <li key={l}><a href="#">{l}</a></li>)}
+            {['Bệnh & Góc sức khỏe', 'Tra cứu thuốc', 'Tra cứu dược chất', 'Kiểm tra tương tác thuốc', 'Danh sách bệnh viện', 'Trung tâm châm cứu', 'Câu hỏi thường gặp'].map(l => <li key={l}><span title="Tính năng đang được phát triển">{l}</span></li>)}
           </ul>
         </div>
 
@@ -63,19 +62,19 @@ const Footer = () => (
           <h4 className="footer-col-title">KẾT NỐI VỚI CHÚNG TÔI</h4>
           <div className="footer-socials">
             <a href="https://www.facebook.com/profile.php?id=61592828656029" target="_blank" rel="noopener noreferrer" className="social-btn fb">f Facebook</a>
-            <a href="#" className="social-btn zalo">Zalo</a>
-            <a href="#" className="social-btn yt">▶ YouTube</a>
+            <span className="social-btn zalo" title="Tính năng đang được phát triển">Zalo</span>
+            <span className="social-btn yt" title="Tính năng đang được phát triển">▶ YouTube</span>
           </div>
           <h4 className="footer-col-title" style={{ marginTop: '16px' }}>TẢI ỨNG DỤNG</h4>
           <div className="footer-app-btns">
-            <a href="#" className="app-btn">
+            <span className="app-btn" title="Ứng dụng đang được phát triển">
               <span className="app-icon">🍎</span>
               <div><span className="app-sub">Tải về trên</span><span className="app-name">App Store</span></div>
-            </a>
-            <a href="#" className="app-btn">
+            </span>
+            <span className="app-btn" title="Ứng dụng đang được phát triển">
               <span className="app-icon">▶</span>
               <div><span className="app-sub">Tải về trên</span><span className="app-name">Google Play</span></div>
-            </a>
+            </span>
           </div>
         </div>
       </div>

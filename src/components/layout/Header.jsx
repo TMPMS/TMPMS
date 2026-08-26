@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, User, Mic, Camera, Phone, Download, ChevronDown, MapPin, Syringe, Menu, ChevronRight, FileText } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Search, ShoppingCart, User, Mic, Camera, ChevronDown, Menu, ChevronRight, FileText } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -234,7 +234,7 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
     recognitionRef.current = recognition;
     try {
       recognition.start();
-    } catch (e) {
+    } catch {
       setVoiceSearchError('Không thể khởi động micro. Vui lòng thử lại.');
     }
   };
@@ -513,8 +513,8 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 }}
               />
               <div className="search-divider" />
-              <button className="search-icon-btn" type="button" onClick={startVoiceSearch} title="Tìm bằng giọng nói"><Mic size={18} /></button>
-              <button className="search-icon-btn" type="button" onClick={startImageSearch} title="Tìm bằng hình ảnh"><Camera size={18} /></button>
+              <button className="search-icon-btn" type="button" onClick={startVoiceSearch} title="Tìm bằng giọng nói" aria-label="Tìm bằng giọng nói"><Mic size={18} /></button>
+              <button className="search-icon-btn" type="button" onClick={startImageSearch} title="Tìm bằng hình ảnh" aria-label="Tìm bằng hình ảnh"><Camera size={18} /></button>
             </div>
 
             {/* Suggestions Popover */}

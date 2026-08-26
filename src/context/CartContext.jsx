@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import * as api from '../services/api';
 
@@ -13,9 +13,6 @@ export const CartProvider = ({ children }) => {
   // Hiện khi BE từ chối thêm thuốc kê đơn vào giỏ vì chưa có đơn thuốc được duyệt
   // (chưa khám / chưa được Dược sĩ kê đơn) — hướng người dùng sang đặt lịch khám thay vì chỉ báo lỗi.
   const [rxPrompt, setRxPrompt] = useState(null); // { productName } | null
-
-  // Keep a ref of cart items to avoid dependency cycle in useEffect
-  const guestCartRef = useRef([]);
 
   const loadCart = useCallback(async (authUser) => {
     const currentUser = authUser || user;
@@ -169,35 +166,9 @@ export const CartProvider = ({ children }) => {
     window.dispatchEvent(new CustomEvent('open-upload-prescription-modal'));
   }, []);
 
-  const updateQuantity = useCallback(async (productId, quantity) => {
-    if (quantity <= 0) {
-      return removeFromCart(productId);
-    }
-    
-    const cartId = user ? (user.cart_id || user.cartId) : null;
-    
-    if (user && cartId) {
-      try {
-        const item = cartItems.find(x => x.id === productId);
-        if (item && item.db_item_id) {
-          await api.updateCartItem(item.db_item_id, quantity);
-          setCartItems(prev => prev.map(x => x.id === productId ? { ...x, quantity } : x));
-        }
-      } catch (e) {
-        console.error(e);
-        // Dòng giỏ hàng đã bị xóa ở server (đơn hàng vừa được tạo/đã checkout) → loại bỏ khỏi state
-        if (e.responseStatus === 404) {
-          setCartItems(prev => prev.filter(x => x.id !== productId));
-        }
-      }
-    } else {
-      setCartItems(prev => prev.map(x => x.id === productId ? { ...x, quantity } : x));
-    }
-  }, [user, cartItems]);
-
   const removeFromCart = useCallback(async (productId) => {
     const cartId = user ? (user.cart_id || user.cartId) : null;
-    
+
     if (user && cartId) {
       try {
         const item = cartItems.find(x => x.id === productId);
@@ -215,6 +186,32 @@ export const CartProvider = ({ children }) => {
       setCartItems(prev => prev.filter(x => x.id !== productId));
     }
   }, [user, cartItems]);
+
+  const updateQuantity = useCallback(async (productId, quantity) => {
+    if (quantity <= 0) {
+      return removeFromCart(productId);
+    }
+
+    const cartId = user ? (user.cart_id || user.cartId) : null;
+
+    if (user && cartId) {
+      try {
+        const item = cartItems.find(x => x.id === productId);
+        if (item && item.db_item_id) {
+          await api.updateCartItem(item.db_item_id, quantity);
+          setCartItems(prev => prev.map(x => x.id === productId ? { ...x, quantity } : x));
+        }
+      } catch (e) {
+        console.error(e);
+        // Dòng giỏ hàng đã bị xóa ở server (đơn hàng vừa được tạo/đã checkout) → loại bỏ khỏi state
+        if (e.responseStatus === 404) {
+          setCartItems(prev => prev.filter(x => x.id !== productId));
+        }
+      }
+    } else {
+      setCartItems(prev => prev.map(x => x.id === productId ? { ...x, quantity } : x));
+    }
+  }, [user, cartItems, removeFromCart]);
 
   const clearCart = useCallback(() => {
     setCartItems([]);

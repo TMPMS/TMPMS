@@ -100,7 +100,7 @@ const SpinWheelModal = ({ isOpen, onClose }) => {
   return (
     <div className="wheel-modal-overlay" onClick={onClose}>
       <div className="wheel-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="wheel-modal-close" onClick={onClose}><X size={20} /></button>
+        <button className="wheel-modal-close" onClick={onClose} aria-label="Đóng"><X size={20} /></button>
         <h2 className="wheel-modal-title"><Gift size={20} /> Vòng quay may mắn hôm nay</h2>
         <p className="wheel-modal-subtitle">Mỗi ngày một lượt quay — trúng ngay voucher giảm giá!</p>
 

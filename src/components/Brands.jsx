@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -32,8 +32,7 @@ const Brands = ({ onSelectSupplier }) => {
       .catch(() => setBrands([]));
   }, []);
 
-  const handleClick = (e, id, name) => {
-    e.preventDefault();
+  const handleClick = (id, name) => {
     if (onSelectSupplier) onSelectSupplier(id, name);
   };
 
@@ -68,14 +67,14 @@ const Brands = ({ onSelectSupplier }) => {
           const { color, textColor } = PALETTE[i % PALETTE.length];
           return (
             <SwiperSlide key={id}>
-              <a href="#" className="brand-card" style={{ background: color }} onClick={(e) => handleClick(e, id, name)}>
+              <button type="button" className="brand-card" style={{ background: color }} onClick={() => handleClick(id, name)}>
                 <div className="brand-img-placeholder">
                   <span className="brand-name-text" style={{ color: textColor }}>{name}</span>
                 </div>
                 <div className="brand-discount" style={{ color: textColor }}>
                   {count > 0 ? `${count} sản phẩm` : 'Chưa có sản phẩm'}
                 </div>
-              </a>
+              </button>
             </SwiperSlide>
           );
         })}

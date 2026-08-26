@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Plus, Check, X, AlertTriangle, User, Search } from 'lucide-react';
 import {
@@ -249,7 +249,7 @@ const PrescriptionsTab = ({ hasAccess, showSuccess, setError, loggedInUser, appo
       setPrescriptions(prev => prev.map(p => p.id === id ? { ...p, status } : p));
       showSuccess('Cập nhật đơn thuốc thành công!');
     } catch (err) {
-      setError('Lỗi cập nhật trạng thái đơn thuốc.');
+      setError(err.message || 'Lỗi cập nhật trạng thái đơn thuốc.');
     }
   };
 
@@ -767,6 +767,7 @@ const PrescriptionsTab = ({ hasAccess, showSuccess, setError, loggedInUser, appo
                             {prescriptionSearch && (
                               <button
                                 type="button"
+                                aria-label="Xóa tìm kiếm"
                                 onClick={() => setPrescriptionSearch('')}
                                 style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
                               >
@@ -780,6 +781,7 @@ const PrescriptionsTab = ({ hasAccess, showSuccess, setError, loggedInUser, appo
                         <div className="prescribe-inputs" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           <select
                             className="form-select flex-1"
+                            aria-label="Chọn vị thuốc / thảo dược"
                             value={selectedMedicineId}
                             onChange={e => setSelectedMedicineId(e.target.value)}
                             style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', fontWeight: '500' }}
@@ -878,7 +880,7 @@ const PrescriptionsTab = ({ hasAccess, showSuccess, setError, loggedInUser, appo
                             <div key={item.medicineId} className="preview-item-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span>🌿 <strong>{item.medicineName}</strong> - Số lượng: {item.quantity}</span>
-                                <button type="button" className="btn-remove-item" onClick={() => removeMedicineFromPrescription(item.medicineId)}><X size={14} /></button>
+                                <button type="button" className="btn-remove-item" aria-label={`Xóa ${item.medicineName} khỏi đơn thuốc`} onClick={() => removeMedicineFromPrescription(item.medicineId)}><X size={14} /></button>
                               </div>
                               <input
                                 type="text"

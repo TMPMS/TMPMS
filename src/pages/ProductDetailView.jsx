@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchProductReviews, checkReviewEligibility, submitProductReview, fetchHerbalMedicineInfo } from '../services/api';
@@ -88,7 +88,7 @@ const ProductDetailView = ({ product, onBack }) => {
   const handleAddToCart = async () => {
     let successCount = 0;
     for (let i = 0; i < quantity; i++) {
-      // eslint-disable-next-line no-await-in-loop
+       
       const ok = await addToCart(product);
       if (!ok) break; // Dừng lại nếu bị chặn (ví dụ: cần đơn thuốc) để tránh gọi API thất bại nhiều lần
       successCount++;
@@ -131,7 +131,7 @@ const ProductDetailView = ({ product, onBack }) => {
     <div className="pd-container">
       {/* Breadcrumbs */}
       <div className="pd-breadcrumbs">
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }}>Trang chủ</a>
+        <button type="button" className="pd-breadcrumb-home" onClick={onBack}>Trang chủ</button>
         <span>&gt;</span>
         <span className="current">{product.name}</span>
       </div>

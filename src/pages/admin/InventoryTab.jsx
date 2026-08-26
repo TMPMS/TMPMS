@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Package, Info, ScanLine } from 'lucide-react';
 import { formatDateVN, formatDateTimeVN } from '../../utils/dateUtils';
@@ -79,7 +79,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
       ]);
       setExistingBatches(data);
       setProfitReport(profitData);
-    } catch (err) {
+    } catch {
       setExistingBatches([]);
     } finally {
       setBatchesLoading(false);

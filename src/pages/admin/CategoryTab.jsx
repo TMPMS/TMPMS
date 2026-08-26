@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Tag } from 'lucide-react';
 
 // Quản lý Danh mục sản phẩm — tách theo cùng khuôn mẫu với NewsTab.jsx (chỉ Admin).
-const CategoryTab = ({ hasAccess, showSuccess, setError }) => {
+const CategoryTab = ({ showSuccess, setError }) => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [editingCategoryId, setEditingCategoryId] = useState(null);

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Tag } from 'lucide-react';
 
 // Voucher & Khuyến mãi — tách từ AdminView.jsx (tab "vouchers", chỉ Admin).
-const VouchersTab = ({ hasAccess, showSuccess, setError }) => {
+const VouchersTab = ({ showSuccess, setError }) => {
   const [loading, setLoading] = useState(true);
   const [vouchers, setVouchers] = useState([]);
   const [editingVoucherId, setEditingVoucherId] = useState(null);

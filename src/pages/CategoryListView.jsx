@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filter, SlidersHorizontal, ChevronRight, X, RotateCcw, AlertCircle, Search, Globe, Building2, PackageCheck, Leaf, Sparkles, PackageX, BadgePercent } from 'lucide-react';
 import { ProductCard } from '../components/ProductSection';
 import * as api from '../services/api';
@@ -228,7 +228,7 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
     <div className="category-list-container">
       {/* Breadcrumbs */}
       <div className="cl-breadcrumbs">
-        <a href="#" onClick={(e) => { e.preventDefault(); onBackToHome(); }} className="cl-breadcrumb-home">Trang chủ</a>
+        <button type="button" onClick={onBackToHome} className="cl-breadcrumb-home">Trang chủ</button>
         <ChevronRight size={14} className="cl-breadcrumb-separator" />
         <span className="cl-breadcrumb-current">{pageTitle}</span>
       </div>

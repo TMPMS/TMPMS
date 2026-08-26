@@ -535,7 +535,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
             <span>Giỏ Hàng của bạn</span>
             <span className="cart-badge-count">({cartItems.length})</span>
           </div>
-          <button className="cart-drawer-close" onClick={onClose} title="Đóng giỏ hàng">
+          <button className="cart-drawer-close" onClick={onClose} title="Đóng giỏ hàng" aria-label="Đóng giỏ hàng">
             <X size={22} />
           </button>
         </div>

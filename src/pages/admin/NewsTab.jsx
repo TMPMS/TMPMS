@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { FileText } from 'lucide-react';
 
 // Tin tức sức khỏe — tách từ AdminView.jsx (tab "news", chỉ Admin).
-const NewsTab = ({ hasAccess, showSuccess, setError }) => {
+const NewsTab = ({ showSuccess, setError }) => {
   const [loading, setLoading] = useState(true);
   const [newsArticles, setNewsArticles] = useState([]);
   const [editingNewsId, setEditingNewsId] = useState(null);

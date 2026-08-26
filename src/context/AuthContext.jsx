@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import * as api from '../services/api';
 
 const AuthContext = createContext();
@@ -14,7 +14,10 @@ function deriveRoleId(roles) {
 // lưu ở localStorage chỉ là thông tin hiển thị không nhạy cảm, dùng để tránh nhấp nháy UI khi
 // tải lại trang, không phải nguồn xác thực thật.
 function persistUser(data) {
-  const { token, accessToken, refreshToken, ...safe } = data;
+  const safe = { ...data };
+  delete safe.token;
+  delete safe.accessToken;
+  delete safe.refreshToken;
   localStorage.setItem('user', JSON.stringify(safe));
 }
 
@@ -37,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (e) {
+      } catch {
         localStorage.removeItem('user');
       }
     }
@@ -50,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         const data = profileToUser(profile);
         setUser(data);
         persistUser(data);
-      } catch (e) {
+      } catch {
         setUser(null);
         localStorage.removeItem('user');
       } finally {

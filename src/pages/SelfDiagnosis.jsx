@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import { Leaf, Activity, Sparkles, ChevronRight, Calendar, ShoppingCart, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Activity, Sparkles, Calendar, ShoppingCart, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toLocalWallClockIso } from '../utils/dateTime';
 import TongueAnalysisCard from '../components/ui/TongueAnalysisCard';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { fetchHealthReelsVideos } from '../../services/api';
 import './FeaturedVideosCarousel.css'; // Reuse & extend health video styles
