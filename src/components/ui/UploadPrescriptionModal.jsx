@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, UploadCloud, CheckCircle2, ShieldAlert, FileText } from 'lucide-react';
 import { createPrescription, uploadPrescriptionImage } from '../../services/api';
 import { toLocalWallClockIso } from '../../utils/dateTime';

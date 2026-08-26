@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 import AppointmentBooking from '../components/AppointmentBooking';
-import { 
-  Heart, Calendar, FileText, Activity, ShieldAlert, Sparkles, Check, Clock, User
+import {
+  Heart, Calendar, FileText, Activity, ShieldAlert, Clock, User
 } from 'lucide-react';
 import { getPrescriptionStatusClass, getPrescriptionStatusLabel } from '../utils/prescriptionStatus';
 import { formatDateTimeVN, formatDateVN } from '../utils/dateUtils';
@@ -102,7 +102,7 @@ const PatientPortal = ({ onBack }) => {
             medicalHistory: profile.medicalHistory || 'Chưa ghi nhận bệnh nền.'
           });
         }
-      } catch (e) {
+      } catch {
         // Fallback to logged in user state
         setPatientRecord({
           gender: user.gender || 'Nam',

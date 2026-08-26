@@ -31,7 +31,7 @@ export async function previewImport(file) {
     return res.json();
   } catch (err) {
     if (err && err.name === 'AbortError') {
-      throw new Error('Quá thời gian chờ xử lý (120 giây) — file quá lớn hoặc máy chủ quá chậm. Vui lòng thử lại hoặc chia nhỏ file.');
+      throw new Error('Quá thời gian chờ xử lý (120 giây) — file quá lớn hoặc máy chủ quá chậm. Vui lòng thử lại hoặc chia nhỏ file.', { cause: err });
     }
     throw err;
   } finally {
@@ -57,7 +57,7 @@ export async function confirmImport(importSessionId, confirmedRowIndexes) {
     return res.json();
   } catch (err) {
     if (err && err.name === 'AbortError') {
-      throw new Error('Quá thời gian chờ xác nhận nhập (120 giây) — vui lòng thử lại.');
+      throw new Error('Quá thời gian chờ xác nhận nhập (120 giây) — vui lòng thử lại.', { cause: err });
     }
     throw err;
   } finally {

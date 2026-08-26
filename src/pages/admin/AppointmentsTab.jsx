@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { Plus, Edit2, Trash2, Check, X, CheckCircle2, CheckCheck } from 'lucide-react';
 import { toLocalWallClockIso } from '../../utils/dateTime';
@@ -59,7 +59,7 @@ const AppointmentsTab = ({ hasAccess, showSuccess, setError, appointments, setAp
       }
       setAppointmentModal(null);
       loadTabData();
-    } catch (err) {
+    } catch {
       setError('Lỗi khi lưu lịch hẹn.');
     }
   };
@@ -74,7 +74,7 @@ const AppointmentsTab = ({ hasAccess, showSuccess, setError, appointments, setAp
       await api.deleteAppointment(id);
       setAppointments(prev => prev.filter(a => a.id !== id));
       showSuccess('Xóa lịch hẹn thành công!');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi xóa lịch hẹn.');
     }
   };

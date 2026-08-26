@@ -5,7 +5,9 @@ export async function fetchNewsArticles(tag) {
     const qs = tag ? `?tag=${encodeURIComponent(tag)}` : '';
     const res = await apiFetch(`${API_URL}/news${qs}`);
     if (res.ok) return await res.json();
-  } catch (e) {}
+  } catch {
+    // intentionally ignored: /news unreachable, fall back to empty list below
+  }
   return [];
 }
 

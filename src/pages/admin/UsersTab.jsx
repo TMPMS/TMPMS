@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { formatDate } from './shared/adminFormat';
 
@@ -33,7 +33,7 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, roleName: roleName } : u));
       showSuccess('Cập nhật quyền người dùng thành công!');
       loadTabData();
-    } catch (err) {
+    } catch {
       setError('Lỗi khi đổi quyền người dùng.');
     }
   };
@@ -47,7 +47,7 @@ const UsersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.toggleUserStatus(userId, !currentStatus);
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: !currentStatus } : u));
       showSuccess('Cập nhật trạng thái hoạt động thành công!');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi thay đổi trạng thái hoạt động.');
     }
   };

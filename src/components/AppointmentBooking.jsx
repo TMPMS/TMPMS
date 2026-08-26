@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Clock, ImagePlus, MapPin, ShieldCheck } from 'lucide-react';
 import * as api from '../services/api';
-import { toLocalWallClockIso } from '../utils/dateTime';
 import { formatDateTimeVN } from '../utils/dateUtils';
 import './AppointmentBooking.css';
 

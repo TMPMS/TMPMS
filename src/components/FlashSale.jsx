@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -114,7 +114,7 @@ const FlashSale = ({ onProductClick }) => {
             </div>
             <span className="fs-subtitle">GIÁ TỐT</span>
           </div>
-          <a href="#" className="flashsale-see-rule">Xem thể lệ &rsaquo;</a>
+          <span className="flashsale-see-rule" title="Tính năng đang được phát triển">Xem thể lệ &rsaquo;</span>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User, ShoppingCart, ArrowRight, Mic, ImagePlus } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { MessageSquare, X, Send, Bot, ShoppingCart, ArrowRight, Mic, ImagePlus } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { askAiChatbot, formatImageUrl } from '../../services/api';
 import './AIChatbot.css';
@@ -325,7 +325,7 @@ const AIChatbot = () => {
               <h4>Dược Sĩ Trợ Lý AI</h4>
               <span className="status-online">● Hoạt động 24/7</span>
             </div>
-            <button className="ai-close-window-btn" onClick={() => setIsOpen(false)}>
+            <button className="ai-close-window-btn" onClick={() => setIsOpen(false)} aria-label="Đóng">
               <X size={18} />
             </button>
           </div>
@@ -402,7 +402,7 @@ const AIChatbot = () => {
             <div className="ai-image-preview-bar">
               <img src={attachedImage.previewUrl} alt="Ảnh sắp gửi" />
               <span>Sẽ gửi kèm ảnh này — bạn có thể mô tả thêm bên dưới.</span>
-              <button type="button" onClick={removeAttachedImage} title="Bỏ ảnh">
+              <button type="button" onClick={removeAttachedImage} title="Bỏ ảnh" aria-label="Bỏ ảnh">
                 <X size={14} />
               </button>
             </div>
@@ -422,6 +422,7 @@ const AIChatbot = () => {
               className="ai-mic-btn"
               onClick={() => fileInputRef.current?.click()}
               title="Đính kèm ảnh thuốc/sản phẩm để AI nhận diện"
+              aria-label="Đính kèm ảnh thuốc/sản phẩm để AI nhận diện"
             >
               <ImagePlus size={16} />
             </button>
@@ -430,6 +431,7 @@ const AIChatbot = () => {
               className={`ai-mic-btn${isListening ? ' listening' : ''}`}
               onClick={isListening ? stopVoiceInput : startVoiceInput}
               title={isListening ? 'Đang nghe... bấm để dừng' : 'Nhập bằng giọng nói'}
+              aria-label={isListening ? 'Đang nghe... bấm để dừng' : 'Nhập bằng giọng nói'}
             >
               <Mic size={16} />
             </button>
@@ -439,7 +441,7 @@ const AIChatbot = () => {
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
             />
-            <button type="submit" className="ai-send-btn">
+            <button type="submit" className="ai-send-btn" aria-label="Gửi">
               <Send size={16} />
             </button>
           </form>

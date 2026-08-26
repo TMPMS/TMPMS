@@ -4,15 +4,18 @@ import {
   User, Users, History
 } from 'lucide-react';
 import PharmacyChatDashboard from '../components/admin/PharmacyChatDashboard';
+import { useAuth } from '../context/AuthContext';
 import './AdminView.css';
 
 // ── AdminView shell ──────────────────────────────────────────────────────
 // Bảng quản trị được tách thành các file theo từng tab trong src/pages/admin/*
 // (mỗi tab tự quản lý state/dữ liệu riêng của nó — xem chi tiết trong từng file).
 // Shell này chỉ còn giữ: điều hướng tab, người dùng đăng nhập, banner lỗi/thành công,
-// và 2 mảng `appointments`/`prescriptions` — đây là state DUY NHẤT thực sự dùng chung
-// giữa nhiều tab (tab "Hồ sơ Bệnh nhân" đọc lại 2 mảng này do tab "Lịch hẹn"/"Kê đơn"
-// tải về, đúng như hành vi của bản gốc trước khi tách file).
+// và 2 mảng `appointments`/`prescriptions` — state dùng chung GIỮA AppointmentsTab và
+// PrescriptionsTab (2 tab này cùng đọc/ghi). PatientsTab KHÔNG dùng 2 mảng này: chúng chỉ
+// được nạp khi AppointmentsTab/PrescriptionsTab đã từng mount, nên nếu PatientsTab đọc lại
+// sẽ rỗng khi pharmacist vào thẳng tab "Hồ sơ Bệnh nhân" trước — PatientsTab tự fetch riêng
+// để đảm bảo luôn có dữ liệu đúng bất kể thứ tự mở tab.
 const OrdersTab = lazy(() => import('./admin/OrdersTab'));
 const PatientsTab = lazy(() => import('./admin/PatientsTab'));
 const AppointmentsTab = lazy(() => import('./admin/AppointmentsTab'));
@@ -42,25 +45,18 @@ const AdminView = () => {
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
 
-  // Current logged in user profile (from localStorage)
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  // Người dùng đăng nhập hiện tại — lấy từ AuthContext (nguồn xác thực thật là cookie phiên
+  // trên server, tự đồng bộ/xóa khi phiên hết hạn qua sự kiện 'auth:expired') thay vì tự đọc
+  // localStorage riêng, để tránh hiển thị user/role cũ sau khi phiên đã hết hạn.
+  const { user: loggedInUser } = useAuth();
+  const initialTabSet = React.useRef(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setLoggedInUser(parsedUser);
-        if (parsedUser.role_id === 1) {
-          setActiveTab('users');
-        } else {
-          setActiveTab('orders');
-        }
-      } catch (e) {
-        console.error('Dữ liệu người dùng trong localStorage bị hỏng', e);
-      }
+    if (loggedInUser && !initialTabSet.current) {
+      initialTabSet.current = true;
+      setActiveTab(loggedInUser.role_id === 1 ? 'users' : 'orders');
     }
-  }, []);
+  }, [loggedInUser]);
 
   const showSuccess = useCallback((msg) => {
     setSuccess(msg);
@@ -192,8 +188,6 @@ const AdminView = () => {
               hasAccess={hasAccess}
               showSuccess={showSuccess}
               setError={showError}
-              appointments={appointments}
-              prescriptions={prescriptions}
             />
           )}
 

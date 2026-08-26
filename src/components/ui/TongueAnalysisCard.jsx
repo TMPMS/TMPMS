@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Camera, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
 import { analyzeTongueImage } from '../../services/api';
 import './TongueAnalysisCard.css';

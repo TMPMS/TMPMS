@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calendar, User, Syringe, ChevronRight, CheckCircle2, ShieldAlert, MapPin, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Syringe, ChevronRight, CheckCircle2, ShieldAlert, MapPin } from 'lucide-react';
 import { formatDateVN } from '../utils/dateUtils';
 import './VaccineBookingView.css';
 
@@ -73,7 +73,7 @@ const VaccineBookingView = ({ onBack }) => {
     <div className="vc-booking-container">
       {/* Breadcrumbs */}
       <div className="vc-breadcrumbs">
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} className="vc-bc-home">Trang chủ</a>
+        <button type="button" onClick={onBack} className="vc-bc-home">Trang chủ</button>
         <ChevronRight size={14} className="vc-bc-sep" />
         <span className="vc-bc-current">Đăng ký tiêm chủng</span>
       </div>

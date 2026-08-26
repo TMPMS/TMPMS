@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { formatPrice, formatDate } from './shared/adminFormat';
 
@@ -58,7 +58,7 @@ const OrdersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.updateOrderStatus(orderId, { status: 'Delivered' });
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Delivered' } : o));
       showSuccess('Đã xác nhận đơn hàng giao thành công!');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi xác nhận đã giao đơn hàng.');
     }
   };
@@ -78,7 +78,7 @@ const OrdersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.updatePaymentStatus(order.paymentId, 'Success');
       showSuccess(`Đã xác nhận thu tiền đơn #${order.id}!`);
       await loadTabData();
-    } catch (err) {
+    } catch {
       setError('Lỗi khi xác nhận thu tiền đơn hàng.');
     }
   };
@@ -93,7 +93,7 @@ const OrdersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.updateOrderStatus(order.id, { status: 'Returned', paymentStatus: 'Refunded' });
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Returned', paymentStatus: 'Refunded', payment_status: 'Refunded' } : o));
       showSuccess('Đã duyệt trả hàng và hoàn tiền cho khách hàng!');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi duyệt trả hàng.');
     }
   };
@@ -108,7 +108,7 @@ const OrdersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.updateOrderStatus(order.id, { status: 'Delivered' });
       setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Delivered', returnReason: '' } : o));
       showSuccess('Đã từ chối yêu cầu trả hàng.');
-    } catch (err) {
+    } catch {
       setError('Lỗi khi từ chối trả hàng.');
     }
   };
@@ -143,7 +143,7 @@ const OrdersTab = ({ hasAccess, showSuccess, setError }) => {
       await api.updatePaymentStatus(order.paymentId, statusMap[newPaymentStatus] || newPaymentStatus);
       showSuccess('Cập nhật trạng thái thanh toán thành công!');
       await loadTabData();
-    } catch (err) {
+    } catch {
       setError('Lỗi khi cập nhật thanh toán.');
     }
   };

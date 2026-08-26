@@ -4,7 +4,9 @@ export async function fetchCategories() {
   try {
     const res = await apiFetch(`${API_URL}/categories`);
     if (res.ok) return await res.json();
-  } catch (e) {}
+  } catch {
+    // intentionally ignored: /categories unreachable, fall back to default categories below
+  }
   // /categories không truy cập được — trả về danh mục mặc định để UI vẫn hiển thị được thay vì trống trơn.
   return [{ id: 1, name: 'Thuốc Đông Y' }, { id: 2, name: 'Dược Liệu Thảo Dược' }];
 }
@@ -84,7 +86,7 @@ export async function searchMedicineByImage(file) {
     if (!res.ok) throw new Error(data?.message || 'Không thể nhận diện ảnh sản phẩm');
     return data;
   } catch (err) {
-    if (err.name === 'AbortError') throw new Error('Quá thời gian nhận diện ảnh, vui lòng thử lại');
+    if (err.name === 'AbortError') throw new Error('Quá thời gian nhận diện ảnh, vui lòng thử lại', { cause: err });
     throw err;
   } finally {
     clearTimeout(timer);
@@ -244,6 +246,16 @@ export async function fetchMedicineByBarcode(barcode) {
   const res = await apiFetch(`${API_URL}/medicines/by-barcode/${encodeURIComponent(barcode)}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error('Không thể tra cứu sản phẩm theo mã vạch');
+  return normalizeMedicine(await res.json());
+}
+
+
+// Tra cứu 1 sản phẩm theo id — dùng để khôi phục trang chi tiết sản phẩm từ URL (deep link,
+// nút Back/Forward của trình duyệt, hoặc tải lại trang). Trả về null nếu không tìm thấy.
+export async function fetchMedicineById(id) {
+  const res = await apiFetch(`${API_URL}/medicines/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('Không thể tải thông tin sản phẩm');
   return normalizeMedicine(await res.json());
 }
 

@@ -866,6 +866,36 @@
   gap: 20px;
 }
 
+/* Paired chart/table cards within the stats dashboard (Top sản phẩm, Doanh thu
+   theo danh mục/nhân viên, Trạng thái lịch hẹn/đơn thuốc, ...) — was 3x duplicated
+   inline style, consolidated into one reusable class. */
+.stats-two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Full-width standalone cards (date filter, trend charts) — was repeated
+   inline style={{ marginBottom: 20 }}, consolidated into one reusable class. */
+.stats-section {
+  margin-bottom: 20px;
+}
+
+/* Groups a run of stats cards under a small label so the dashboard reads as
+   named zones instead of one flat stack of same-looking boxes. */
+.stats-group-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #94a3b8;
+  margin: 28px 0 10px;
+}
+.stats-group-label:first-child {
+  margin-top: 0;
+}
+
 .stats-detail-card {
   background-color: #fff;
   border: 1px solid #e2e8f0;
@@ -929,6 +959,7 @@
 @media (max-width: 992px) {
   .stats-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-detail-grid { grid-template-columns: 1fr; }
+  .stats-two-col-grid { grid-template-columns: 1fr; }
   .inventory-grid { grid-template-columns: 1fr; }
 }
 

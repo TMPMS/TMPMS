@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { ShoppingCart, Star, Leaf, Eye } from 'lucide-react';
 import './ProductCard.css';
@@ -51,15 +51,6 @@ const ProductCard = ({ product, isFlashSale, onProductClick }) => {
   const rating = product.rating !== undefined && product.rating !== null
     ? Number(product.rating).toFixed(1)
     : getStarRating(product.id || 42);
-
-  const formatMaskedPrice = (price) => {
-    if (!price) return '';
-    const s = price.toString();
-    if (s.length <= 5) return 'xx.x00đ';
-    if (s.length === 6) return 'xxx.000đ';
-    if (s.length >= 7) return 'x.xxx.000đ';
-    return 'xx.xxxđ';
-  };
 
   const handleAddToCart = async () => {
     const ok = await addToCart(product);

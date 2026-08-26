@@ -1,4 +1,3 @@
-import React from 'react';
 import './StorePromoBar.css';
 
 const StorePromoBar = ({ onNavigate }) => {

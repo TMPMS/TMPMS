@@ -1,4 +1,3 @@
-import React from 'react';
 import './QuickLinks.css';
 
 const QuickLinks = ({ onNavigate }) => {
@@ -16,12 +15,11 @@ const QuickLinks = ({ onNavigate }) => {
   return (
     <div className="quick-links-bar">
       {links.map((l) => (
-        <a 
-          key={l.label} 
-          href="#" 
+        <button
+          type="button"
+          key={l.label}
           className="quick-link-item"
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             if (l.action) l.action();
           }}
         >
@@ -29,7 +27,7 @@ const QuickLinks = ({ onNavigate }) => {
             <span>{l.icon}</span>
           </div>
           <span className="quick-link-label">{l.label}</span>
-        </a>
+        </button>
       ))}
     </div>
   );

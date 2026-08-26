@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { History } from 'lucide-react';
 
@@ -50,7 +50,7 @@ const ENTITY_OPTIONS = [
   'Order', 'Cart', 'CartItem', 'Prescription', 'Appointment', 'Payment',
 ];
 
-const AuditLogTab = ({ hasAccess, showSuccess, setError }) => {
+const AuditLogTab = ({ setError }) => {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
   const [totalCount, setTotalCount] = useState(0);

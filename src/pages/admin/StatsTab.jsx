@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import { BarChart2, Users, Calendar, Package, Download, Tag, UserCog, FileText } from 'lucide-react';
 import { formatPrice } from './shared/adminFormat';
 
 // Báo cáo & Thống kê — tách từ AdminView.jsx (tab "stats").
-const StatsTab = ({ hasAccess, showSuccess, setError }) => {
+const StatsTab = ({ setError }) => {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -167,7 +167,8 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
               </div>
 
               {/* Date range filter */}
-              <div className="admin-card" style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+              <h3 className="stats-group-label">Bộ lọc &amp; xuất báo cáo</h3>
+              <div className="admin-card stats-section" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Từ ngày</label>
                   <input type="date" value={statsDateFrom} onChange={e => setStatsDateFrom(e.target.value)} className="admin-input" style={{ padding: '7px 10px' }} />
@@ -209,7 +210,9 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
 
               {/* Chart Visualizer: Revenue Trend & Order Distribution */}
               {(customRevenueTrend || reportData?.revenueTrend) && (customRevenueTrend || reportData.revenueTrend).length > 0 && (
-                <div className="admin-card" style={{ marginBottom: 20 }}>
+                <>
+                  <h3 className="stats-group-label">Biểu đồ xu hướng</h3>
+                  <div className="admin-card stats-section">
                   <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
                     <BarChart2 size={18} /> 📈 Biểu đồ Xu hướng Doanh thu {customRevenueTrend ? `(${statsDateFrom} → ${statsDateTo})` : '(30 Ngày gần nhất)'}
                   </h4>
@@ -237,11 +240,13 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                       );
                     })}
                   </div>
-                </div>
+                  </div>
+                </>
               )}
 
               {/* Top Selling Products & Order Status Breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+              <h3 className="stats-group-label">Phân tích chi tiết</h3>
+              <div className="stats-two-col-grid">
                 {/* Top Selling Products */}
                 <div className="admin-card">
                   <h4 style={{ margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 15 }}>
@@ -306,7 +311,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
               </div>
 
               {/* Category & Staff Revenue */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+              <div className="stats-two-col-grid">
                 <div className="admin-card">
                   <h4 style={{ margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 15 }}>
                     <Tag size={16} /> Doanh thu theo Danh mục
@@ -351,7 +356,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
               </div>
 
               {/* Appointment & Prescription Status Breakdown + User Growth */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+              <div className="stats-two-col-grid">
                 <div className="admin-card">
                   <h4 style={{ margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8, color: '#0d9488', fontSize: 15 }}>
                     <Calendar size={16} /> Phân bố Trạng thái Lịch hẹn
@@ -389,7 +394,8 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
                 </div>
               </div>
 
-              <div className="admin-card" style={{ marginBottom: 20 }}>
+              <h3 className="stats-group-label">Tăng trưởng &amp; tồn kho</h3>
+              <div className="admin-card stats-section">
                 <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
                   <Users size={18} /> 📈 Người dùng mới đăng ký (30 Ngày gần nhất)
                 </h4>
@@ -424,7 +430,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
 
               {/* Giá trị tồn kho theo từng kho (giá vốn các lô còn hàng) */}
               {inventoryValueData.length > 0 && (
-                <div className="admin-card" style={{ marginBottom: 20 }}>
+                <div className="admin-card stats-section">
                   <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
                     <Package size={18} /> 💰 Giá trị Tồn kho hiện tại theo Kho (giá vốn)
                   </h4>
@@ -456,6 +462,7 @@ const StatsTab = ({ hasAccess, showSuccess, setError }) => {
               )}
 
               {/* Cảnh báo tồn kho & tình trạng hoạt động */}
+              <h3 className="stats-group-label">Cảnh báo &amp; tình trạng hoạt động</h3>
               <div className="stats-detail-grid">
                 <div className="stats-detail-card">
                   <h4>⚠️ Cảnh báo tồn kho cực thấp (dưới 20 đơn vị)</h4>

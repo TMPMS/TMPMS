@@ -117,16 +117,21 @@
   flex-direction: column;
   gap: 10px;
 }
-.footer-links li a {
+.footer-links li a,
+.footer-links li span {
   font-size: 13.5px;
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   transition: color 0.2s, transform 0.15s;
   display: inline-block;
+  cursor: default;
 }
 .footer-links li a:hover {
   color: #2dd4bf;
   transform: translateX(3px);
+}
+.footer-links li span:hover {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Hotlines */
@@ -183,9 +188,13 @@
   text-decoration: none;
   transition: opacity 0.2s, transform 0.15s;
   color: #fff;
+  cursor: default;
 }
 .social-btn:hover {
   transform: translateY(-1px);
+}
+a.social-btn {
+  cursor: pointer;
 }
 .social-btn.fb {
   background: #1877f2;

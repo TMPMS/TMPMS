@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchCategories } from '../services/api';
 import './FeaturedCategories.css';
 
@@ -58,9 +58,9 @@ const FeaturedCategories = ({ onSelectCategory, onNavigate }) => {
           const count = c.productCount ?? c.ProductCount ?? 0;
           const style = getStyle(name);
           return (
-            <a
+            <button
+              type="button"
               key={id}
-              href="#"
               className="feat-cat-item"
               style={{ '--cat-accent': style.accent }}
               onClick={(e) => handleClick(e, id)}
@@ -74,7 +74,7 @@ const FeaturedCategories = ({ onSelectCategory, onNavigate }) => {
               </div>
               <span className="feat-cat-label">{name}</span>
               <span className="feat-cat-sub">{count > 0 ? `${count} sản phẩm` : 'Chưa có sản phẩm'}</span>
-            </a>
+            </button>
           );
         })}
       </div>
