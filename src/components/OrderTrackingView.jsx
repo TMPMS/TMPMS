@@ -98,7 +98,6 @@ const OrderTrackingView = ({ order, onClose }) => {
     connection.start()
       .then(() => {
         setConnected(true);
-        console.log(`SignalR connected for order #${orderId}`);
         connection.invoke("JoinOrderTrackingGroup", orderId.toString())
           .catch(err => console.error("Error joining SignalR group:", err));
       })
@@ -108,7 +107,6 @@ const OrderTrackingView = ({ order, onClose }) => {
       });
 
     connection.on("ReceiveTrackingUpdate", (data) => {
-      console.log('Received shipper tick from SignalR:', data);
       setTrackingData(prev => ({
         ...prev,
         status: data.status,

@@ -16,6 +16,7 @@ const PatientPortal = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | diagnose | appointments | prescriptions
   const [myAppointments, setMyAppointments] = useState([]);
   const [myPrescriptions, setMyPrescriptions] = useState([]);
+  const [prescriptionsLoadError, setPrescriptionsLoadError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [patientRecord, setPatientRecord] = useState(null);
   const [cartAddedMap, setCartAddedMap] = useState({});
@@ -87,8 +88,10 @@ const PatientPortal = ({ onBack }) => {
       try {
         const myPrescs = await api.fetchUserPrescriptions(user.id);
         setMyPrescriptions(myPrescs);
+        setPrescriptionsLoadError(false);
       } catch (e) {
         console.warn('Could not fetch user prescriptions:', e);
+        setPrescriptionsLoadError(true);
       }
 
       // 3. Fetch user profile for patient record
@@ -322,7 +325,9 @@ const PatientPortal = ({ onBack }) => {
           {activeTab === 'prescriptions' && (
             <div className="portal-card">
               <h4>Đơn thuốc Đông Y đã kê của bạn</h4>
-              {myPrescriptions.length === 0 ? (
+              {prescriptionsLoadError ? (
+                <p className="empty-text" style={{ color: '#c2410c' }}>⚠️ Không thể tải danh sách đơn thuốc. Vui lòng thử lại sau.</p>
+              ) : myPrescriptions.length === 0 ? (
                 <p className="empty-text">Bạn chưa được kê đơn thuốc nào từ Thầy thuốc.</p>
               ) : (
                 <div className="prescriptions-grid-portal">

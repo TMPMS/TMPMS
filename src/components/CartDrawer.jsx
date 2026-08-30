@@ -151,23 +151,29 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
 
   const [shippingFee, setShippingFee] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [shippingFeeError, setShippingFeeError] = useState('');
 
   useEffect(() => {
     if (!checkoutMode) return;
-    
+
     const calculateFee = async () => {
       try {
         const addr = deliveryMode === 'shipping' ? addressDetail : pickupStore;
         if (deliveryMode === 'shipping' && !addressDetail.trim()) {
           setShippingFee(0);
           setDistance(0);
+          setShippingFeeError('');
           return;
         }
         const data = await api.calculateShipping(addr, deliveryMode);
         setShippingFee(data.shippingFee);
         setDistance(data.distance);
+        setShippingFeeError('');
       } catch (err) {
         console.error("Error calculating shipping:", err);
+        // Phí hiển thị ở đây chỉ là ước tính — server luôn tính lại phí thật khi tạo đơn nên không
+        // undercharge, nhưng nếu không báo lỗi thì khách sẽ thấy phí sai/cũ và tưởng đó là phí thật.
+        setShippingFeeError('Không thể tính phí vận chuyển cho địa chỉ này — số hiển thị có thể chưa đúng, phí thật sẽ được xác nhận khi đặt hàng.');
       }
     };
 
@@ -834,6 +840,11 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
 
               {/* Price summary table */}
               <div className="checkout-summary-box">
+                {shippingFeeError && (
+                  <div className="price-calc-row" style={{ color: '#c2410c', fontSize: 12, marginBottom: 8 }}>
+                    ⚠️ {shippingFeeError}
+                  </div>
+                )}
                 <div className="price-calc-row">
                   <span>Tổng tiền hàng:</span>
                   <span>{formatPrice(totalAmount)}</span>

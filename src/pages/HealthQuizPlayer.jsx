@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, RotateCcw, Calendar, AlertTriangle, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react';
+import { apiFetch } from '../services/core';
 import './HealthQuizPlayer.css';
 
 const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
@@ -56,7 +57,6 @@ const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
-      const token = localStorage.getItem('token');
       const payload = {
         answers: Object.entries(selectedAnswers).map(([qId, optId]) => ({
           questionId: parseInt(qId),
@@ -64,14 +64,12 @@ const HealthQuizPlayer = ({ quizCode, onBack, onNavigateBooking }) => {
         }))
       };
 
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/HealthQuiz/${quizCode}/submit`, {
+      // apiFetch gửi kèm cookie phiên đăng nhập (credentials: 'include') — nếu khách đã đăng nhập, BE
+      // sẽ gắn kết quả bài test vào đúng tài khoản; nếu chưa đăng nhập vẫn gửi được (endpoint cho phép
+      // ẩn danh), chỉ là không gắn được userId.
+      const res = await apiFetch(`${import.meta.env.VITE_API_URL ?? ''}/HealthQuiz/${quizCode}/submit`, {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 

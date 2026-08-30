@@ -63,17 +63,8 @@ export async function createAppointment(appointmentData) {
 }
 
 
-export async function cancelAppointment(appointmentId) {
-  const res = await requestWithAuth(`${API_URL}/Appointment/cancel/${appointmentId}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => null);
-    throw new Error(errBody?.Message || errBody?.message || 'Không thể hủy lịch hẹn');
-  }
-  return res.json();
-}
+// Đã gỡ: dùng cancelAppointmentWithRefund (bên dưới) — endpoint cũ (PUT /Appointment/cancel/{id})
+// không xử lý hoàn cọc, có thể làm mất tiền cọc khách đã trả mà không ai biết cần hoàn lại.
 
 
 export async function approveAppointment(appointmentId) {
