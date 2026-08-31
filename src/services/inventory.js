@@ -11,6 +11,7 @@ export async function createStockBatch(batchData) {
     expiryDate: batchData.expiryDate,
     quantity: parseInt(batchData.quantity),
     unitCostPrice: batchData.unitCostPrice ? parseFloat(batchData.unitCostPrice) : null,
+    sellPrice: batchData.sellPrice ? parseFloat(batchData.sellPrice) : null,
     supplierId: batchData.supplierId ? parseInt(batchData.supplierId) : null,
     note: batchData.note || null,
     registrationNumber: batchData.registrationNumber || null,
