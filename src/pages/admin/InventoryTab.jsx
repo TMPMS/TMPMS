@@ -35,6 +35,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
   const [batchExpiryDate, setBatchExpiryDate] = useState('');
   const [batchQuantity, setBatchQuantity] = useState('');
   const [batchCostPrice, setBatchCostPrice] = useState('');
+  const [batchSellPrice, setBatchSellPrice] = useState('');
   const batchSupplierIdState = useState('');
   const [batchSupplierId, setBatchSupplierId] = batchSupplierIdState;
   const [batchNote, setBatchNote] = useState('');
@@ -143,6 +144,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
         expiryDate: batchExpiryDate,
         quantity: batchQuantity,
         unitCostPrice: batchCostPrice || null,
+        sellPrice: batchSellPrice || null,
         supplierId: batchSupplierId || null,
         registrationNumber: batchRegNumber || null,
         storageCondition: batchStorageCondition || null,
@@ -155,6 +157,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
       setBatchExpiryDate('');
       setBatchQuantity('');
       setBatchCostPrice('');
+      setBatchSellPrice('');
       setBatchRegNumber('');
       setBatchNote('');
       await loadExistingBatches(batchMedicineId, batchWarehouseId);
@@ -516,6 +519,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                               <th>SL nhập</th>
                               <th>SL còn</th>
                               <th>Giá nhập/đv</th>
+                              <th>Giá bán riêng</th>
                               <th>Trạng thái</th>
                             </tr>
                           </thead>
@@ -530,6 +534,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                                   <td>{b.quantityReceived}</td>
                                   <td>{b.quantityRemaining}</td>
                                   <td>{b.unitCostPrice != null ? formatPrice(b.unitCostPrice) : '—'}</td>
+                                  <td>{b.sellPrice != null ? formatPrice(b.sellPrice) : '—'}</td>
                                   <td>
                                     <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: st.color, background: st.bg }}>
                                       {st.text}
@@ -566,6 +571,11 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                     <div className="form-group">
                       <label className="form-label">Giá nhập / đơn vị (VND)</label>
                       <input type="number" min="0" className="form-input" value={batchCostPrice} onChange={(e) => setBatchCostPrice(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Giá bán riêng cho lô này (VND)</label>
+                      <input type="number" min="0" className="form-input" placeholder="Để trống = giữ giá bán hiện tại của sản phẩm" value={batchSellPrice} onChange={(e) => setBatchSellPrice(e.target.value)} />
+                      <small style={{ color: '#64748b', fontSize: 12 }}>Khi lô này tới lượt bán (FEFO), giá bán sản phẩm sẽ tự đổi theo giá này.</small>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Nhà cung cấp lô này</label>

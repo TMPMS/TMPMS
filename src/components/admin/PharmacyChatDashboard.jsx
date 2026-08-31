@@ -118,7 +118,6 @@ const PharmacyChatDashboard = () => {
     connection
       .start()
       .then(() => {
-        console.log('SignalR Dashboard connected to PharmacyChatHub');
         setHubError(false);
       })
       .catch((err) => {

@@ -11,6 +11,7 @@ export async function createStockBatch(batchData) {
     expiryDate: batchData.expiryDate,
     quantity: parseInt(batchData.quantity),
     unitCostPrice: batchData.unitCostPrice ? parseFloat(batchData.unitCostPrice) : null,
+    sellPrice: batchData.sellPrice ? parseFloat(batchData.sellPrice) : null,
     supplierId: batchData.supplierId ? parseInt(batchData.supplierId) : null,
     note: batchData.note || null,
     registrationNumber: batchData.registrationNumber || null,
@@ -153,6 +154,17 @@ export async function fetchBatchProfitReport(warehouseId = null, medicineId = nu
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Không thể tải báo cáo lãi gộp');
+  return res.json();
+}
+
+
+// Lãi gộp tổng hợp theo kỳ (gộp mọi sản phẩm) — bổ sung cho fetchBatchProfitReport (chỉ xem được
+// từng sản phẩm một), để có 1 màn hình xem lãi gộp toàn cửa hàng theo khoảng thời gian.
+export async function fetchProfitSummary(from, to, groupBy = 'Day') {
+  const res = await requestWithAuth(`${API_URL}/inventory/reports/profit-summary?from=${from}&to=${to}&groupBy=${groupBy}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Không thể tải báo cáo lãi gộp theo kỳ');
   return res.json();
 }
 

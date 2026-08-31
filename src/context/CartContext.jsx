@@ -59,6 +59,8 @@ export const CartProvider = ({ children }) => {
         setCartItems(mappedItems);
       } catch (e) {
         console.error('Không thể tải giỏ hàng từ cơ sở dữ liệu', e);
+        setToast({ visible: true, message: 'Không thể tải giỏ hàng. Vui lòng tải lại trang.', type: 'error' });
+        setTimeout(() => setToast({ visible: false, message: '' }), 3000);
       }
     } else {
       // Load guest cart
@@ -206,6 +208,12 @@ export const CartProvider = ({ children }) => {
         // Dòng giỏ hàng đã bị xóa ở server (đơn hàng vừa được tạo/đã checkout) → loại bỏ khỏi state
         if (e.responseStatus === 404) {
           setCartItems(prev => prev.filter(x => x.id !== productId));
+        } else {
+          // Các lỗi khác (vd vượt tồn kho) trước đây bị nuốt hoàn toàn — số lượng trên UI không đổi
+          // (giữ nguyên giá trị cũ vì state chỉ cập nhật sau khi API thành công) nhưng người dùng không
+          // biết vì sao nút bấm "không có tác dụng".
+          setToast({ visible: true, message: e.message || 'Không thể cập nhật số lượng.', type: 'error' });
+          setTimeout(() => setToast({ visible: false, message: '' }), 3000);
         }
       }
     } else {

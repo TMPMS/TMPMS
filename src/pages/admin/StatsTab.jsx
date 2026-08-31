@@ -22,6 +22,7 @@ const StatsTab = ({ setError }) => {
   const [prescriptionStatusData, setPrescriptionStatusData] = useState([]);
   const [userGrowthData, setUserGrowthData] = useState([]);
   const [inventoryValueData, setInventoryValueData] = useState([]);
+  const [profitSummaryData, setProfitSummaryData] = useState([]);
 
   const loadTabData = async () => {
     setLoading(true);
@@ -29,7 +30,7 @@ const StatsTab = ({ setError }) => {
     try {
       const last30From = new Date(Date.now() - 30 * 86400000).toISOString();
       const last30To = new Date().toISOString();
-      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData, apptStatusData, presStatusData, growthData, invValueData] = await Promise.all([
+      const [ordersData, patientsData, appointmentsData, medData, repData, statusData, catRevData, staffRevData, apptStatusData, presStatusData, growthData, invValueData, profitData] = await Promise.all([
         api.fetchAdminOrders().catch(() => []),
         api.fetchPatients().catch(() => []),
         api.fetchAppointments().catch(() => []),
@@ -42,6 +43,7 @@ const StatsTab = ({ setError }) => {
         api.fetchReportPrescriptionStatus().catch(() => []),
         api.fetchReportUserGrowth(last30From, last30To, 'Day').catch(() => []),
         api.fetchReportInventoryValue().catch(() => []),
+        api.fetchProfitSummary(last30From, last30To, 'Day').catch(() => []),
       ]);
       setOrders(ordersData);
       setPatients(patientsData);
@@ -55,6 +57,7 @@ const StatsTab = ({ setError }) => {
       setPrescriptionStatusData(presStatusData);
       setUserGrowthData(growthData);
       setInventoryValueData(invValueData);
+      setProfitSummaryData(profitData);
     } catch (err) {
       console.error(err);
       setError('Lỗi tải dữ liệu. Vui lòng thử lại.');
@@ -72,14 +75,16 @@ const StatsTab = ({ setError }) => {
     try {
       const fromIso = new Date(statsDateFrom).toISOString();
       const toIso = new Date(statsDateTo + 'T23:59:59').toISOString();
-      const [trend, catRev, staffRev] = await Promise.all([
+      const [trend, catRev, staffRev, profitData] = await Promise.all([
         api.fetchReportRevenue(fromIso, toIso, 'Day'),
         api.fetchReportCategoryRevenue(fromIso, toIso).catch(() => []),
         api.fetchReportStaffRevenue(fromIso, toIso).catch(() => []),
+        api.fetchProfitSummary(fromIso, toIso, 'Day').catch(() => []),
       ]);
       setCustomRevenueTrend(trend);
       setCategoryRevenueData(catRev);
       setStaffRevenueData(staffRev);
+      setProfitSummaryData(profitData);
     } catch (err) {
       setError(err.message || 'Không thể tải thống kê theo khoảng thời gian đã chọn.');
     } finally {
@@ -243,6 +248,45 @@ const StatsTab = ({ setError }) => {
                   </div>
                 </>
               )}
+
+              {/* Lãi gộp toàn cửa hàng theo kỳ đã chọn — tổng hợp giá vốn (theo lô, giá nhập khác nhau)
+                  và giá bán thực tế (tại thời điểm bán, giá bán khác nhau theo thời gian). */}
+              {profitSummaryData.length > 0 && (() => {
+                const totalRevenue = profitSummaryData.reduce((s, p) => s + (p.estimatedRevenue || 0), 0);
+                const totalCost = profitSummaryData.reduce((s, p) => s + (p.estimatedCost || 0), 0);
+                const totalProfit = totalRevenue - totalCost;
+                const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100).toFixed(1) : null;
+                const hasEstimated = profitSummaryData.some(p => p.isEstimated);
+                return (
+                  <>
+                    <h3 className="stats-group-label">Lãi gộp toàn cửa hàng</h3>
+                    <div className="admin-card stats-section">
+                      <h4 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8, color: '#0f766e', fontSize: 16 }}>
+                        💵 Lãi gộp ước tính {customRevenueTrend ? `(${statsDateFrom} → ${statsDateTo})` : '(30 Ngày gần nhất)'}
+                      </h4>
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 150, padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Doanh thu</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: '#1e293b' }}>{formatPrice(totalRevenue)}</div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 150, padding: '12px 16px', background: '#fff7ed', borderRadius: 8, border: '1px solid #fed7aa' }}>
+                          <div style={{ fontSize: 11, color: '#9a3412', fontWeight: 700 }}>Giá vốn (theo lô)</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: '#c2410c' }}>{formatPrice(totalCost)}</div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 150, padding: '12px 16px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                          <div style={{ fontSize: 11, color: '#166534', fontWeight: 700 }}>Lãi gộp{margin !== null ? ` (${margin}%)` : ''}</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: '#15803d' }}>{formatPrice(totalProfit)}</div>
+                        </div>
+                      </div>
+                      {hasEstimated && (
+                        <p style={{ fontSize: 11, color: '#92400e', marginTop: 12, marginBottom: 0 }}>
+                          ⚠️ Một phần số liệu là ước tính (không tra được giá bán snapshot tại thời điểm bán cho các giao dịch cũ).
+                        </p>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Top Selling Products & Order Status Breakdown */}
               <h3 className="stats-group-label">Phân tích chi tiết</h3>

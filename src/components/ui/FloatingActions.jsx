@@ -13,8 +13,9 @@ const FloatingActions = ({ user }) => {
 
     const handleOpenChat = (e) => {
       const activeUser = getCurrentUser();
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || activeUser?.token;
-      if (!token && !activeUser) {
+      // App xác thực bằng cookie phiên (không lưu token trong localStorage/sessionStorage nữa) — chỉ
+      // activeUser (từ AuthContext hoặc user đã lưu) phản ánh đúng trạng thái đăng nhập thật.
+      if (!activeUser) {
         window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
         return;
       }
@@ -46,9 +47,8 @@ const FloatingActions = ({ user }) => {
 
   const handlePharmacyChatClick = (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const activeUser = getCurrentUser();
-    if (!token && !activeUser) {
+    if (!activeUser) {
       window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: 'login' }));
       return;
     }
