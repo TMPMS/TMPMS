@@ -62,8 +62,15 @@ const ProductDetailView = ({ product, onBack }) => {
     // Dữ liệu Tính vị/Công dụng thật từ backend (nếu dược sĩ/admin đã nhập), ưu tiên hơn
     // chuỗi tĩnh trong meridianData.js để nội dung trên trang và trong modal 3D luôn khớp nhau.
     const loadHerbalInfo = async () => {
-      const info = await fetchHerbalMedicineInfo(product.id);
-      setHerbalInfo(info);
+      try {
+        const info = await fetchHerbalMedicineInfo(product.id);
+        setHerbalInfo(info);
+      } catch (err) {
+        // Không có bản ghi HerbalMedicineInfo cho sản phẩm này (404) hoặc lỗi mạng — trước đây không
+        // bắt lỗi, để lại unhandled promise rejection và herbalInfo mãi là null không rõ nguyên nhân.
+        // Giữ nguyên hành vi hiển thị (phần Tính vị/Công dụng đơn giản là không hiện) nhưng ghi log rõ ràng.
+        console.error('Lỗi tải thông tin dược liệu:', err);
+      }
     };
 
     loadReviews();

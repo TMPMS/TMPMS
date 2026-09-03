@@ -99,10 +99,22 @@ export const CartProvider = ({ children }) => {
     let showToastMessage = quantity > 1 ? `Đã thêm ${quantity} ${product.name} vào giỏ hàng` : `Đã thêm ${product.name} vào giỏ hàng`;
     let toastType = 'success';
     let success = true;
-    const cartId = user ? (user.cart_id || user.cartId) : null;
 
-    if (user && cartId) {
+    if (user) {
       try {
+        // cart_id có thể CHƯA kịp load xong ngay sau khi đăng nhập (loadCart chạy bất đồng bộ, cập
+        // nhật cart_id sau). Trước đây, thiếu cart_id ở đúng lúc này khiến hàm rơi nhầm vào nhánh giỏ
+        // khách (local state, không lưu server) — rồi bị loadCart tải xong đè mất không dấu vết. Giờ tự
+        // lấy/tạo cart của user này giống hệt logic loadCart, không bao giờ rơi vào nhánh local khi đã
+        // đăng nhập.
+        let cartId = user.cart_id || user.cartId;
+        if (!cartId) {
+          const carts = await api.fetchCarts(user.id);
+          const cart = (carts && carts.length > 0) ? carts[0] : await api.createCart(user.id);
+          cartId = cart.id;
+          updateUser({ cart_id: cartId });
+        }
+
         // BE cộng dồn số lượng cho dòng đã tồn tại (cart_id + medicine_id).
         await api.addCartItem(cartId, product.id, quantity);
 
@@ -149,7 +161,7 @@ export const CartProvider = ({ children }) => {
       setToast({ visible: false, message: '' });
     }, 3000);
     return success;
-  }, [user]);
+  }, [user, updateUser]);
 
   const closeRxPrompt = useCallback(() => setRxPrompt(null), []);
 

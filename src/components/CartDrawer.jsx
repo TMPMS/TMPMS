@@ -399,6 +399,12 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
     setLoading(true);
     setError('');
 
+    // Theo dõi riêng đơn đã tạo thành công ở server hay chưa — nếu bước xin link PayOS lỗi SAU khi
+    // đơn đã tạo (hàng đã trừ kho, giỏ đã bị xoá đúng các mục vừa mua), phải báo đúng sự thật thay vì
+    // dùng chung thông báo "tạo đơn thất bại", tránh khách hiểu nhầm chưa có đơn nào rồi bấm lại và
+    // tạo trùng một đơn hàng thứ hai cho cùng lần mua.
+    let createdOrder = null;
+
     try {
       // Build composite address depending on delivery mode
       let compositeAddress = '';
@@ -424,14 +430,14 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
         }))
       };
 
-      const order = await api.createOrder(orderPayload);
+      createdOrder = await api.createOrder(orderPayload);
 
       if (paymentMethod === 'PAYOS') {
         const baseUrl = window.location.origin;
         const paymentLink = await api.createPayOSPaymentLink(
-          order.id,
-          `${baseUrl}/?payment=success&orderCode=${order.id}`,
-          `${baseUrl}/?payment=cancelled&orderCode=${order.id}`
+          createdOrder.id,
+          `${baseUrl}/?payment=success&orderCode=${createdOrder.id}`,
+          `${baseUrl}/?payment=cancelled&orderCode=${createdOrder.id}`
         );
         await refreshCart();
         window.location.assign(paymentLink.checkoutUrl);
@@ -456,7 +462,12 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth, startInCheckout = false, chec
       }, 3500);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại kết nối!');
+      if (createdOrder) {
+        await refreshCart();
+        setError(`Đơn hàng #${createdOrder.id} đã được tạo nhưng không lấy được link thanh toán PayOS. Vui lòng vào "Lịch sử đơn hàng" để thanh toán lại — không đặt lại đơn mới.`);
+      } else {
+        setError(err.message || 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại kết nối!');
+      }
     } finally {
       setLoading(false);
     }
