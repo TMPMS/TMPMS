@@ -52,6 +52,18 @@ const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMe
     });
   }, [medicines, filterSearch, filterOrigin, filterLowStock]);
 
+  // Phân trang phía client cho DANH SÁCH HIỂN THỊ — API vẫn tải toàn bộ catalog 1 lần (chấp nhận
+  // được ở quy mô hiện tại), nhưng render hết vào DOM cùng lúc sẽ ngày càng chậm khi catalog lớn dần
+  // (đặc biệt sau import Excel hàng loạt). Giới hạn số dòng render mỗi lần, không đổi cách tải/lọc dữ liệu.
+  const LIST_PAGE_SIZE = 30;
+  const [listPage, setListPage] = useState(1);
+  useEffect(() => { setListPage(1); }, [filterSearch, filterOrigin, filterLowStock]);
+  const totalListPages = Math.max(1, Math.ceil(filteredMedicines.length / LIST_PAGE_SIZE));
+  const pagedMedicines = useMemo(
+    () => filteredMedicines.slice((listPage - 1) * LIST_PAGE_SIZE, listPage * LIST_PAGE_SIZE),
+    [filteredMedicines, listPage]
+  );
+
   return (
     <div className="admin-card products-list-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
@@ -124,7 +136,7 @@ const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMe
         {filteredMedicines.length === 0 && (
           <div className="admin-empty">Không có dược phẩm nào phù hợp với bộ lọc.</div>
         )}
-        {filteredMedicines.map(m => (
+        {pagedMedicines.map(m => (
           <div key={m.id} className={`medicine-crud-row ${editingMedicineId === m.id ? 'editing' : ''}`}>
             <input
               type="checkbox"
@@ -155,6 +167,28 @@ const MedicineListPanel = memo(function MedicineListPanel({ medicines, editingMe
           </div>
         ))}
       </div>
+
+      {totalListPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={() => setListPage(p => Math.max(1, p - 1))}
+            disabled={listPage <= 1}
+            style={{ padding: '6px 12px', fontSize: 13, borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: listPage <= 1 ? 'not-allowed' : 'pointer', opacity: listPage <= 1 ? 0.5 : 1 }}
+          >
+            ‹ Trước
+          </button>
+          <span style={{ fontSize: 13, color: '#475569' }}>Trang {listPage}/{totalListPages}</span>
+          <button
+            type="button"
+            onClick={() => setListPage(p => Math.min(totalListPages, p + 1))}
+            disabled={listPage >= totalListPages}
+            style={{ padding: '6px 12px', fontSize: 13, borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', cursor: listPage >= totalListPages ? 'not-allowed' : 'pointer', opacity: listPage >= totalListPages ? 0.5 : 1 }}
+          >
+            Sau ›
+          </button>
+        </div>
+      )}
     </div>
   );
 });

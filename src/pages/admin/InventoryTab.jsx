@@ -297,7 +297,7 @@ const InventoryTab = ({ hasAccess, showSuccess, setError }) => {
                         </div>
                         <div className="wh-body">
                           <div className="wh-stat">
-                            <span className="wh-stat-num">{(w.total_quantity ?? w.totalQuantity ?? 0).toLocaleString()}</span>
+                            <span className="wh-stat-num">{(w.totalStockQuantity ?? w.total_quantity ?? w.totalQuantity ?? 0).toLocaleString()}</span>
                             <span className="wh-stat-lbl">Tổng vị thuốc lưu kho</span>
                           </div>
                           <div className="wh-info">

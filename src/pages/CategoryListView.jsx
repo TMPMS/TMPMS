@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Filter, SlidersHorizontal, ChevronRight, X, RotateCcw, AlertCircle, Search, Globe, Building2, PackageCheck, Leaf, Sparkles, PackageX, BadgePercent } from 'lucide-react';
 import { ProductCard } from '../components/ProductSection';
 import * as api from '../services/api';
@@ -76,6 +76,11 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
   const [facetSource, setFacetSource] = useState([]);
   const [herbalOptions, setHerbalOptions] = useState({ partUsed: [], effects: [] });
   const [suppliersMap, setSuppliersMap] = useState(supplierNames);
+
+  // Đánh dấu request danh sách sản phẩm mới nhất — trước đây nếu khách bấm "Xem thêm" rồi đổi filter
+  // trước khi request đó xong, kết quả trang cũ (dựng từ filter cũ) có thể về SAU kết quả filter mới,
+  // nối luôn vào danh sách đã lọc mới, hiển thị lẫn sản phẩm không khớp bộ lọc hiện tại.
+  const requestIdRef = useRef(0);
 
   // Reset pagination & filters when category (hoặc supplier, ở chế độ xem theo NCC) đổi
   useEffect(() => {
@@ -168,9 +173,11 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
   // Fetch trang 1 mỗi khi bộ lọc/sắp xếp/category đổi (debounce 400ms)
   useEffect(() => {
     const timer = setTimeout(() => {
+      const requestId = ++requestIdRef.current;
       setLoadingList(true);
       api.fetchMedicinesFiltered(buildFilters(1))
         .then(res => {
+          if (requestIdRef.current !== requestId) return; // có request mới hơn đã bắt đầu, bỏ kết quả này
           let list = res.items;
           // Lọc "yêu cầu kê đơn" phía client vì backend chỉ hỗ trợ include/exclude toàn bộ Rx
           if (selectedPrescription === 'prescription') list = list.filter(p => p.requiresPrescription === true);
@@ -178,8 +185,8 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
           setTotalCount(res.totalCount);
           setPage(1);
         })
-        .catch(() => { setItems([]); setTotalCount(0); })
-        .finally(() => setLoadingList(false));
+        .catch(() => { if (requestIdRef.current === requestId) { setItems([]); setTotalCount(0); } })
+        .finally(() => { if (requestIdRef.current === requestId) setLoadingList(false); });
     }, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,9 +196,11 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
 
   const handleLoadMore = async () => {
     const nextPage = page + 1;
+    const requestId = ++requestIdRef.current;
     setLoadingList(true);
     try {
       const res = await api.fetchMedicinesFiltered(buildFilters(nextPage));
+      if (requestIdRef.current !== requestId) return; // filter đã đổi trong lúc chờ, bỏ trang cũ này
       let list = res.items;
       if (selectedPrescription === 'prescription') list = list.filter(p => p.requiresPrescription === true);
       setItems(prev => [...prev, ...list]);
@@ -200,7 +209,7 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
     } catch {
       // ignore
     } finally {
-      setLoadingList(false);
+      if (requestIdRef.current === requestId) setLoadingList(false);
     }
   };
 
