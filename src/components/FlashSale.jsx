@@ -48,35 +48,44 @@ const FlashSale = ({ onProductClick }) => {
   // ra theo lịch hẹn giờ), lấy trực tiếp từ bảng FlashSale — không giới hạn ở hàng sắp hết hạn.
   useEffect(() => {
     let mounted = true;
-    fetchActiveFlashSales()
-      .then(data => {
-        if (!mounted || !Array.isArray(data)) return;
-        const onSale = data
-          .filter(c => c.salePrice != null)
-          .map(c => ({
-            id: c.medicineId,
-            name: c.medicineName,
-            image: formatImageUrl(c.imageUrl),
-            price: c.salePrice,
-            oldPrice: c.originalPrice,
-            stockQuantity: c.stockQuantity ?? 0,
-            unit: c.unit || 'Hộp',
-            discount: c.discountPercent,
-            origin: c.origin || 'Việt Nam',
-            originColor: originColorFor(c.origin),
-            startTime: c.startTime,
-            endTime: c.endTime,
-            quantityLimit: c.quantityLimit,
-            quantitySold: c.quantitySold,
-            isScheduled: c.status === 'Scheduled',
-          }));
-        if (onSale.length > 0) {
-          setProducts(onSale);
-          setIsFallback(false);
-        }
-      })
-      .catch(() => {});
-    return () => { mounted = false; };
+
+    const load = () => {
+      fetchActiveFlashSales()
+        .then(data => {
+          if (!mounted || !Array.isArray(data)) return;
+          const onSale = data
+            .filter(c => c.salePrice != null)
+            .map(c => ({
+              id: c.medicineId,
+              name: c.medicineName,
+              image: formatImageUrl(c.imageUrl),
+              price: c.salePrice,
+              oldPrice: c.originalPrice,
+              stockQuantity: c.stockQuantity ?? 0,
+              unit: c.unit || 'Hộp',
+              discount: c.discountPercent,
+              origin: c.origin || 'Việt Nam',
+              originColor: originColorFor(c.origin),
+              startTime: c.startTime,
+              endTime: c.endTime,
+              quantityLimit: c.quantityLimit,
+              quantitySold: c.quantitySold,
+              isScheduled: c.status === 'Scheduled',
+            }));
+          if (onSale.length > 0) {
+            setProducts(onSale);
+            setIsFallback(false);
+          }
+        })
+        .catch(() => {});
+    };
+
+    load();
+    // Trước đây chỉ tải 1 lần lúc vào trang — sale đang chạy hết EndTime vẫn nằm nguyên trong danh
+    // sách với giá cũ, sale "sắp diễn ra" tới đúng StartTime vẫn hiện badge chờ giờ, cho tới khi khách
+    // tự F5. Tải lại định kỳ để bắt kịp 2 mốc chuyển trạng thái đó mà không cần khách reload tay.
+    const refreshTimer = setInterval(load, 30000);
+    return () => { mounted = false; clearInterval(refreshTimer); };
   }, []);
 
   // Tick mỗi giây để đếm ngược thật (đến EndTime nếu đang chạy, hoặc StartTime nếu đang chờ tới giờ)
