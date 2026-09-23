@@ -337,13 +337,24 @@
 }
 
 @media (max-width: 640px) {
+  .upm-overlay {
+    padding: 12px;
+  }
   .upm-modal {
-    padding: 20px;
+    padding: 20px 16px;
     border-radius: 16px;
-    margin: 12px;
+    margin: 0;
+    max-width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .upm-form-row {
     grid-template-columns: 1fr;
     gap: 12px;
   }
+  .upm-header h2 {
+    font-size: 18px;
+  }
 }
+

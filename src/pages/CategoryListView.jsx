@@ -65,6 +65,9 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
   // Sort State
   const [sortBy, setSortBy] = useState('popular'); // popular | priceAsc | priceDesc | nameAsc | nameDesc
 
+  // Mobile Bottom Sheet Filter State
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
   // Server-side paginated results
   const [items, setItems] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -250,20 +253,38 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
 
       {/* Main Content Layout */}
       <div className="cl-main-layout">
+        {/* Backdrop for mobile drawer */}
+        {isMobileFilterOpen && (
+          <div 
+            className="cl-sidebar-backdrop" 
+            onClick={() => setIsMobileFilterOpen(false)}
+          />
+        )}
+
         {/* Sidebar Filters */}
-        <aside className="cl-sidebar">
+        <aside className={`cl-sidebar ${isMobileFilterOpen ? 'cl-sidebar--mobile-open' : ''}`}>
           <div className="cl-filter-card">
             <div className="cl-filter-header">
               <div className="cl-filter-title">
                 <Filter size={16} />
                 <span>Bộ lọc đa năng</span>
               </div>
-              {hasActiveFilters && (
-                <button className="cl-reset-btn" onClick={handleResetFilters}>
-                  <RotateCcw size={12} />
-                  <span>Xóa tất cả</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {hasActiveFilters && (
+                  <button className="cl-reset-btn" onClick={handleResetFilters}>
+                    <RotateCcw size={12} />
+                    <span>Xóa tất cả</span>
+                  </button>
+                )}
+                <button 
+                  type="button" 
+                  className="cl-mobile-close-filter"
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  aria-label="Đóng bộ lọc"
+                >
+                  <X size={18} />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Filter Section: Search input inside sidebar */}
@@ -530,6 +551,15 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
               </div>
             </div>
 
+            {/* Mobile Bottom Sheet Actions */}
+            <div className="cl-mobile-filter-actions">
+              <button type="button" className="cl-mobile-reset-btn" onClick={handleResetFilters}>
+                Thiết lập lại
+              </button>
+              <button type="button" className="cl-mobile-apply-btn" onClick={() => setIsMobileFilterOpen(false)}>
+                Áp dụng {totalCount > 0 ? `(${totalCount})` : ''}
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -609,8 +639,21 @@ const CategoryListView = ({ categoryId, categoryName, supplierId, supplierName, 
             </div>
           )}
 
-          {/* Sorting Toolbar */}
+          {/* Sorting & Filter Toolbar */}
           <div className="cl-toolbar">
+            <button
+              type="button"
+              className="cl-mobile-filter-trigger"
+              onClick={() => setIsMobileFilterOpen(true)}
+              aria-label="Mở bộ lọc"
+            >
+              <Filter size={15} />
+              <span>Bộ lọc</span>
+              {hasActiveFilters && (
+                <span className="cl-filter-count-badge">●</span>
+              )}
+            </button>
+
             <div className="cl-sort-wrap">
               <SlidersHorizontal size={14} className="cl-sort-icon" />
               <span className="cl-sort-label">Sắp xếp theo:</span>

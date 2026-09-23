@@ -228,9 +228,50 @@
 .pc-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 @media (max-width: 640px) {
-  .ps-section { padding: 14px; border-radius: 12px; }
-  .ps-title { font-size: 16px; }
+  .ps-section {
+    padding: 14px 12px;
+    border-radius: 14px;
+    margin-top: 12px;
+  }
+  .ps-header {
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+  .ps-title-wrap {
+    gap: 6px;
+    min-width: 0;
+  }
+  .ps-title-bar {
+    height: 18px;
+    width: 3px;
+    flex-shrink: 0;
+  }
+  .ps-title {
+    font-size: 15px;
+    letter-spacing: 0;
+    line-height: 1.25;
+  }
+  .ps-view-all {
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
   .ps-swiper .swiper-button-next,
   .ps-swiper .swiper-button-prev { display: none; }
-  .pc-img-wrap { height: 110px; }
+  .pc-img-wrap { height: 100px; }
+  .pc-card {
+    padding: 10px 8px;
+  }
+  .pc-name {
+    font-size: 12px;
+    min-height: 30px;
+  }
+  .pc-price {
+    font-size: 15px;
+  }
+  .pc-cta {
+    padding: 7px 0;
+    font-size: 12px;
+    border-radius: 20px;
+  }
 }

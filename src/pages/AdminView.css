@@ -1364,3 +1364,94 @@
 }
 
 .payment-toggle-btn.refunded { background-color: #ede9fe; color: #7c3aed; }
+
+/* ============ ADMIN VIEW RESPONSIVE SYSTEM ============ */
+@media (max-width: 1024px) {
+  .admin-container {
+    padding: 0 14px;
+    margin: 18px auto 36px;
+  }
+
+  .admin-header {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .admin-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    gap: 6px;
+  }
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 7px 14px;
+    font-size: 12.5px;
+  }
+
+  .admin-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
+    max-width: 100%;
+  }
+
+  .admin-table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-container {
+    padding: 0 10px;
+    margin: 12px auto 28px;
+  }
+
+  .admin-title {
+    font-size: 19px;
+  }
+
+  .admin-role-badge {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .btn-add-action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-table {
+    min-width: 600px;
+    font-size: 12.5px;
+  }
+
+  .admin-table th, 
+  .admin-table td {
+    padding: 8px 10px;
+  }
+}
+

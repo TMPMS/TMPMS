@@ -428,6 +428,26 @@ const ProductDetailView = ({ product, onBack }) => {
           />
         </Suspense>
       )}
+
+      {/* Sticky Bottom Action Bar for Mobile View */}
+      {product && (
+        <div className="pd-mobile-sticky-bar">
+          <div className="pd-sticky-price-wrap">
+            <span className="pd-sticky-label">Đơn giá:</span>
+            <span className="pd-sticky-price">
+              {product.price ? `${product.price.toLocaleString('vi-VN')} đ` : 'Liên hệ'}
+            </span>
+          </div>
+          <button 
+            type="button"
+            className="pd-sticky-buy-btn"
+            disabled={product.stockQuantity <= 0}
+            onClick={handleAddToCart}
+          >
+            {product.stockQuantity <= 0 ? 'Hết hàng' : 'Chọn mua ngay'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

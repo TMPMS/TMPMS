@@ -369,7 +369,9 @@
   .reels-view-container {
     margin: 0;
     height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     max-width: 100%;
   }
 }
+

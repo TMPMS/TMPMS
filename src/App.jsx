@@ -407,7 +407,7 @@ function App() {
         onSelectProduct={handleSelectProduct}
       />
 
-      <main style={{ width: '1200px', maxWidth: '100%', margin: '0 auto', padding: '0 0 32px' }}>
+      <main className="main-content-layout">
         <Suspense fallback={<div style={{ padding: '80px 0', textAlign: 'center', color: '#0d9488', fontWeight: 600 }}>Đang tải...</div>}>
           {renderContent()}
         </Suspense>

@@ -529,18 +529,46 @@
 
 @media (max-width: 640px) {
   .vc-steps-indicator {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+  }
+  .step-node {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .step-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
   }
   .step-line {
-    display: none;
+    display: block;
+    height: 2px;
+    flex: 1;
+    margin: 0 4px;
   }
   .form-row {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
   .vc-content-card {
-    padding: 16px;
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+  .vc-footer-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vc-btn-outline, .vc-btn-primary {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }
+

@@ -233,6 +233,35 @@
   left: 120%;
 }
 
+/* ============ RESPONSIVE / TABLET & SHRUNK DESKTOP ============ */
+@media (min-width: 769px) and (max-width: 1080px) {
+  .hero-banner {
+    height: 280px;
+    gap: 10px;
+  }
+  .hero-slide {
+    height: 280px;
+    padding: 24px 32px;
+  }
+  .hero-title {
+    font-size: 24px;
+  }
+  .hero-sub {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .hero-btn {
+    padding: 10px 22px;
+    font-size: 13px;
+  }
+  .hero-side-banner {
+    padding: 14px 16px;
+  }
+  .side-label {
+    font-size: 13px;
+  }
+}
+
 /* ============ RESPONSIVE / MOBILE ============ */
 @media (max-width: 768px) {
   .hero-banner {
@@ -250,30 +279,60 @@
     height: 220px;
   }
   .hero-slide {
-    padding: 20px 22px;
+    padding: 18px 20px;
   }
-  .hero-slide-content { max-width: 80%; }
-  .hero-tag { font-size: 11px; padding: 3px 10px; margin-bottom: 8px; }
-  .hero-title { font-size: 19px; margin-bottom: 8px; }
-  .hero-sub { font-size: 12.5px; margin-bottom: 14px; max-width: 100%; }
-  .hero-btn { padding: 9px 18px; font-size: 12.5px; }
-  .hero-nav-btn { width: 32px; height: 32px; font-size: 18px; }
-  .hero-herb-1, .hero-herb-2, .hero-herb-3 { font-size: 22px !important; }
+  .hero-slide-content { max-width: 82%; }
+  .hero-tag { font-size: 10.5px; padding: 2px 8px; margin-bottom: 6px; }
+  .hero-title {
+    font-size: clamp(17px, 4.5vw, 20px);
+    margin-bottom: 6px;
+    line-height: 1.25;
+  }
+  .hero-sub {
+    font-size: 12px;
+    margin-bottom: 12px;
+    max-width: 100%;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hero-btn { padding: 8px 18px; font-size: 12px; }
+
+  /* Hide arrow navigation buttons on mobile to avoid covering text/images (Photo 5 & 11) */
+  .hero-nav-btn {
+    display: none !important;
+  }
+
+  .hero-herb-1, .hero-herb-2, .hero-herb-3 { font-size: 20px !important; }
 
   .hero-side {
     flex: none;
     width: 100%;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
   .hero-side-banner {
-    min-height: 100px;
-    padding: 12px 14px;
+    min-height: 75px;
+    padding: 10px 12px;
   }
   .side-sub { font-size: 9px; }
-  .side-label { font-size: 12px; margin-bottom: 4px; }
-  .side-link { font-size: 11px; }
+  .side-label { font-size: 11.5px; margin-bottom: 2px; }
+  .side-link { font-size: 10.5px; }
 }
 
 @media (max-width: 480px) {
-  .hero-side { flex-direction: column; }
+  .hero-slide,
+  .hero-swiper {
+    height: 205px;
+  }
+  .hero-slide {
+    padding: 16px;
+  }
+  .hero-side-banner {
+    min-height: 70px;
+    padding: 8px 10px;
+  }
 }

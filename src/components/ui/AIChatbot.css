@@ -1,7 +1,7 @@
 .ai-chatbot-wrapper {
   position: fixed;
-  bottom: 90px;
-  right: 30px;
+  bottom: 88px;
+  right: 16px;
   z-index: 9999;
   font-family: 'Inter', sans-serif;
 }
@@ -481,16 +481,23 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .ai-chatbot-wrapper {
     right: 12px;
-    bottom: 20px;
+    bottom: 78px;
+  }
+  .ai-chat-bubble {
+    width: 46px;
+    height: 46px;
   }
   .ai-chat-window {
-    width: calc(100vw - 24px);
-    height: 75vh;
     position: fixed;
-    right: 12px;
-    bottom: 80px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    height: 85vh;
+    border-radius: 20px 20px 0 0;
+    z-index: 10006;
   }
 }

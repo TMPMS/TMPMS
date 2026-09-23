@@ -567,3 +567,71 @@
   .review-form textarea { padding: 10px; font-size: 14px; }
   .submit-review-btn { width: 100%; }
 }
+
+/* Mobile Sticky Bottom CTA Bar */
+.pd-mobile-sticky-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .pd-container {
+    padding-bottom: 84px; /* Space for sticky bar */
+  }
+
+  .pd-mobile-sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 10px 16px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .pd-sticky-price-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pd-sticky-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .pd-sticky-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f766e;
+  }
+
+  .pd-sticky-buy-btn {
+    flex: 1;
+    max-width: 200px;
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    transition: all 0.2s ease;
+  }
+
+  .pd-sticky-buy-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+

@@ -44,26 +44,40 @@ const Footer = () => (
           </ul>
         </div>
 
-        {/* Column 4 */}
-        <div className="footer-col">
-          <h4 className="footer-col-title">TỔNG ĐÀI</h4>
-          <ul className="footer-hotlines">
-            <li><span className="hotline-label">Mua hàng & CSKH:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
-            <li><span className="hotline-label">Châm cứu trị liệu:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
-            <li><span className="hotline-label">Góp ý & Khiếu nại:</span><a href="tel:0862544627" className="hotline-num">0862 544 627</a></li>
-          </ul>
-          <p className="hotline-note">(8:00 – 22:00 kể cả lễ)</p>
-          <p className="footer-address">🏢 Số 1 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. HCM</p>
+        {/* Column 4: Hotline Card */}
+        <div className="footer-col footer-col-hotline">
+          <h4 className="footer-col-title">TỔNG ĐÀI HỖ TRỢ</h4>
+          <div className="footer-hotline-card">
+            <div className="f-hotline-main">
+              <span className="hotline-badge">Miễn cước</span>
+              <a href="tel:0862544627" className="hotline-num">0862 544 627</a>
+            </div>
+            <p className="hotline-scope">Tư vấn thuốc, Châm cứu & Khiếu nại dịch vụ</p>
+            <p className="hotline-note">🕒 8:00 – 22:00 (kể cả Lễ, Tết)</p>
+            <a href="tel:0862544627" className="footer-call-btn">
+              📞 Gọi tổng đài ngay
+            </a>
+          </div>
+          <p className="footer-address" style={{ marginTop: '12px' }}>🏢 Số 1 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. HCM</p>
           <p className="footer-address">✉️ <a href="mailto:ng.tammail@gmail.com">ng.tammail@gmail.com</a></p>
         </div>
 
-        {/* Column 5 */}
-        <div className="footer-col">
+        {/* Column 5: Socials & Apps */}
+        <div className="footer-col footer-col-socials">
           <h4 className="footer-col-title">KẾT NỐI VỚI CHÚNG TÔI</h4>
           <div className="footer-socials">
-            <a href="https://www.facebook.com/profile.php?id=61592828656029" target="_blank" rel="noopener noreferrer" className="social-btn fb">f Facebook</a>
-            <span className="social-btn zalo" title="Tính năng đang được phát triển">Zalo</span>
-            <span className="social-btn yt" title="Tính năng đang được phát triển">▶ YouTube</span>
+            <a href="https://www.facebook.com/profile.php?id=61592828656029" target="_blank" rel="noopener noreferrer" className="social-btn fb" title="Facebook TMPMS">
+              <span>f</span>
+              <small>Facebook</small>
+            </a>
+            <span className="social-btn zalo" title="Zalo Official Account">
+              <span>Z</span>
+              <small>Zalo</small>
+            </span>
+            <span className="social-btn yt" title="YouTube Channel">
+              <span>▶</span>
+              <small>YouTube</small>
+            </span>
           </div>
           <h4 className="footer-col-title" style={{ marginTop: '16px' }}>TẢI ỨNG DỤNG</h4>
           <div className="footer-app-btns">

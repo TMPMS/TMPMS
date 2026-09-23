@@ -645,7 +645,119 @@
 .address-action-btn:hover { border-color: #0d9488; color: #0d9488; }
 .address-action-btn.danger:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
 
-@media (max-width: 560px) {
-  .address-card { flex-direction: column; align-items: stretch; }
-  .address-card-actions { justify-content: flex-end; }
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 0 32px;
+  }
+
+  .profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Compact Horizontal Segmented Navigation Bar */
+  .profile-nav {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 6px;
+    gap: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .profile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pnav-btn {
+    width: auto;
+    white-space: nowrap;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border-left: none;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .pnav-btn.active {
+    background: #0d9488;
+    color: #ffffff;
+    border-left: none;
+  }
+
+  .pnav-btn.active .pnav-badge {
+    background: #ffffff;
+    color: #0d9488;
+  }
+
+  .profile-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
+
+@media (max-width: 600px) {
+  .profile-avatar-block {
+    padding: 20px 16px 16px;
+    border-radius: 14px;
+  }
+
+  .profile-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .profile-name {
+    font-size: 15px;
+  }
+
+  .profile-points-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .points-value {
+    font-size: 22px;
+  }
+
+  .profile-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .profile-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .address-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .address-card-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .address-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+

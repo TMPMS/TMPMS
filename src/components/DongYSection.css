@@ -257,17 +257,31 @@
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 900px) {
-  .ds-grid { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 769px) and (max-width: 1080px) {
+  .ds-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .dongy-section-inner { padding: 22px 20px 26px; }
+  .ds-title { font-size: 22px; }
+}
+
+@media (max-width: 768px) {
+  .ds-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .ds-benefits { grid-template-columns: repeat(2, 1fr); }
+  .ds-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .ds-tabs::-webkit-scrollbar { display: none; }
+  .ds-tab { white-space: nowrap; flex-shrink: 0; }
 }
 
 @media (max-width: 600px) {
-  .ds-grid { grid-template-columns: repeat(2, 1fr); }
-  .ds-title { font-size: 20px; }
-  .dongy-section-inner { padding: 18px 16px 22px; }
-  .ds-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .ds-benefits { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .ds-tabs { gap: 6px; }
-  .ds-tab { padding: 6px 14px; font-size: 12px; }
+  .ds-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ds-title { font-size: 19px; }
+  .dongy-section-inner { padding: 16px 12px 20px; }
+  .ds-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .ds-benefits { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ds-tab { padding: 5px 12px; font-size: 11.5px; }
 }

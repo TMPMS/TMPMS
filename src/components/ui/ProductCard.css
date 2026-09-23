@@ -312,3 +312,62 @@
 .btn-add-cart--dongy:hover {
   background: linear-gradient(135deg, #047857 0%, #065f46 100%);
 }
+
+/* ============ RESPONSIVE / MOBILE ============ */
+@media (max-width: 640px) {
+  .product-card {
+    padding: 10px 8px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  .product-badges {
+    top: 6px;
+    left: 6px;
+    gap: 3px;
+  }
+  .badge-discount, .badge-dongy, .badge-rx {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .pc-origin {
+    top: 6px;
+    right: 6px;
+    padding: 1px 5px;
+    font-size: 9px;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .product-image {
+    margin-bottom: 6px;
+  }
+  .product-image img {
+    height: 110px;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+  }
+  .product-name {
+    font-size: 12px;
+    min-height: 30px;
+    margin-bottom: 4px;
+    -webkit-line-clamp: 2;
+  }
+  .product-current-price {
+    font-size: 15px;
+  }
+  .pc-unit {
+    font-size: 11px;
+  }
+  .product-action {
+    margin-top: 8px;
+  }
+  .btn-add-cart {
+    padding: 7px 0;
+    font-size: 12px;
+    gap: 4px;
+    border-radius: 20px;
+  }
+}

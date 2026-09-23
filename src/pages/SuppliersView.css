@@ -321,3 +321,26 @@
     gap: 24px;
   }
 }
+
+@media (max-width: 600px) {
+  .suppliers-container {
+    padding: 0 12px;
+    margin: 16px auto 32px;
+  }
+  .suppliers-title {
+    font-size: 20px;
+  }
+  .column-header-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .directory-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .card-top-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
