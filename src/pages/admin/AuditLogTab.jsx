@@ -90,7 +90,7 @@ const AuditLogTab = ({ setError }) => {
     <div className="admin-card">
       <h3 className="admin-section-title"><History size={16} /> Nhật ký thao tác ({totalCount})</h3>
 
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+      <div className="admin-filter-bar">
         <select className="admin-input" style={{ width: 180 }} value={filters.entityName}
           onChange={e => setFilters(f => ({ ...f, entityName: e.target.value }))}>
           <option value="">Tất cả đối tượng</option>

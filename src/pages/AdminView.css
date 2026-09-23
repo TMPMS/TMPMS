@@ -1365,11 +1365,128 @@
 
 .payment-toggle-btn.refunded { background-color: #ede9fe; color: #7c3aed; }
 
+/* ============ ADMIN TAB CRUD & FORM SYSTEM ============ */
+.admin-tab-crud-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-form .form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.admin-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+textarea.admin-input {
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.5;
+}
+
+.admin-form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.admin-add-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+}
+
+.admin-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.cancel-edit-btn {
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-edit-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.admin-filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
 /* ============ ADMIN VIEW RESPONSIVE SYSTEM ============ */
 @media (max-width: 1024px) {
   .admin-container {
     padding: 0 14px;
     margin: 18px auto 36px;
+  }
+
+  .admin-tab-crud-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .admin-header {
@@ -1442,6 +1559,21 @@
   .btn-add-action {
     width: 100%;
     justify-content: center;
+  }
+
+  .admin-form-row-2col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-filter-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-filter-bar select,
+  .admin-filter-bar input {
+    width: 100% !important;
   }
 
   .admin-table {

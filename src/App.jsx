@@ -128,12 +128,13 @@ function App() {
     initialRoute.supplierId ? { id: initialRoute.supplierId, name: initialRoute.supplierName || '' } : null
   );
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [profileInitialTab, setProfileInitialTab] = useState('profile');
   
   const [bestSellers, setBestSellers] = useState([]);
   const [supplements, setSupplements] = useState([]);
 
   const handleSelectProduct = (product) => {
-    setSelectedProduct(product);
+    setSelectedProduct(product ? mapProduct(product) : null);
     setCurrentPage('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -197,7 +198,10 @@ function App() {
     }
   };
 
-  const handleNavigate = (page) => {
+  const handleNavigate = (page, options) => {
+    if (page === 'profile' && options?.tab) {
+      setProfileInitialTab(options.tab);
+    }
     setCurrentPage(page);
     setIsSearching(false);
     setSearchQuery('');
@@ -326,7 +330,7 @@ function App() {
       case 'patient-portal':
         return <PatientPortal onBack={() => handleNavigate('home')} />;
       case 'profile':
-        return <ProfileView onNavigate={handleNavigate} />;
+        return <ProfileView onNavigate={handleNavigate} initialTab={profileInitialTab} />;
       case 'detail':
         return <ProductDetailView product={selectedProduct} onBack={() => handleNavigate('home')} />;
       case 'scan-medicine':

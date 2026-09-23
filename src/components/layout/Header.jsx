@@ -563,7 +563,8 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                                   image: m.imageUrl,
                                   unit: m.unit || 'Hộp',
                                   requiresPrescription: m.requiresPrescription,
-                                  supplierId: m.supplierId
+                                  supplierId: m.supplierId,
+                                  stockQuantity: m.stockQuantity !== undefined ? m.stockQuantity : (m.stock_quantity !== undefined ? m.stock_quantity : 99)
                                 });
                               }
                             }}
@@ -602,8 +603,23 @@ const Header = ({ onSearch, onNavigate, onSelectCategory, onSelectProduct }) => 
                 </button>
                 {isUserMenuOpen && (
                   <div className="user-dropdown-menu">
-                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>👤 Hồ sơ của tôi</button>
-                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile'); setIsUserMenuOpen(false); }}>🎟️ Voucher của tôi</button>
+                    <div className="user-dropdown-header">
+                      <div className="user-dropdown-user-info">
+                        <span className="user-dropdown-display-name">{user.fullName || user.username}</span>
+                        {user.fullName && user.username && user.fullName !== user.username && (
+                          <span className="user-dropdown-username">@{user.username}</span>
+                        )}
+                      </div>
+                      <div className="user-dropdown-role-row">
+                        <span className={`user-dropdown-role-badge role-${user.role_id || 2}`}>
+                          {user.role_name || (user.role_id === 1 ? 'Quản trị viên' : user.role_id === 3 ? 'Dược sĩ' : user.role_id === 4 ? 'Nhân viên' : 'Thành viên')}
+                        </span>
+                        {user.id && <span className="user-dropdown-id-tag">ID: #{user.id}</span>}
+                      </div>
+                      {user.email && <div className="user-dropdown-email">{user.email}</div>}
+                    </div>
+                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile', { tab: 'profile' }); setIsUserMenuOpen(false); }}>👤 Hồ sơ của tôi</button>
+                    <button className="user-dropdown-item" onClick={() => { onNavigate('profile', { tab: 'vouchers' }); setIsUserMenuOpen(false); }}>🎟️ Voucher của tôi</button>
                     <button className="user-dropdown-item" onClick={() => { setIsWheelModalOpen(true); setIsUserMenuOpen(false); }}>🎡 Vòng quay may mắn</button>
                     <button className="user-dropdown-item" style={{ color: '#0d9488' }} onClick={() => { onNavigate('history'); setIsUserMenuOpen(false); }}>Lịch sử mua</button>
                     {user.role_id === 2 && (

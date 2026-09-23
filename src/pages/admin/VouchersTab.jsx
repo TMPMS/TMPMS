@@ -41,7 +41,7 @@ const VouchersTab = ({ showSuccess, setError }) => {
   }
 
   return (
-            <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 20, alignItems: 'start' }}>
+            <div className="admin-tab-crud-layout">
               {/* Form */}
               <div className="admin-card">
                 <h3 className="admin-section-title">
@@ -63,7 +63,7 @@ const VouchersTab = ({ showSuccess, setError }) => {
                       <option value="shipping">Giảm phí vận chuyển</option>
                     </select>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="admin-form-row-2col">
                     <div className="form-group">
                       <label>Loại giảm</label>
                       <select className="admin-input" value={voucherForm.discountType} onChange={e => setVoucherForm(p => ({ ...p, discountType: e.target.value }))}>
@@ -76,7 +76,7 @@ const VouchersTab = ({ showSuccess, setError }) => {
                       <input type="number" className="admin-input" value={voucherForm.discountValue} onChange={e => setVoucherForm(p => ({ ...p, discountValue: e.target.value }))} placeholder={voucherForm.discountType === 'percent' ? '10' : '20000'} />
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="admin-form-row-2col">
                     <div className="form-group">
                       <label>Đơn tối thiểu (đ)</label>
                       <input type="number" className="admin-input" value={voucherForm.minOrderValue} onChange={e => setVoucherForm(p => ({ ...p, minOrderValue: e.target.value }))} placeholder="200000" />
@@ -86,7 +86,7 @@ const VouchersTab = ({ showSuccess, setError }) => {
                       <input type="number" className="admin-input" value={voucherForm.maxDiscount} onChange={e => setVoucherForm(p => ({ ...p, maxDiscount: e.target.value }))} placeholder="50000" />
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="admin-form-row-2col">
                     <div className="form-group">
                       <label>Số lượng</label>
                       <input type="number" className="admin-input" value={voucherForm.usageLimit} onChange={e => setVoucherForm(p => ({ ...p, usageLimit: e.target.value }))} placeholder="100" />

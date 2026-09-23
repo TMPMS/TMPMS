@@ -1,7 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { fetchProductReviews, checkReviewEligibility, submitProductReview, fetchHerbalMedicineInfo } from '../services/api';
+import { fetchProductReviews, checkReviewEligibility, submitProductReview, fetchHerbalMedicineInfo, fetchMedicineById } from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
 import { getMeridianInfoForMedicine, MERIDIANS_CATALOG } from '../data/meridianData';
 import { getStarRating } from '../components/ui/ProductCard';
@@ -13,6 +13,7 @@ const Meridian3DModal = lazy(() => import('../components/ui/Meridian3DModal'));
 const ProductDetailView = ({ product, onBack }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const [detailProduct, setDetailProduct] = useState(product);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [isEligible, setIsEligible] = useState(false);
@@ -78,6 +79,26 @@ const ProductDetailView = ({ product, onBack }) => {
     loadHerbalInfo();
   }, [product?.id, userId]);
 
+  useEffect(() => {
+    setDetailProduct(product);
+  }, [product]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    // Tự động tải thông tin thuốc mới nhất từ server để đồng bộ tồn kho và chi tiết
+    fetchMedicineById(product.id)
+      .then(fresh => {
+        if (fresh) {
+          setDetailProduct(prev => ({
+            ...(prev || {}),
+            ...fresh,
+            stockQuantity: fresh.stockQuantity !== undefined ? fresh.stockQuantity : (fresh.stock_quantity !== undefined ? fresh.stock_quantity : prev?.stockQuantity),
+          }));
+        }
+      })
+      .catch(err => console.error('Lỗi tải chi tiết thuốc:', err));
+  }, [product?.id]);
+
   if (!product) {
     return (
       <div className="pd-container">
@@ -89,14 +110,21 @@ const ProductDetailView = ({ product, onBack }) => {
     );
   }
 
-  const displayPrice = product.price ? (typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0) : 0;
-  const displayOldPrice = product.oldPrice ? (typeof product.oldPrice === 'number' ? product.oldPrice : parseFloat(product.oldPrice) || 0) : null;
+  const currentProduct = detailProduct || product;
+  const displayPrice = currentProduct.price ? (typeof currentProduct.price === 'number' ? currentProduct.price : parseFloat(currentProduct.price) || 0) : 0;
+  const displayOldPrice = currentProduct.oldPrice ? (typeof currentProduct.oldPrice === 'number' ? currentProduct.oldPrice : parseFloat(currentProduct.oldPrice) || 0) : null;
+
+  const stock = currentProduct?.stockQuantity !== undefined 
+    ? currentProduct.stockQuantity 
+    : (currentProduct?.stock_quantity !== undefined ? currentProduct.stock_quantity : currentProduct?.StockQuantity);
+  const hasKnownStock = stock !== undefined && stock !== null && !isNaN(Number(stock));
+  const isOutOfStock = hasKnownStock && Number(stock) <= 0;
 
   const handleAddToCart = async () => {
     let successCount = 0;
     for (let i = 0; i < quantity; i++) {
        
-      const ok = await addToCart(product);
+      const ok = await addToCart(currentProduct);
       if (!ok) break; // Dừng lại nếu bị chặn (ví dụ: cần đơn thuốc) để tránh gọi API thất bại nhiều lần
       successCount++;
     }
@@ -182,17 +210,24 @@ const ProductDetailView = ({ product, onBack }) => {
           <div className="pd-meta-grid">
             <div className="pd-meta-item">
               <span className="meta-label">Xuất xứ</span>
-              <span className="meta-value">{product.origin || 'Việt Nam'}</span>
+              <span className="meta-value">{currentProduct.origin || 'Việt Nam'}</span>
             </div>
             <div className="pd-meta-item">
               <span className="meta-label">Quy cách</span>
-              <span className="meta-value">{product.packaging || product.unit || 'Túi/Kg'}</span>
+              <span className="meta-value">{currentProduct.packaging || currentProduct.unit || 'Túi/Kg'}</span>
             </div>
           </div>
 
-          <div style={{ margin: '15px 0', padding: '10px 15px', background: product.stockQuantity <= 0 ? '#fdf2f2' : '#f0fdf4', borderRadius: '8px', border: `1px solid ${product.stockQuantity <= 0 ? '#fde8e8' : '#dcfce7'}`, display: 'inline-block' }}>
-            <span style={{ fontWeight: '600', color: product.stockQuantity <= 0 ? '#9b1c1c' : '#166534' }}>
-              Trạng thái: {product.stockQuantity <= 0 ? 'Tạm hết hàng' : `Còn hàng (Tồn kho: ${product.stockQuantity})`}
+          <div style={{
+            margin: '15px 0',
+            padding: '10px 15px',
+            background: isOutOfStock ? '#fdf2f2' : '#f0fdf4',
+            borderRadius: '8px',
+            border: `1px solid ${isOutOfStock ? '#fde8e8' : '#dcfce7'}`,
+            display: 'inline-block'
+          }}>
+            <span style={{ fontWeight: '600', color: isOutOfStock ? '#9b1c1c' : '#166534' }}>
+              Trạng thái: {isOutOfStock ? 'Tạm hết hàng' : hasKnownStock ? `Còn hàng (Tồn kho: ${stock})` : 'Còn hàng'}
             </span>
           </div>
 

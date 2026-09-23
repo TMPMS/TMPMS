@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Tag, ShoppingBag, Edit3, Save, X, Copy, Check, Calendar, Phone, MapPin, Mail, Shield, KeyRound, Plus, Trash2, Star, Gift } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 import { formatDateVN } from '../utils/dateUtils';
 import './ProfileView.css';
@@ -16,8 +17,10 @@ const VOUCHER_COLORS = [
   ['#be185d', '#831843'],
 ];
 
-export default function ProfileView({ onNavigate }) {
-  const [activeTab, setActiveTab] = useState('profile');
+export default function ProfileView({ onNavigate, initialTab }) {
+  const { user: authUser } = useAuth();
+  const navRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(initialTab || 'profile');
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({});
@@ -44,7 +47,23 @@ export default function ProfileView({ onNavigate }) {
   const [redeemError, setRedeemError] = useState('');
   const [redeemSuccess, setRedeemSuccess] = useState('');
 
-  const user = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+  const localUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+  const user = authUser || localUser;
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (navRef.current) {
+      const activeBtn = navRef.current.querySelector('.pnav-btn.active');
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeTab]);
 
   const reloadAddresses = async () => {
     if (!user?.id) return;
@@ -260,10 +279,14 @@ export default function ProfileView({ onNavigate }) {
     );
   };
 
-  const displayName = profile?.fullName || profile?.username || user?.username || 'Người dùng';
+  const roleName = user?.role_name || profile?.role_name || (user?.role_id === 1 ? 'Quản trị viên' : user?.role_id === 3 ? 'Dược sĩ' : user?.role_id === 4 ? 'Nhân viên' : 'Thành viên');
+  const roleId = user?.role_id || (roleName === 'Quản trị viên' ? 1 : roleName === 'Dược sĩ' ? 3 : roleName === 'Nhân viên' ? 4 : 2);
+  const username = user?.username || profile?.username || '';
+  const displayName = profile?.fullName || user?.fullName || username || 'Người dùng';
   const avatarLetter = (displayName || 'U')[0].toUpperCase();
-  const roleName = profile?.role_name === 'Customer' || profile?.role_name === 'User' ? 'Thành viên' :
-    profile?.role_name === 'Admin' ? 'Quản trị viên' : profile?.role_name || 'Thành viên';
+  const userEmail = profile?.email || user?.email || '';
+  const userPhone = profile?.phoneNumber || user?.phoneNumber || profile?.phone || user?.phone || '';
+  const userId = user?.id || profile?.id;
 
   if (loading) return (
     <div className="profile-loading" aria-live="polite">
@@ -286,7 +309,7 @@ export default function ProfileView({ onNavigate }) {
     <div className="profile-layout">
       {/* SIDEBAR */}
       <aside className="profile-sidebar">
-        {/* Avatar + Name */}
+        {/* Avatar + Identity Block */}
         <div className="profile-avatar-block">
           <div className="profile-avatar">
             {profile?.avatarUrl
@@ -295,19 +318,24 @@ export default function ProfileView({ onNavigate }) {
             }
             <div className="profile-avatar-ring" />
           </div>
-          <h3 className="profile-name">{displayName}</h3>
-          <span className="profile-role-badge">{roleName}</span>
-          <p className="profile-member-since">{profile?.email}</p>
+          <div className="profile-user-identity">
+            <h3 className="profile-name">{displayName}</h3>
+            {username && username !== displayName && (
+              <span className="profile-username-tag">@{username}</span>
+            )}
+            <div className="profile-role-wrap">
+              <span className={`profile-role-badge role-${roleId}`}>{roleName}</span>
+              {userId && <span className="profile-id-badge">ID: #{userId}</span>}
+            </div>
+            <div className="profile-contact-quick">
+              {userEmail && <span className="profile-member-email"><Mail size={12} /> {userEmail}</span>}
+              {userPhone && <span className="profile-member-phone"><Phone size={12} /> {userPhone}</span>}
+            </div>
+          </div>
         </div>
 
         {/* Nav Tabs */}
-        <nav className="profile-nav">
-          <button
-            className={`pnav-btn ${activeTab === 'security' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('security'); setError(''); setSuccess(''); }}
-          >
-            <KeyRound size={16} /> Đổi mật khẩu
-          </button>
+        <nav className="profile-nav" ref={navRef}>
           <button
             className={`pnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
@@ -315,17 +343,10 @@ export default function ProfileView({ onNavigate }) {
             <User size={16} /> Hồ sơ của tôi
           </button>
           <button
-            className={`pnav-btn ${activeTab === 'addresses' ? 'active' : ''}`}
-            onClick={() => setActiveTab('addresses')}
-          >
-            <MapPin size={16} /> Sổ địa chỉ
-            <span className="pnav-badge">{addresses.length}</span>
-          </button>
-          <button
             className={`pnav-btn ${activeTab === 'vouchers' ? 'active' : ''}`}
             onClick={() => setActiveTab('vouchers')}
           >
-            <Tag size={16} /> Voucher
+            <Tag size={16} /> Voucher của tôi
             <span className="pnav-badge">{myVouchers.length + vouchers.length}</span>
           </button>
           <button
@@ -336,10 +357,23 @@ export default function ProfileView({ onNavigate }) {
             <span className="pnav-badge">{loyaltySummary.points}</span>
           </button>
           <button
+            className={`pnav-btn ${activeTab === 'addresses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('addresses')}
+          >
+            <MapPin size={16} /> Sổ địa chỉ
+            <span className="pnav-badge">{addresses.length}</span>
+          </button>
+          <button
             className={`pnav-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => { onNavigate && onNavigate('history'); }}
           >
             <ShoppingBag size={16} /> Lịch sử đơn hàng
+          </button>
+          <button
+            className={`pnav-btn ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('security'); setError(''); setSuccess(''); }}
+          >
+            <KeyRound size={16} /> Đổi mật khẩu
           </button>
         </nav>
       </aside>

@@ -39,7 +39,7 @@ const NewsTab = ({ showSuccess, setError }) => {
   }
 
   return (
-            <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 20, alignItems: 'start' }}>
+            <div className="admin-tab-crud-layout">
               {/* Form */}
               <div className="admin-card">
                 <h3 className="admin-section-title">
