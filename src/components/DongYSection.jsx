@@ -7,7 +7,7 @@ import './DongYSection.css';
 const mapProduct = (p) => ({
   id: p.id,
   name: p.name,
-  image: p.image_url || p.imageUrl,
+  image: p.image || p.image_url || p.imageUrl,
   price: parseFloat(p.price),
   oldPrice: p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null),
   unit: p.unit || 'Hộp',

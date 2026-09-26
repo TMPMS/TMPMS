@@ -175,7 +175,7 @@ const ProductDetailView = ({ product, onBack }) => {
       <div className="pd-card">
         <div className="pd-left">
           <div className="pd-image-wrapper">
-            <img src={product.image} alt={product.name} />
+            <img src={currentProduct?.image || currentProduct?.imageUrl || currentProduct?.image_url || product?.image || product?.imageUrl || ''} alt={product.name} />
           </div>
         </div>
 

@@ -71,7 +71,7 @@ const mapProduct = (p) => {
   return {
     id: p.id || p.Id,
     name: p.name || p.Name,
-    image: p.image_url || p.imageUrl || p.ImageUrl,
+    image: p.image || p.image_url || p.imageUrl || p.ImageUrl,
     price: parseFloat(p.price !== undefined ? p.price : (p.Price !== undefined ? p.Price : 0)),
     oldPrice: p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : (p.OldPrice ? parseFloat(p.OldPrice) : null)),
     unit: p.unit || p.Unit || 'Hộp',
